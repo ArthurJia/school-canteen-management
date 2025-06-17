@@ -93,7 +93,20 @@
           </el-form-item>
       
           <el-form-item label="分类" prop="category">
-            <el-input v-model="editForm.category" />
+            <el-select v-model="editForm.category" placeholder="请选择分类" style="width: 100%">
+              <el-option-group
+                v-for="group in categories"
+                :key="group.label"
+                :label="group.label"
+              >
+                <el-option
+                  v-for="item in group.options"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-option-group>
+            </el-select>
           </el-form-item>
       
           <el-form-item label="数量" prop="quantity">
@@ -160,6 +173,35 @@ import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+// 当天类食材和储存类食材的分类
+const dailyCategories = [
+  { value: 'vegetable', label: '蔬菜类' },
+  { value: 'meat', label: '鲜肉类' },
+  { value: 'frozen', label: '冷冻类' },
+  { value: 'tofu', label: '豆制品类' },
+  { value: 'egg', label: '禽蛋类' },
+  { value: 'fruit', label: '水果类' },
+  { value: 'dessert', label: '点心类' },
+  { value: 'flour', label: '面粉制品' }
+]
+
+const storageCategories = [
+  { value: 'rice', label: '大米' },
+  { value: 'oil', label: '食用油类' },
+  { value: 'seasoning', label: '调味品类' }
+]
+
+const categories = ref([
+  {
+    label: '当天类食材',
+    options: dailyCategories
+  },
+  {
+    label: '储存类食材',
+    options: storageCategories
+  }
+])
 
 const suppliers = ref([
   { value: 'maidelong', label: '麦德龙' },
