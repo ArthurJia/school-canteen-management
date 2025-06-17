@@ -17,7 +17,7 @@
             />
             <el-input
               v-model="searchQuery"
-              placeholder="输入食材名称查询"
+              placeholder="输入查询内容"
               style="width: 300px"
               clearable
             >
