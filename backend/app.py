@@ -72,34 +72,49 @@ def get_stock_ins():
         # 获取查询参数
         start_time = request.args.get('startTime')
         end_time = request.args.get('endTime')
+        search = request.args.get('search', '')
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('pageSize', 10))
         
-        print(f"Fetching stock-ins with startTime={start_time}, endTime={end_time}")
+        # 计算偏移量
+        offset = (page - 1) * page_size
         
         conn = get_db_connection()
         cursor = conn.cursor()
         
         # 构建查询条件
         query = 'SELECT * FROM stock_ins'
+        count_query = 'SELECT COUNT(*) FROM stock_ins'
         params = []
+        where_clauses = []
         
         if start_time or end_time:
-            query += ' WHERE'
             if start_time:
-                query += ' date(in_time) >= date(?)'
+                where_clauses.append('date(in_time) >= date(?)')
                 params.append(start_time)
             if end_time:
-                if start_time:
-                    query += ' AND'
-                query += ' date(in_time) <= date(?)'
+                where_clauses.append('date(in_time) <= date(?)')
                 params.append(end_time)
         
-        query += ' ORDER BY in_time DESC'
+        if search:
+            where_clauses.append('(name LIKE ? OR category LIKE ? OR supplier LIKE ?)')
+            search_param = f'%{search}%'
+            params.extend([search_param, search_param, search_param])
         
-        print(f"Executing query: {query} with params: {params}")
+        if where_clauses:
+            query += ' WHERE ' + ' AND '.join(where_clauses)
+            count_query += ' WHERE ' + ' AND '.join(where_clauses)
         
-        # 执行查询
+        query += ' ORDER BY in_time DESC LIMIT ? OFFSET ?'
+        params.extend([page_size, offset])
+        
+        # 执行查询获取数据
         cursor.execute(query, params)
         records = cursor.fetchall()
+        
+        # 执行查询获取总数
+        cursor.execute(count_query, params[:len(params)-2] if where_clauses else [])
+        total = cursor.fetchone()[0]
         
         # 将记录转换为字典列表
         stock_ins = []
@@ -120,9 +135,13 @@ def get_stock_ins():
             stock_ins.append(stock_in)
         
         conn.close()
-        print(f"Found {len(stock_ins)} records")
         
-        return jsonify({'data': stock_ins})
+        return jsonify({
+            'data': stock_ins,
+            'total': total,
+            'page': page,
+            'pageSize': page_size
+        })
         
     except Exception as e:
         print(f"Error fetching stock-ins: {str(e)}")
