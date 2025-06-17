@@ -56,10 +56,14 @@
             }}
           </template>
         </el-table-column>
-        <el-table-column prop="supplier" label="供应商" width="150" />
+        <el-table-column prop="supplier" label="供应商" width="150">
+          <template #default="{row}">
+            {{ suppliers.find(s => s.value === row.supplier)?.label || row.supplier }}
+          </template>
+        </el-table-column>
         <el-table-column prop="quantity" label="数量" width="100" align="right">
           <template #default="{row}">
-            {{ row.quantity }} {{ row.unit }}
+            {{ row.quantity }} {{ row.unit === 'kg' ? '千克' : (row.unit === 'L' ? '升' : row.unit) }}
           </template>
         </el-table-column>
         <el-table-column prop="price" label="单价(元)" width="120" align="right">
@@ -94,14 +98,21 @@
       
           <el-form-item label="数量" prop="quantity">
             <el-input-number v-model="editForm.quantity" :min="0" :precision="2" />
-          </el-form-item>
-      
-          <el-form-item label="单位" prop="unit">
-            <el-input v-model="editForm.unit" />
+            <el-select v-model="editForm.unit" style="width: 100px; margin-left: 10px">
+              <el-option label="千克" value="kg" />
+              <el-option label="升" value="L" />
+            </el-select>
           </el-form-item>
       
           <el-form-item label="供应商" prop="supplier">
-            <el-input v-model="editForm.supplier" />
+            <el-select v-model="editForm.supplier" placeholder="请选择供应商">
+              <el-option
+                v-for="item in suppliers"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
           </el-form-item>
       
           <el-form-item label="单价" prop="price">
@@ -149,6 +160,32 @@ import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+const suppliers = ref([
+  { value: 'maidelong', label: '麦德龙' },
+  { value: 'hetianyu', label: '禾田裕' },
+  { value: 'tianyuan', label: '天源' },
+  { value: 'hejiahuang', label: '合家欢' },
+  { value: 'yurun', label: '雨润' },
+  { value: 'zhonghe', label: '中合' },
+  { value: 'zhongxin', label: '中鑫' },
+  { value: 'suhe', label: '苏合' },
+  { value: 'huacheng', label: '华诚' },
+  { value: 'xuezihan', label: '学子膳' },
+  { value: 'yaozhiwei', label: '肴之味' },
+  { value: 'yuanwei', label: '原味' },
+  { value: 'huihai', label: '汇海' },
+  { value: 'zuming', label: '祖名' },
+  { value: 'yafu', label: '亚夫' },
+  { value: 'longmen', label: '龙门' },
+  { value: 'weigang', label: '卫岗' },
+  { value: 'tiangu', label: '天谷' },
+  { value: 'sushi', label: '苏食' },
+  { value: 'hengshun', label: '恒顺' },
+  { value: 'zhongrun', label: '中润' },
+  { value: 'guoguo', label: '果果' },
+  { value: 'furun', label: '富润' }
+])
 
 const searchQuery = ref('')
 const dateRange = ref([])
