@@ -90,10 +90,6 @@
             <el-input-number v-model="editForm.price" :min="0" :precision="2" />
           </el-form-item>
       
-          <el-form-item label="日常用品" prop="is_daily">
-            <el-switch v-model="editForm.is_daily" />
-          </el-form-item>
-      
           <el-form-item label="备注" prop="note">
             <el-input v-model="editForm.note" type="textarea" />
           </el-form-item>
@@ -194,7 +190,6 @@ const editForm = ref({
   unit: '',
   supplier: '',
   price: 0,
-  is_daily: false,
   note: '',
   in_time: ''
 })
@@ -208,7 +203,6 @@ const handleEdit = row => {
     unit: row.unit,
     supplier: row.supplier,
     price: row.price,
-    is_daily: row.is_daily,
     note: row.note,
     in_time: row.in_time
   }
