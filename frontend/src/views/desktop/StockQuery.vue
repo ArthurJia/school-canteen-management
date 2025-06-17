@@ -110,10 +110,16 @@
           </el-form-item>
       
           <el-form-item label="数量" prop="quantity">
-            <el-input-number v-model="editForm.quantity" :min="0" :precision="2" />
-            <el-select v-model="editForm.unit" style="width: 100px; margin-left: 10px">
-              <el-option label="千克" value="kg" />
-              <el-option label="升" value="L" />
+            <el-input 
+              v-model="editForm.quantity" 
+              type="number"
+              :min="0"
+              placeholder="请输入数量"
+              style="width: 70%"
+            />
+            <el-select v-model="editForm.unit" placeholder="单位" style="width: 28%; margin-left: 2%">
+              <el-option label="千克(kg)" value="kg" />
+              <el-option label="升(L)" value="L" />
             </el-select>
           </el-form-item>
       
@@ -129,7 +135,13 @@
           </el-form-item>
       
           <el-form-item label="单价" prop="price">
-            <el-input-number v-model="editForm.price" :min="0" :precision="2" />
+            <el-input 
+              v-model="editForm.price" 
+              type="number"
+              :min="0"
+              :step="0.01"
+              placeholder="请输入单价"
+            />
           </el-form-item>
       
           <el-form-item label="备注" prop="note">
