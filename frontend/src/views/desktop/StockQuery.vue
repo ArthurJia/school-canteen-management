@@ -55,12 +55,65 @@
           </template>
         </el-table-column>
         <el-table-column prop="note" label="备注" />
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" width="150">
           <template #default="scope">
-            <el-button size="small" @click="handleEdit(scope.row)">详情</el-button>
+            <el-button size="small" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
+  
+      <!-- 编辑对话框 -->
+      <el-dialog v-model="editDialogVisible" title="编辑库存记录" width="50%">
+        <el-form :model="editForm" label-width="120px">
+          <el-form-item label="物品名称" prop="name">
+            <el-input v-model="editForm.name" />
+          </el-form-item>
+      
+          <el-form-item label="分类" prop="category">
+            <el-input v-model="editForm.category" />
+          </el-form-item>
+      
+          <el-form-item label="数量" prop="quantity">
+            <el-input-number v-model="editForm.quantity" :min="0" :precision="2" />
+          </el-form-item>
+      
+          <el-form-item label="单位" prop="unit">
+            <el-input v-model="editForm.unit" />
+          </el-form-item>
+      
+          <el-form-item label="供应商" prop="supplier">
+            <el-input v-model="editForm.supplier" />
+          </el-form-item>
+      
+          <el-form-item label="单价" prop="price">
+            <el-input-number v-model="editForm.price" :min="0" :precision="2" />
+          </el-form-item>
+      
+          <el-form-item label="日常用品" prop="is_daily">
+            <el-switch v-model="editForm.is_daily" />
+          </el-form-item>
+      
+          <el-form-item label="备注" prop="note">
+            <el-input v-model="editForm.note" type="textarea" />
+          </el-form-item>
+      
+          <el-form-item label="入库时间" prop="in_time">
+            <el-date-picker 
+              v-model="editForm.in_time" 
+              type="date" 
+              value-format="YYYY-MM-DD"
+              placeholder="选择日期" />
+          </el-form-item>
+        </el-form>
+    
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="editDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="handleSave">保存</el-button>
+          </span>
+        </template>
+      </el-dialog>
 
       <div class="pagination">
         <el-pagination
@@ -81,7 +134,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const searchQuery = ref('')
 const dateRange = ref([])
@@ -132,8 +185,69 @@ const filteredStock = computed(() => {
   )
 })
 
+const editDialogVisible = ref(false)
+const editForm = ref({
+  id: 0,
+  name: '',
+  category: '',
+  quantity: 0,
+  unit: '',
+  supplier: '',
+  price: 0,
+  is_daily: false,
+  note: '',
+  in_time: ''
+})
+
 const handleEdit = row => {
-  console.log('编辑行:', row)
+  editForm.value = {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    quantity: row.quantity,
+    unit: row.unit,
+    supplier: row.supplier,
+    price: row.price,
+    is_daily: row.is_daily,
+    note: row.note,
+    in_time: row.in_time
+  }
+  editDialogVisible.value = true
+}
+
+const handleSave = async () => {
+  try {
+    await axios.put(`/api/stock-ins/${editForm.value.id}`, editForm.value)
+    ElMessage.success('修改成功')
+    editDialogVisible.value = false
+    fetchStockData() // 刷新数据
+  } catch (error) {
+    ElMessage.error('修改失败')
+    console.error('修改失败:', error)
+  }
+}
+
+const handleDelete = async row => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除 "${row.name}" 的库存记录吗?`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    await axios.delete(`/api/stock-ins/${row.id}`)
+    ElMessage.success('删除成功')
+    fetchStockData() // 刷新数据
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+      console.error('删除失败:', error)
+    }
+  }
 }
 
 onMounted(() => {

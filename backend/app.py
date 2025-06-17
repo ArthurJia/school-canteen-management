@@ -147,6 +147,89 @@ def get_stock_ins():
         print(f"Error fetching stock-ins: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stock-ins/<int:stock_in_id>', methods=['PUT'])
+def update_stock_in(stock_in_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # 必填字段验证
+        required_fields = ['name', 'quantity', 'unit']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        # 计算小计金额
+        quantity = float(data['quantity'])
+        price = float(data.get('price', 0))
+        subtotal = quantity * price
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 更新库存记录
+        cursor.execute('''
+        UPDATE stock_ins 
+        SET name = ?, 
+            category = ?, 
+            quantity = ?, 
+            unit = ?, 
+            supplier = ?, 
+            price = ?, 
+            subtotal = ?, 
+            is_daily = ?, 
+            note = ?, 
+            in_time = ?
+        WHERE id = ?
+        ''', (
+            data['name'],
+            data.get('category', ''),
+            quantity,
+            data['unit'],
+            data.get('supplier', ''),
+            price,
+            subtotal,
+            1 if data.get('is_daily', False) else 0,
+            data.get('note', ''),
+            data.get('in_time', ''),
+            stock_in_id
+        ))
+        
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Stock record not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error updating stock record: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-ins/<int:stock_in_id>', methods=['DELETE'])
+def delete_stock_in(stock_in_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 删除指定的库存记录
+        cursor.execute('DELETE FROM stock_ins WHERE id = ?', (stock_in_id,))
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Stock record not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error deleting stock record: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/stock-outs', methods=['POST'])
 def create_stock_out():
     data = request.get_json()
