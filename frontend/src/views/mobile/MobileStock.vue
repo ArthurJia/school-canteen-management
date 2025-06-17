@@ -22,7 +22,7 @@
       >
         <div class="item-name">{{ item.name }}</div>
         <div class="item-info">
-          <span class="item-category">{{ item.category }}</span>
+          <span class="item-category">{{ getCategoryLabel(item.category) }}</span>
           <span class="item-quantity">{{ item.quantity }}{{ item.unit }}</span>
         </div>
       </div>
@@ -49,7 +49,7 @@
         <h3>{{ currentItem.name }}</h3>
         <div class="detail-row">
           <span class="label">分类:</span>
-          <span>{{ currentItem.category }}</span>
+          <span>{{ getCategoryLabel(currentItem.category) }}</span>
         </div>
         <div class="detail-row">
           <span class="label">库存量:</span>
@@ -74,6 +74,24 @@ const pageSize = ref(10)
 const totalItems = ref(100)
 const drawerVisible = ref(false)
 const currentItem = ref(null)
+
+const categoryMap = {
+  vegetable: '蔬菜类',
+  meat: '鲜肉类',
+  frozen: '冷冻类',
+  tofu: '豆制品类',
+  egg: '禽蛋类',
+  fruit: '水果类',
+  dessert: '点心类',
+  flour: '面粉制品',
+  rice: '大米',
+  oil: '食用油类',
+  seasoning: '调味品类'
+}
+
+const getCategoryLabel = (category) => {
+  return categoryMap[category] || category
+}
 
 // 模拟库存数据
 const stockData = ref([

@@ -37,7 +37,25 @@
           </template>
         </el-table-column>
         <el-table-column prop="name" label="食材名称" width="150" />
-        <el-table-column prop="category" label="分类" width="120" />
+        <el-table-column prop="category" label="分类" width="120">
+          <template #default="{row}">
+            {{
+              [
+                { value: 'vegetable', label: '蔬菜类' },
+                { value: 'meat', label: '鲜肉类' },
+                { value: 'frozen', label: '冷冻类' },
+                { value: 'tofu', label: '豆制品类' },
+                { value: 'egg', label: '禽蛋类' },
+                { value: 'fruit', label: '水果类' },
+                { value: 'dessert', label: '点心类' },
+                { value: 'flour', label: '面粉制品' },
+                { value: 'rice', label: '大米' },
+                { value: 'oil', label: '食用油类' },
+                { value: 'seasoning', label: '调味品类' }
+              ].find(item => item.value === row.category)?.label || row.category
+            }}
+          </template>
+        </el-table-column>
         <el-table-column prop="supplier" label="供应商" width="150" />
         <el-table-column prop="quantity" label="数量" width="100" align="right">
           <template #default="{row}">
