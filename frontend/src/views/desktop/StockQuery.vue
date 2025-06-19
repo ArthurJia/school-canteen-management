@@ -284,11 +284,23 @@ const formatDate = (dateString) => {
 }
 
 const filteredStock = computed(() => {
-  return stockData.value.filter(item =>
-    item.name.includes(searchQuery.value) ||
-    item.category.includes(searchQuery.value) ||
-    item.supplier?.includes(searchQuery.value)
-  )
+  if (!searchQuery.value) return stockData.value
+  
+  return stockData.value.filter(item => {
+    // 搜索食材名称
+    if (item.name.includes(searchQuery.value)) return true
+    
+    // 搜索分类名称和value
+    const categoryLabel = [...dailyCategories, ...storageCategories]
+      .find(cat => cat.value === item.category)?.label || ''
+    if (categoryLabel.includes(searchQuery.value) || item.category.includes(searchQuery.value)) return true
+    
+    // 搜索供应商名称和value
+    const supplierLabel = suppliers.value.find(s => s.value === item.supplier)?.label || ''
+    if (supplierLabel.includes(searchQuery.value) || item.supplier?.includes(searchQuery.value)) return true
+    
+    return false
+  })
 })
 
 const editDialogVisible = ref(false)
