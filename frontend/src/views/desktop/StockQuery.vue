@@ -25,7 +25,6 @@
                 <el-button :icon="Search" @click="fetchStockData" />
               </template>
             </el-input>
-            <el-button type="primary" :icon="Refresh" @click="fetchStockData">刷新</el-button>
             <el-button type="success" :icon="Download" @click="exportToExcel">导出Excel</el-button>
           </div>
         </div>
