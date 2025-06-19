@@ -26,6 +26,7 @@
               </template>
             </el-input>
             <el-button type="primary" :icon="Refresh" @click="fetchStockData">刷新</el-button>
+            <el-button type="success" :icon="Download" @click="exportToExcel">导出Excel</el-button>
           </div>
         </div>
       </template>
@@ -182,7 +183,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, Download } from '@element-plus/icons-vue'
+import * as XLSX from 'xlsx'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -350,6 +352,110 @@ const handleDelete = async row => {
       ElMessage.error('删除失败')
       console.error('删除失败:', error)
     }
+  }
+}
+
+// 获取所有符合当前搜索条件的数据（不分页）
+const fetchAllStockData = async () => {
+  try {
+    let url = '/api/stock-ins?'
+    
+    if (dateRange.value && dateRange.value.length === 2) {
+      const [startTime, endTime] = dateRange.value
+      url += `startTime=${startTime}&endTime=${endTime}&`
+    }
+    
+    // 不使用分页参数，获取所有数据
+    url += `pageSize=1000` // 设置一个足够大的数值来获取所有数据
+    
+    if (searchQuery.value) {
+      url += `&search=${searchQuery.value}`
+    }
+
+    const response = await axios.get(url)
+    return response.data.data || []
+  } catch (error) {
+    console.error('获取所有库存数据失败:', error)
+    ElMessage.error('获取所有库存数据失败')
+    return []
+  }
+}
+
+const exportToExcel = async () => {
+  try {
+    ElMessage.info('正在准备导出数据，请稍候...')
+    
+    // 获取所有符合当前搜索条件的数据
+    const allStockData = await fetchAllStockData()
+    
+    if (allStockData.length === 0) {
+      ElMessage.warning('没有数据可导出')
+      return
+    }
+    
+    // 准备导出数据
+    const exportData = allStockData.map(item => {
+      // 查找分类名称
+      const categoryObj = [...dailyCategories, ...storageCategories].find(
+        cat => cat.value === item.category
+      );
+      const categoryName = categoryObj ? categoryObj.label : item.category;
+      
+      // 查找供应商名称
+      const supplierObj = suppliers.value.find(s => s.value === item.supplier);
+      const supplierName = supplierObj ? supplierObj.label : item.supplier;
+      
+      // 格式化日期
+      const formattedDate = formatDate(item.in_time);
+      
+      // 格式化单位
+      const unitDisplay = item.unit === 'kg' ? '千克' : (item.unit === 'L' ? '升' : item.unit);
+      
+      // 返回格式化后的数据行
+      return {
+        '入库时间': formattedDate,
+        '食材名称': item.name,
+        '分类': categoryName,
+        '供应商': supplierName,
+        '数量': `${item.quantity} ${unitDisplay}`,
+        '单价(元)': item.price.toFixed(2),
+        '小计(元)': item.subtotal.toFixed(2),
+        '备注': item.note || ''
+      };
+    });
+    
+    // 创建工作表
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    
+    // 设置列宽
+    const columnWidths = [
+      { wch: 12 }, // 入库时间
+      { wch: 15 }, // 食材名称
+      { wch: 10 }, // 分类
+      { wch: 15 }, // 供应商
+      { wch: 10 }, // 数量
+      { wch: 10 }, // 单价
+      { wch: 10 }, // 小计
+      { wch: 20 }  // 备注
+    ];
+    worksheet['!cols'] = columnWidths;
+    
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '库存数据');
+    
+    // 生成文件名（包含当前日期和时间）
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+    const fileName = `库存数据_${dateStr}.xlsx`;
+    
+    // 导出Excel文件
+    XLSX.writeFile(workbook, fileName);
+    
+    ElMessage.success(`导出成功，共导出 ${exportData.length} 条数据`);
+  } catch (error) {
+    console.error('导出Excel失败:', error);
+    ElMessage.error('导出Excel失败');
   }
 }
 
