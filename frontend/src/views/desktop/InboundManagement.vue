@@ -78,9 +78,9 @@
                 type="number"
                 :min="1"
                 placeholder="请输入数量"
-                style="width: 70%"
+                style="width: 60%"
               />
-              <el-select v-model="form.unit" placeholder="单位" style="width: 28%; margin-left: 2%">
+              <el-select v-model="form.unit" placeholder="单位" style="width: 38%; margin-left: 2%">
                 <el-option label="千克(kg)" value="kg" />
                 <el-option label="升(L)" value="L" />
               </el-select>
