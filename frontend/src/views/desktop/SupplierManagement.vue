@@ -134,6 +134,13 @@
               <el-button :icon="Search" />
             </template>
           </el-input>
+          <el-button 
+            type="success" 
+            style="margin-left: 10px"
+            @click="handleExportExcel"
+          >
+            导出Excel
+          </el-button>
         </div>
       </el-card>
 
@@ -232,6 +239,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
+import * as XLSX from 'xlsx'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { 
   getSuppliers, 
@@ -648,6 +656,48 @@ const handleSubmit = async () => {
       return false
     }
   })
+}
+
+const handleExportExcel = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在准备导出数据...',
+    background: 'rgba(0, 0, 0, 0.7)',
+  })
+  
+  try {
+    // 调用API获取所有供应商数据
+    const response = await getSuppliers({
+      page: 1,
+      pageSize: 10000, // 获取所有数据
+      search: searchQuery.value
+    })
+
+    // 准备导出数据
+    const exportData = response.data.map(item => ({
+      '供应商名称': item.name,
+      '供应商全称': item.fullName,
+      '联系人': item.contact,
+      '联系电话': item.phone,
+      '供应品类': formatSupplyItems(item.supplyItems || [])
+    }))
+
+    // 创建工作簿
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(exportData)
+    XLSX.utils.book_append_sheet(wb, ws, '供应商数据')
+
+    // 生成Excel文件并下载
+    const fileName = `供应商数据_${new Date().toLocaleDateString()}.xlsx`
+    XLSX.writeFile(wb, fileName)
+
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败，请稍后重试')
+  } finally {
+    loading.close()
+  }
 }
 </script>
 
