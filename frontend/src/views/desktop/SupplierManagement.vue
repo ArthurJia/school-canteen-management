@@ -38,11 +38,7 @@
             <el-table-column prop="name" label="供应商名称" />
             <el-table-column prop="contact" label="联系人" />
             <el-table-column prop="phone" label="联系电话" />
-            <el-table-column prop="fullName" label="供应商全称">
-              <template #default="{ row }">
-                {{ row.fullName || '无' }}
-              </template>
-            </el-table-column>
+            <!-- 供应商全称列已移除 -->
             <el-table-column prop="supplyItems" label="供应品类">
               <template #default="{ row }">
                 {{ formatSupplyItems(row.supplyItems) }}
@@ -72,30 +68,30 @@
           </div>
         </template>
 
-        <el-table :data="allMonthlySuppliers" style="width: 100%">
-          <el-table-column prop="name" label="供应商名称" />
-          <el-table-column prop="contact" label="联系人" />
-          <el-table-column prop="phone" label="联系电话" />
-          <el-table-column label="供应月份" width="120">
-            <template #default="{ row }">
-              {{ row.year }}年{{ row.month }}月
-            </template>
-          </el-table-column>
-          <el-table-column prop="supplyItems" label="供应品类">
-            <template #default="{ row }">
-              {{ formatSupplyItems(row.supplyItems) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="120">
-            <template #default="{ row }">
-              <el-button
-                type="danger"
-                size="small"
-                @click="handleRemoveMonthlySupplier(row)"
-              >移除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+                  <el-table :data="allMonthlySuppliers" style="width: 100%">
+                    <el-table-column label="供应月份" width="120">
+                      <template #default="{ row }">
+                        {{ row.year }}年{{ row.month }}月
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="name" label="供应商名称" />
+                    <el-table-column prop="contact" label="联系人" />
+                    <el-table-column prop="phone" label="联系电话" />
+                    <el-table-column prop="supplyItems" label="供应品类">
+                      <template #default="{ row }">
+                        {{ formatSupplyItems(row.supplyItems) }}
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="120">
+                      <template #default="{ row }">
+                        <el-button
+                          type="danger"
+                          size="small"
+                          @click="handleRemoveMonthlySupplier(row)"
+                        >移除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
       </el-card>
     </template>
 
