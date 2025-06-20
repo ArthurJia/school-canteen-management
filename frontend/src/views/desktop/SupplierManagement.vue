@@ -69,7 +69,7 @@
         </template>
 
                   <el-table :data="allMonthlySuppliers" style="width: 100%">
-                    <el-table-column label="供应月份" width="120">
+                    <el-table-column label="供应月份" width="200">
                       <template #default="{ row }">
                         {{ row.year }}年{{ row.month }}月
                       </template>
