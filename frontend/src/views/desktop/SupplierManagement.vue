@@ -147,10 +147,10 @@
         v-loading="loading"
       >
         <el-table-column prop="name" label="供应商名称" width="200" />
-        <el-table-column prop="fullName" label="供应商全称" />
+        <el-table-column prop="fullName" label="供应商全称" width="300" />
         <el-table-column prop="contact" label="联系人" width="150" />
         <el-table-column prop="phone" label="联系电话" width="150" />
-        <el-table-column label="供应品类" width="200" class-name="supply-items-column">
+        <el-table-column label="供应品类" class-name="supply-items-column">
           <template #default="scope">
             <span style="display: inline-block; min-width: 100px;">
               {{ formatSupplyItems(scope.row?.supplyItems || []) }}
