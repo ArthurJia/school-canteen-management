@@ -57,7 +57,7 @@
           </div>
           <div class="info-row">
             <el-icon><Location /></el-icon>
-            <span>{{ supplier.address }}</span>
+            <span>{{ supplier.fullName }}</span>
           </div>
           <div class="info-row">
             <el-icon><Goods /></el-icon>
@@ -83,8 +83,8 @@
         <el-form-item label="联系电话" required>
           <el-input v-model="supplierForm.phone" size="large" />
         </el-form-item>
-        <el-form-item label="地址">
-          <el-input v-model="supplierForm.address" type="textarea" />
+        <el-form-item label="全称">
+          <el-input v-model="supplierForm.fullName" type="textarea" />
         </el-form-item>
         <el-form-item label="供应品类">
           <el-select
@@ -125,7 +125,7 @@ const supplierForm = ref({
   name: '',
   contact: '',
   phone: '',
-  address: '',
+  fullName: '',
   supplyItems: []
 })
 
@@ -150,7 +150,7 @@ const suppliers = ref([
     name: '麦德龙',
     contact: '张经理',
     phone: '13800138000',
-    address: '北京市朝阳区建国路88号',
+    fullName: '北京市朝阳区建国路88号',
     supplyItems: ['rice', 'oil', 'seasoning']
   },
   {
@@ -158,7 +158,7 @@ const suppliers = ref([
     name: '禾田裕',
     contact: '李经理',
     phone: '13900139000',
-    address: '上海市浦东新区张江高科技园区',
+    fullName: '上海市浦东新区张江高科技园区',
     supplyItems: ['vegetable', 'fruit']
   },
   // 更多模拟数据...
@@ -186,7 +186,7 @@ const showAddDialog = () => {
     name: '',
     contact: '',
     phone: '',
-    address: '',
+    fullName: '',
     supplyItems: []
   }
   isEditing.value = false

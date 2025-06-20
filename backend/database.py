@@ -14,7 +14,7 @@ def init_db():
         name TEXT NOT NULL,
         contact TEXT NOT NULL,
         phone TEXT NOT NULL,
-        address TEXT,
+        full_name TEXT,
         supply_items TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )

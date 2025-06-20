@@ -38,9 +38,9 @@
             <el-table-column prop="name" label="供应商名称" />
             <el-table-column prop="contact" label="联系人" />
             <el-table-column prop="phone" label="联系电话" />
-            <el-table-column prop="address" label="地址">
+            <el-table-column prop="fullName" label="供应商全称">
               <template #default="{ row }">
-                {{ row.address || '无' }}
+                {{ row.fullName || '无' }}
               </template>
             </el-table-column>
             <el-table-column prop="supplyItems" label="供应品类">
@@ -153,7 +153,7 @@
         <el-table-column prop="name" label="供应商名称" width="200" />
         <el-table-column prop="contact" label="联系人" width="150" />
         <el-table-column prop="phone" label="联系电话" width="150" />
-        <el-table-column prop="address" label="地址" />
+        <el-table-column prop="fullName" label="供应商全称" />
         <el-table-column label="供应品类" width="200" class-name="supply-items-column">
           <template #default="scope">
             <span style="display: inline-block; min-width: 100px;">
@@ -205,8 +205,8 @@
         <el-form-item label="联系电话" prop="phone">
           <el-input v-model="supplierForm.phone" placeholder="请输入联系电话" />
         </el-form-item>
-        <el-form-item label="地址" prop="address">
-          <el-input v-model="supplierForm.address" type="textarea" placeholder="请输入详细地址" />
+        <el-form-item label="供应商全称" prop="fullName">
+          <el-input v-model="supplierForm.fullName" placeholder="请输入供应商全称" />
         </el-form-item>
         <el-form-item label="供应品类" prop="supplyItems">
           <el-select
@@ -479,7 +479,7 @@ const resetForm = () => {
     name: '',
     contact: '',
     phone: '',
-    address: '',
+    fullName: '',
     supplyItems: []
   }
 }
@@ -488,7 +488,7 @@ const supplierForm = ref({
   name: '',
   contact: '',
   phone: '',
-  address: '',
+  fullName: '',
   supplyItems: []
 })
 

@@ -384,7 +384,7 @@ def get_suppliers():
                 'name': record[1],
                 'contact': record[2],
                 'phone': record[3],
-                'address': record[4],
+                'fullName': record[4],
                 'supplyItems': supply_items,  # 转换为数组并使用驼峰命名法
                 'created_at': record[6]
             }
@@ -430,13 +430,13 @@ def create_supplier():
         supply_items_str = ','.join(supply_items) if isinstance(supply_items, list) else supply_items
         
         cursor.execute('''
-        INSERT INTO suppliers (name, contact, phone, address, supply_items)
+        INSERT INTO suppliers (name, contact, phone, full_name, supply_items)
         VALUES (?, ?, ?, ?, ?)
         ''', (
             data['name'],
             data['contact'],
             data['phone'],
-            data.get('address', ''),
+            data.get('fullName', ''),
             supply_items_str
         ))
         
@@ -478,13 +478,13 @@ def update_supplier(supplier_id):
         
         cursor.execute('''
         UPDATE suppliers
-        SET name = ?, contact = ?, phone = ?, address = ?, supply_items = ?
+        SET name = ?, contact = ?, phone = ?, full_name = ?, supply_items = ?
         WHERE id = ?
         ''', (
             data['name'],
             data['contact'],
             data['phone'],
-            data.get('address', ''),
+            data.get('fullName', ''),
             supply_items_str,
             supplier_id
         ))
@@ -525,7 +525,7 @@ def get_supplier(supplier_id):
             'name': record[1],
             'contact': record[2],
             'phone': record[3],
-            'address': record[4],
+            'fullName': record[4],
             'supplyItems': supply_items,  # 转换为数组并使用驼峰命名法
             'created_at': record[6]
         }
@@ -573,7 +573,7 @@ def get_all_monthly_suppliers():
         
         # 获取所有每月供应商记录，包括供应商信息和年月信息
         cursor.execute('''
-        SELECT s.id, s.name, s.contact, s.phone, s.address, s.supply_items, s.created_at, ms.year, ms.month
+        SELECT s.id, s.name, s.contact, s.phone, s.full_name, s.supply_items, s.created_at, ms.year, ms.month
         FROM suppliers s
         JOIN monthly_suppliers ms ON s.id = ms.supplier_id
         ORDER BY ms.year DESC, ms.month DESC, s.name ASC
@@ -592,7 +592,7 @@ def get_all_monthly_suppliers():
                 'name': record[1],
                 'contact': record[2],
                 'phone': record[3],
-                'address': record[4],
+                'fullName': record[4],
                 'supplyItems': supply_items,  # 转换为数组并使用驼峰命名法
                 'created_at': record[6],
                 'year': record[7],
@@ -647,7 +647,7 @@ def get_monthly_suppliers():
                 'name': record[1],
                 'contact': record[2],
                 'phone': record[3],
-                'address': record[4],
+                'fullName': record[4],
                 'supplyItems': supply_items,  # 转换为数组并使用驼峰命名法
                 'created_at': record[6]
             }
