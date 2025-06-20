@@ -143,7 +143,6 @@
         :data="suppliers"
         border
         style="width: 100%"
-        :max-height="500"
         v-loading="loading"
       >
         <el-table-column prop="name" label="供应商名称" width="200" />
