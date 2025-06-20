@@ -124,23 +124,25 @@
       <el-card class="toolbar">
         <div class="toolbar-content">
           <el-button type="primary" :icon="Plus" @click="handleAdd">新增供应商</el-button>
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索供应商名称或联系人"
-            style="width: 300px"
-            clearable
-          >
-            <template #append>
-              <el-button :icon="Search" />
-            </template>
-          </el-input>
-          <el-button 
-            type="success" 
-            style="margin-left: 10px"
-            @click="handleExportExcel"
-          >
-            导出Excel
-          </el-button>
+          <div class="header-actions" style="display: flex; gap: 10px; align-items: center; margin-left: 20px">
+            <el-input
+              v-model="searchQuery"
+              placeholder="输入查询内容"
+              style="width: 300px"
+              clearable
+            >
+              <template #append>
+                <el-button :icon="Search" />
+              </template>
+            </el-input>
+            <el-button 
+              type="success" 
+              :icon="Download"
+              @click="handleExportExcel"
+            >
+              导出Excel
+            </el-button>
+          </div>
         </div>
       </el-card>
 
@@ -237,7 +239,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { Search, Plus } from '@element-plus/icons-vue'
+import { Search, Plus, Download } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import * as XLSX from 'xlsx'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
@@ -724,6 +726,7 @@ const handleExportExcel = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
 
 .pagination {
