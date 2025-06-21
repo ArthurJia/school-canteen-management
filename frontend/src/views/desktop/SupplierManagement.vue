@@ -121,32 +121,31 @@
 
     <!-- 所有供应商视图 -->
     <template v-if="currentView === 'all'">
-      <el-card class="toolbar">
-        <div class="toolbar-content">
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增供应商</el-button>
-          <div class="header-actions" style="display: flex; gap: 10px; align-items: center; margin-left: 20px">
-            <el-input
-              v-model="searchQuery"
-              placeholder="输入查询内容"
-              style="width: 300px"
-              clearable
-            >
-              <template #append>
-                <el-button :icon="Search" />
-              </template>
-            </el-input>
-            <el-button 
-              type="success" 
-              :icon="Download"
-              @click="handleExportExcel"
-            >
-              导出Excel
-            </el-button>
-          </div>
-        </div>
-      </el-card>
-
       <el-card>
+        <template #header>
+          <div class="toolbar-content">
+            <el-button type="primary" :icon="Plus" @click="handleAdd">新增供应商</el-button>
+            <div class="header-actions" style="display: flex; gap: 10px; align-items: center; margin-left: 20px">
+              <el-input
+                v-model="searchQuery"
+                placeholder="输入查询内容"
+                style="width: 300px"
+                clearable
+              >
+                <template #append>
+                  <el-button :icon="Search" />
+                </template>
+              </el-input>
+              <el-button 
+                type="success" 
+                :icon="Download"
+                @click="handleExportExcel"
+              >
+                导出Excel
+              </el-button>
+            </div>
+          </div>
+        </template>
       <el-table
         v-if="suppliers.length > 0"
         :data="suppliers"
