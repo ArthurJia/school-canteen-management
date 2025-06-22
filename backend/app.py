@@ -746,5 +746,258 @@ def delete_monthly_supplier(supplier_id):
         print(f"Error deleting monthly supplier: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# 月度报表API
+@app.route('/api/monthly-report/data', methods=['GET'])
+def get_monthly_report_data():
+    try:
+        # 获取查询参数
+        year = request.args.get('year')
+        month = request.args.get('month')
+        
+        if not year or not month:
+            # 如果未提供年月，使用当前年月
+            now = datetime.now()
+            year = year or now.year
+            month = month or now.month
+        else:
+            year = int(year)
+            month = int(month)
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 获取指定月份的入库记录
+        cursor.execute('''
+        SELECT 
+            name,
+            category,
+            SUM(quantity) as total_quantity,
+            unit,
+            AVG(price) as avg_price,
+            SUM(subtotal) as total_subtotal,
+            COUNT(*) as count
+        FROM stock_ins 
+        WHERE strftime('%Y', in_time) = ? AND strftime('%m', in_time) = ?
+        GROUP BY name, category, unit
+        ORDER BY category, name
+        ''', (str(year), f"{month:02d}"))
+        
+        records = cursor.fetchall()
+        
+        # 获取月度总计
+        cursor.execute('''
+        SELECT 
+            SUM(subtotal) as monthly_total
+        FROM stock_ins 
+        WHERE strftime('%Y', in_time) = ? AND strftime('%m', in_time) = ?
+        ''', (str(year), f"{month:02d}"))
+        
+        monthly_total_record = cursor.fetchone()
+        monthly_total = float(monthly_total_record[0]) if monthly_total_record[0] else 0
+        
+        # 获取按类别分组的总计
+        cursor.execute('''
+        SELECT 
+            category,
+            SUM(subtotal) as category_total
+        FROM stock_ins 
+        WHERE strftime('%Y', in_time) = ? AND strftime('%m', in_time) = ?
+        GROUP BY category
+        ORDER BY category_total DESC
+        ''', (str(year), f"{month:02d}"))
+        
+        category_totals_records = cursor.fetchall()
+        
+        # 获取每日总计
+        cursor.execute('''
+        SELECT 
+            strftime('%d', in_time) as day,
+            SUM(subtotal) as daily_total
+        FROM stock_ins 
+        WHERE strftime('%Y', in_time) = ? AND strftime('%m', in_time) = ?
+        GROUP BY strftime('%Y-%m-%d', in_time)
+        ORDER BY day
+        ''', (str(year), f"{month:02d}"))
+        
+        daily_totals_records = cursor.fetchall()
+        
+        conn.close()
+        
+        # 将记录转换为字典列表
+        items = []
+        for record in records:
+            item = {
+                'name': record[0],
+                'category': record[1] or '未分类',
+                'totalQuantity': float(record[2]),
+                'unit': record[3],
+                'avgPrice': float(record[4]),
+                'totalSubtotal': float(record[5]),
+                'count': record[6]
+            }
+            items.append(item)
+        
+        # 将类别总计转换为字典列表
+        category_totals = []
+        for record in category_totals_records:
+            category_total = {
+                'category': record[0] or '未分类',
+                'total': float(record[1])
+            }
+            category_totals.append(category_total)
+        
+        # 将每日总计转换为字典列表
+        daily_totals = []
+        for record in daily_totals_records:
+            daily_total = {
+                'day': record[0],
+                'total': float(record[1])
+            }
+            daily_totals.append(daily_total)
+        
+        # 创建完整的月份天数数组
+        days_in_month = [str(i).zfill(2) for i in range(1, 32)]
+        if month in [4, 6, 9, 11]:
+            days_in_month = days_in_month[:30]
+        elif month == 2:
+            if (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0):
+                days_in_month = days_in_month[:29]  # 闰年
+            else:
+                days_in_month = days_in_month[:28]  # 平年
+        
+        # 填充没有数据的日期
+        daily_totals_dict = {record['day']: record['total'] for record in daily_totals}
+        complete_daily_totals = []
+        for day in days_in_month:
+            complete_daily_totals.append({
+                'day': day,
+                'total': daily_totals_dict.get(day, 0)
+            })
+        
+        return jsonify({
+            'items': items,
+            'monthlyTotal': monthly_total,
+            'categoryTotals': category_totals,
+            'dailyTotals': complete_daily_totals,
+            'year': year,
+            'month': month
+        })
+        
+    except Exception as e:
+        print(f"Error fetching monthly report data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monthly-report/template', methods=['POST'])
+def save_report_template():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # 必填字段验证
+        required_fields = ['name', 'templateData', 'year', 'month']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 检查是否已存在该年月的模板
+        cursor.execute('''
+        SELECT id FROM report_templates
+        WHERE year = ? AND month = ?
+        ''', (data['year'], data['month']))
+        
+        existing_template = cursor.fetchone()
+        
+        if existing_template:
+            # 更新现有模板
+            cursor.execute('''
+            UPDATE report_templates
+            SET name = ?, template_data = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE year = ? AND month = ?
+            ''', (
+                data['name'],
+                data['templateData'],
+                data['year'],
+                data['month']
+            ))
+            template_id = existing_template[0]
+        else:
+            # 创建新模板
+            cursor.execute('''
+            INSERT INTO report_templates (name, template_data, year, month)
+            VALUES (?, ?, ?, ?)
+            ''', (
+                data['name'],
+                data['templateData'],
+                data['year'],
+                data['month']
+            ))
+            template_id = cursor.lastrowid
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'id': template_id,
+            'message': '报表模板保存成功'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error saving report template: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monthly-report/template', methods=['GET'])
+def get_report_template():
+    try:
+        # 获取查询参数
+        year = request.args.get('year')
+        month = request.args.get('month')
+        
+        if not year or not month:
+            # 如果未提供年月，使用当前年月
+            now = datetime.now()
+            year = year or now.year
+            month = month or now.month
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 获取指定年月的模板
+        cursor.execute('''
+        SELECT id, name, template_data, year, month, created_at, updated_at
+        FROM report_templates
+        WHERE year = ? AND month = ?
+        ''', (year, month))
+        
+        record = cursor.fetchone()
+        conn.close()
+        
+        if not record:
+            return jsonify({
+                'exists': False,
+                'message': '未找到模板'
+            }), 404
+        
+        template = {
+            'id': record[0],
+            'name': record[1],
+            'templateData': record[2],
+            'year': record[3],
+            'month': record[4],
+            'createdAt': record[5],
+            'updatedAt': record[6],
+            'exists': True
+        }
+        
+        return jsonify(template), 200
+        
+    except Exception as e:
+        print(f"Error fetching report template: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

@@ -21,6 +21,10 @@
           <el-icon><i-ep-User /></el-icon>
           <span>供应商管理</span>
         </el-menu-item>
+        <el-menu-item index="/desktop/report">
+          <el-icon><i-ep-Document /></el-icon>
+          <span>月度报表</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     

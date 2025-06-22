@@ -67,6 +67,20 @@ def init_db():
     )
     ''')
     
+    # 创建月度报表模板表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS report_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        template_data TEXT NOT NULL,
+        year INTEGER NOT NULL,
+        month INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(year, month)
+    )
+    ''')
+    
     conn.commit()
     conn.close()
 

@@ -31,6 +31,11 @@ const routes = [
         path: 'supplier',
         component: () => import('@/views/desktop/SupplierManagement.vue'),
         meta: { title: '供应商管理' }
+      },
+      {
+        path: 'report',
+        component: () => import('@/views/desktop/MonthlyReport.vue'),
+        meta: { title: '月度报表' }
       }
     ]
   },
