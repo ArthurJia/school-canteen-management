@@ -203,9 +203,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { createStockIn, getStockIns, getTodayCategoryTotals, getMonthCategoryTotals } from '@/api'
+import { createStockIn, getStockIns, getTodayCategoryTotals, getMonthCategoryTotals, getAllMonthlySuppliers } from '@/api'
 
 // 设置今日入库记录表格的最大高度，约为8行记录的高度（每行40px）
 const todayRecordsMaxHeight = 320 // 8行 * 40px = 320px
@@ -228,6 +228,7 @@ const formatDateTime = (dateTimeStr) => {
 const todayRecords = ref([])
 const todayCategoryTotals = ref([])
 const monthCategoryTotals = ref([])
+const monthlySuppliers = ref([]) // 存储历史每月供应商记录
 
 // 计算今日分类价格总计和
 const todayTotalSum = computed(() => {
@@ -302,22 +303,6 @@ const fetchMonthCategoryTotals = async () => {
   }
 }
 
-// 组件挂载时获取今日记录和分类总计
-onMounted(() => {
-  fetchTodayRecords()
-  fetchTodayCategoryTotals()
-  fetchMonthCategoryTotals()
-})
-
-const handleIngredientInput = () => {
-  // 这里可以添加自动完成或验证逻辑
-  if (!form.value.name) {
-    form.value.id = null
-    form.value.category = ''
-    form.value.supplier = ''
-  }
-}
-
 // 获取今天的日期，格式为YYYY-MM-DD
 const getTodayDate = () => {
   const today = new Date()
@@ -339,6 +324,67 @@ const form = ref({
   selectedIngredient: null, // 新增选择器绑定
   stockInDate: getTodayDate() // 默认为今天的日期
 })
+
+// 获取历史每月供应商记录
+const fetchMonthlySuppliers = async () => {
+  try {
+    const response = await getAllMonthlySuppliers()
+    monthlySuppliers.value = response.data
+    console.log('历史每月供应商记录:', monthlySuppliers.value)
+  } catch (error) {
+    console.error('获取历史每月供应商记录失败:', error)
+    ElMessage.error('获取历史每月供应商记录失败')
+  }
+}
+
+// 根据入库日期和分类自动选择供应商
+const updateSupplierByDateAndCategory = () => {
+  if (!form.value.stockInDate || !form.value.category) return
+  
+  // 从入库日期中提取年月
+  const date = new Date(form.value.stockInDate)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1 // JavaScript月份从0开始
+  
+  // 在历史每月供应商记录中查找匹配的供应商
+  const matchedSupplier = monthlySuppliers.value.find(supplier => {
+    return supplier.year === year && 
+           supplier.month === month && 
+           supplier.supplyItems && 
+           supplier.supplyItems.includes(form.value.category)
+  })
+  
+  if (matchedSupplier) {
+    // 找到匹配的供应商，更新表单
+    const supplierOption = suppliers.value.find(s => s.label === matchedSupplier.name)
+    if (supplierOption) {
+      form.value.supplier = supplierOption.value
+      console.log(`根据日期(${year}-${month})和分类(${form.value.category})自动选择供应商: ${matchedSupplier.name}`)
+    }
+  }
+}
+
+// 组件挂载时获取今日记录和分类总计
+onMounted(() => {
+  fetchTodayRecords()
+  fetchTodayCategoryTotals()
+  fetchMonthCategoryTotals()
+  fetchMonthlySuppliers()
+})
+
+const handleIngredientInput = () => {
+  // 这里可以添加自动完成或验证逻辑
+  if (!form.value.name) {
+    form.value.id = null
+    form.value.category = ''
+    form.value.supplier = ''
+  }
+}
+
+// 监听入库日期和分类变化，自动选择供应商
+watch(() => [form.value.stockInDate, form.value.category], () => {
+  updateSupplierByDateAndCategory()
+}, { deep: true })
 
 const subtotal = computed(() => {
   return (form.value.quantity * form.value.price).toFixed(2)
