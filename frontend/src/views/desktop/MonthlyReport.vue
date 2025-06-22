@@ -81,22 +81,6 @@
         <div class="daily-chart-container">
           <div ref="dailyChart" class="daily-chart"></div>
         </div>
-        <el-table
-          :data="reportData.dailyTotals"
-          style="width: 100%"
-          v-loading="loading"
-        >
-          <el-table-column label="日期">
-            <template #default="scope">
-              {{ reportData.year }}-{{ reportData.month.toString().padStart(2, '0') }}-{{ scope.row.day }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="total" label="金额" sortable>
-            <template #default="scope">
-              ¥{{ scope.row.total.toFixed(2) }}
-            </template>
-          </el-table-column>
-        </el-table>
       </el-tab-pane>
       <el-tab-pane label="明细数据" name="3">
         <el-table
