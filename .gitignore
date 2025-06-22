@@ -1,1 +1,4 @@
 backend/canteen.db
+node_modules/
+__pycache__/
+*.pyc
