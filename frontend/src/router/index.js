@@ -36,6 +36,11 @@ const routes = [
         path: 'report',
         component: () => import('@/views/desktop/MonthlyReport.vue'),
         meta: { title: '月度报表' }
+      },
+      {
+        path: 'report-designer',
+        component: () => import('@/views/desktop/ReportDesigner.vue'),
+        meta: { title: '报表设计' }
       }
     ]
   },

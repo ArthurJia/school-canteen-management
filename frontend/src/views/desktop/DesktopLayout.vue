@@ -25,6 +25,10 @@
           <el-icon><i-ep-Document /></el-icon>
           <span>月度报表</span>
         </el-menu-item>
+        <el-menu-item index="/desktop/report-designer">
+          <el-icon><i-ep-Edit /></el-icon>
+          <span>报表设计器</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     
