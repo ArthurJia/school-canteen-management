@@ -11,8 +11,7 @@
           placeholder="选择月份"
           @change="handleDateChange"
         />
-        <el-button type="primary" @click="loadReportData">
-          <el-icon><i-ep-Search /></el-icon>
+        <el-button type="primary" class="query-btn" @click="loadReportData">
           查询
         </el-button>
       </div>
@@ -416,5 +415,10 @@ export default defineComponent({
 .daily-chart {
   width: 100%;
   height: 100%;
+}
+
+/* 查询按钮居中 */
+.query-btn {
+  text-align: center;
 }
 </style>
