@@ -64,7 +64,11 @@
           style="width: 100%"
           v-loading="loading"
         >
-          <el-table-column prop="category" label="类别" />
+          <el-table-column prop="category" label="类别">
+            <template #default="scope">
+              {{ getCategoryLabel(scope.row.category) }}
+            </template>
+          </el-table-column>
           <el-table-column prop="total" label="金额" sortable>
             <template #default="scope">
               ¥{{ scope.row.total.toFixed(2) }}
@@ -89,7 +93,11 @@
           v-loading="loading"
         >
           <el-table-column prop="name" label="名称" />
-          <el-table-column prop="category" label="类别" />
+          <el-table-column prop="category" label="类别">
+            <template #default="scope">
+              {{ getCategoryLabel(scope.row.category) }}
+            </template>
+          </el-table-column>
           <el-table-column prop="totalQuantity" label="数量" />
           <el-table-column prop="unit" label="单位" />
           <el-table-column prop="avgPrice" label="平均单价">
@@ -139,6 +147,30 @@ export default defineComponent({
     const pageSize = ref(10);
     let categoryChartInstance = null;
     let dailyChartInstance = null;
+
+    // 类别映射表 - 与库存查询页面保持一致
+    const categoryMapping = [
+      { value: 'vegetable', label: '蔬菜类' },
+      { value: 'meat', label: '鲜肉类' },
+      { value: 'frozen', label: '冷冻类' },
+      { value: 'tofu', label: '豆制品类' },
+      { value: 'egg', label: '禽蛋类' },
+      { value: 'fruit', label: '水果类' },
+      { value: 'dessert', label: '点心类' },
+      { value: 'flour', label: '面粉制品' },
+      { value: 'rice', label: '大米' },
+      { value: 'oil', label: '食用油类' },
+      { value: 'seasoning', label: '调味品类' }
+    ];
+
+    // 获取类别的中文名称
+    const getCategoryLabel = (categoryValue) => {
+      if (!categoryValue || categoryValue === '未分类') {
+        return '未分类';
+      }
+      const category = categoryMapping.find(item => item.value === categoryValue);
+      return category ? category.label : categoryValue;
+    };
 
     const reportData = reactive({
       items: [],
@@ -208,7 +240,7 @@ export default defineComponent({
       if (categoryChart.value) {
         categoryChartInstance = echarts.init(categoryChart.value);
         const categoryData = reportData.categoryTotals.map(item => ({
-          name: item.category,
+          name: getCategoryLabel(item.category), // 使用中文名称
           value: item.total
         }));
         
@@ -330,7 +362,8 @@ export default defineComponent({
       calculatePercentage,
       calculateDailyAverage,
       handleSizeChange,
-      handleCurrentChange
+      handleCurrentChange,
+      getCategoryLabel
     };
   }
 });
