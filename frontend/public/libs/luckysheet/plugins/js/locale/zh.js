@@ -1,0 +1,121 @@
+window.locale = {
+    toolBar: {
+        undo: '撤销',
+        redo: '重做',
+        paintFormat: '格式刷',
+        currencyFormat: '货币格式',
+        percentageFormat: '百分比格式',
+        numberDecrease: '减少小数位数',
+        numberIncrease: '增加小数位数',
+        moreFormats: '更多格式',
+        font: '字体',
+        fontSize: '字号',
+        bold: '粗体',
+        italic: '斜体',
+        strikethrough: '删除线',
+        underline: '下划线',
+        textColor: '文字颜色',
+        fillColor: '单元格颜色',
+        border: '边框',
+        mergeCell: '合并单元格',
+        horizontalAlign: '水平对齐',
+        verticalAlign: '垂直对齐',
+        alignment: '对齐方式',
+        textWrap: '文本换行',
+        textRotate: '文本旋转',
+        insertImage: '插入图片',
+        chart: '图表',
+        link: '超链接',
+        formula: '公式',
+        sheet: '工作表',
+        autoSum: '自动求和',
+    },
+    button: {
+        confirm: '确定',
+        cancel: '取消',
+        close: '关闭'
+    },
+    paint: {
+        start: '开始擦除',
+        end: '结束擦除',
+    },
+    format: {
+        normal: '常规',
+        text: '文本',
+        number: '数值',
+        percent: '百分比',
+        currency: '货币',
+        date: '日期',
+        time: '时间',
+        datetime: '日期时间',
+    },
+    formula: {
+        sum: '求和',
+        average: '平均值',
+        count: '计数',
+        max: '最大值',
+        min: '最小值',
+        ifGeneral: '如果',
+        and: '与',
+        or: '或',
+    },
+    chart: {
+        column: '柱形图',
+        bar: '条形图',
+        line: '折线图',
+        pie: '饼图',
+        scatter: '散点图',
+        other: '其他图表'
+    },
+    icon: {
+        border: '边框',
+        borderLeft: '左边框',
+        borderRight: '右边框',
+        borderTop: '上边框',
+        borderBottom: '下边框',
+        borderAll: '所有边框',
+        borderNone: '无边框'
+    },
+    color: {
+        theme: '主题颜色',
+        standard: '标准颜色',
+        custom: '自定义'
+    },
+    merge: {
+        mergeAll: '全部合并',
+        mergeV: '垂直合并',
+        mergeH: '水平合并',
+        mergeCancel: '取消合并',
+        mergeCells: '合并单元格'
+    },
+    align: {
+        left: '左对齐',
+        center: '居中对齐',
+        right: '右对齐',
+        top: '顶部对齐',
+        middle: '垂直居中',
+        bottom: '底部对齐'
+    },
+    menu: {
+        copy: '复制',
+        paste: '粘贴',
+        pasteValue: '粘贴数值',
+        pasteFormat: '粘贴格式',
+        hide: '隐藏',
+        unhide: '取消隐藏',
+        deleteSheet: '删除',
+        insertSheet: '插入',
+        duplicateSheet: '复制',
+        renameSheet: '重命名',
+        moveSheet: '移动'
+    },
+    error: {
+        elementNotFound: '元素未找到',
+        invalidParameter: '无效的参数',
+        invalidOperator: '无效的运算符',
+        invalidFormula: '无效的公式',
+        divideByZero: '除数不能为零',
+        invalidReference: '无效的引用',
+        invalidValue: '无效的值'
+    }
+};
