@@ -1,6 +1,6 @@
 <template>
   <div class="inbound-management">
-    <el-card class="form-card">
+    <el-card class="form-card card-hover card-glow">
       <template #header>
         <div class="card-header">
           <span>食材入库</span>
@@ -110,7 +110,7 @@
       </el-form>
     </el-card>
 
-    <el-card class="today-records">
+    <el-card class="today-records card-hover card-glow">
       <template #header>
         <div class="card-header">
           <span>今日入库记录</span>
@@ -144,8 +144,8 @@
       </el-table>
     </el-card>
 
-    <div class="totals-row">
-      <el-card class="totals-card">
+    <div class="totals-row cards-flex">
+      <el-card class="totals-card card-hover card-glow">
         <template #header>
           <div class="card-header">
             <span>今日分类价格总计</span>
@@ -172,7 +172,7 @@
         </div>
       </el-card>
 
-      <el-card class="totals-card">
+      <el-card class="totals-card card-hover card-glow">
         <template #header>
           <div class="card-header">
             <span>本月分类价格总计</span>

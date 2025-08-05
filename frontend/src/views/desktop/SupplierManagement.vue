@@ -23,7 +23,7 @@
         />
       </div>
       <!-- 当前月份供应商卡片 -->
-      <el-card class="monthly-suppliers">
+      <el-card class="monthly-suppliers card-hover">
         <template #header>
           <div class="monthly-header">
             <div class="monthly-info">
@@ -58,7 +58,7 @@
       </el-card>
 
       <!-- 历史每月供应商卡片 -->
-      <el-card class="monthly-suppliers history-suppliers">
+      <el-card class="monthly-suppliers history-suppliers card-hover">
         <template #header>
           <div class="monthly-header">
             <div class="monthly-info">
@@ -121,7 +121,7 @@
 
     <!-- 所有供应商视图 -->
     <template v-if="currentView === 'all'">
-      <el-card>
+      <el-card class="card-hover">
         <template #header>
           <div class="toolbar-content">
             <el-button type="primary" :icon="Plus" @click="handleAdd">新增供应商</el-button>

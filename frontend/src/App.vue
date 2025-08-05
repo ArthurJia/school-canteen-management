@@ -3,6 +3,8 @@
 </template>
 
 <style>
+@import './assets/styles/card-styles.css';
+
 #app {
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', Arial, sans-serif;

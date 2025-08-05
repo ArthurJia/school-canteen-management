@@ -1,6 +1,6 @@
 <template>
   <div class="stock-query">
-    <el-card class="query-card">
+    <el-card class="query-card card-hover card-glow">
       <template #header>
         <div class="card-header">
           <span>库存查询</span>

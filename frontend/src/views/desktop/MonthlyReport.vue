@@ -18,7 +18,7 @@
     </div>
 
     <div class="report-summary">
-      <el-card class="box-card" shadow="hover">
+      <el-card class="box-card card-hover card-glow" shadow="hover">
         <template #header>
           <div class="card-header">
             <span>月度统计</span>
@@ -55,7 +55,7 @@
 
     <el-tabs v-model="activeTabKey" @tab-change="handleTabChange">
       <el-tab-pane label="类别统计" name="1">
-        <div class="category-chart-container">
+        <div class="category-chart-container card-hover">
           <div ref="categoryChart" class="category-chart"></div>
         </div>
         <el-table
@@ -81,7 +81,7 @@
         </el-table>
       </el-tab-pane>
       <el-tab-pane label="每日统计" name="2">
-        <div class="daily-chart-container">
+        <div class="daily-chart-container card-hover">
           <div ref="dailyChart" class="daily-chart"></div>
         </div>
       </el-tab-pane>

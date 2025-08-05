@@ -42,12 +42,12 @@
 
     <div class="designer-main">
       <!-- 左侧：Luckysheet Excel区域 -->
-      <div class="excel-container">
+      <div class="excel-container card-hover">
         <div id="luckysheet" style="margin:0px;padding:0px;position:absolute;width:100%;height:100%;left: 0px;top: 0px;"></div>
       </div>
 
       <!-- 右侧：数据模块面板 -->
-      <div class="modules-panel">
+      <div class="modules-panel card-hover">
         <div class="panel-header">
           <h3>数据模块库</h3>
           <p class="panel-desc">拖拽或点击模块到左侧Excel中</p>
@@ -76,7 +76,7 @@
               <div 
                 v-for="module in filteredDailyModules" 
                 :key="module.id"
-                class="module-card daily-module"
+                class="module-card daily-module card-hover"
                 @click="showDateSelector(module)"
               >
                 <div class="module-icon">📊</div>
@@ -106,7 +106,7 @@
               <div 
                 v-for="module in filteredSummaryModules" 
                 :key="module.id"
-                class="module-card summary-module"
+                class="module-card summary-module card-hover"
                 :draggable="true"
                 @dragstart="handleDragStart($event, module)"
                 @click="insertModule(module)"
@@ -131,7 +131,7 @@
               <div 
                 v-for="module in filteredFormatModules" 
                 :key="module.id"
-                class="module-card format-module"
+                class="module-card format-module card-hover"
                 :draggable="true"
                 @dragstart="handleDragStart($event, module)"
                 @click="insertModule(module)"
