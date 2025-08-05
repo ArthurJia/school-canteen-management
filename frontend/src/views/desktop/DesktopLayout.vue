@@ -129,14 +129,15 @@ const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c672
 }
 
 .menu-container {
-  padding: 16px 8px;
   height: calc(100vh - 64px);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .side-menu {
   border: none;
   background: transparent;
+  height: 100%;
+  padding: 16px 8px;
 }
 
 .menu-item {
@@ -233,23 +234,7 @@ const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c672
   min-height: calc(100vh - 64px);
 }
 
-/* 滚动条美化 */
-.menu-container::-webkit-scrollbar {
-  width: 4px;
-}
 
-.menu-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.menu-container::-webkit-scrollbar-thumb {
-  background: rgba(64, 158, 255, 0.3);
-  border-radius: 2px;
-}
-
-.menu-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(64, 158, 255, 0.5);
-}
 
 /* 响应式设计 */
 @media screen and (max-width: 1200px) {
