@@ -10,31 +10,29 @@
     <div class="designer-toolbar">
       <div class="toolbar-left">
         <el-button type="primary" @click="saveTemplate" :loading="saving">
-          <el-icon><DocumentAdd /></el-icon>
+          <el-icon>
+            <DocumentAdd />
+          </el-icon>
           保存模板
         </el-button>
         <el-button @click="loadTemplate">
-          <el-icon><FolderOpened /></el-icon>
+          <el-icon>
+            <FolderOpened />
+          </el-icon>
           加载模板
         </el-button>
-        <el-dropdown @command="handleExportCommand">
-          <el-button type="success">
-            <el-icon><Download /></el-icon>
-            导出Excel
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="luckysheet">Luckysheet导出</el-dropdown-item>
-              <el-dropdown-item command="manual">手动导出</el-dropdown-item>
-              <el-dropdown-item command="simple">简单导出</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <el-button type="success" @click="manualExport">
+          <el-icon>
+            <Download />
+          </el-icon>
+          导出Excel
+        </el-button>
       </div>
       <div class="toolbar-right">
         <el-button @click="clearAll" type="danger" plain>
-          <el-icon><Delete /></el-icon>
+          <el-icon>
+            <Delete />
+          </el-icon>
           清空
         </el-button>
       </div>
@@ -43,7 +41,8 @@
     <div class="designer-main">
       <!-- 左侧：Luckysheet Excel区域 -->
       <div class="excel-container card-hover">
-        <div id="luckysheet" style="margin:0px;padding:0px;position:absolute;width:100%;height:100%;left: 0px;top: 0px;"></div>
+        <div id="luckysheet"
+          style="margin:0px;padding:0px;position:absolute;width:100%;height:100%;left: 0px;top: 0px;"></div>
       </div>
 
       <!-- 右侧：数据模块面板 -->
@@ -51,14 +50,11 @@
         <div class="panel-header">
           <h3>数据模块库</h3>
           <p class="panel-desc">拖拽或点击模块到左侧Excel中</p>
-          <el-input 
-            v-model="searchText" 
-            placeholder="搜索模块..." 
-            size="small"
-            clearable
-          >
+          <el-input v-model="searchText" placeholder="搜索模块..." size="small" clearable>
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon>
+                <Search />
+              </el-icon>
             </template>
           </el-input>
         </div>
@@ -69,16 +65,14 @@
           <!-- 每日数据模块 (31行) -->
           <div class="module-category">
             <div class="category-header">
-              <el-icon><Calendar /></el-icon>
+              <el-icon>
+                <Calendar />
+              </el-icon>
               <span>每日数据 (31行)</span>
             </div>
             <div class="module-list">
-              <div 
-                v-for="module in filteredDailyModules" 
-                :key="module.id"
-                class="module-card daily-module card-hover"
-                @click="showDateSelector(module)"
-              >
+              <div v-for="module in filteredDailyModules" :key="module.id" class="module-card daily-module card-hover"
+                @click="showDateSelector(module)">
                 <div class="module-icon">📊</div>
                 <div class="module-info">
                   <div class="module-title">{{ module.title }}</div>
@@ -99,18 +93,15 @@
           <!-- 汇总数据模块 -->
           <div class="module-category">
             <div class="category-header">
-              <el-icon><DataAnalysis /></el-icon>
+              <el-icon>
+                <DataAnalysis />
+              </el-icon>
               <span>汇总统计</span>
             </div>
             <div class="module-list">
-              <div 
-                v-for="module in filteredSummaryModules" 
-                :key="module.id"
-                class="module-card summary-module card-hover"
-                :draggable="true"
-                @dragstart="handleDragStart($event, module)"
-                @click="insertModule(module)"
-              >
+              <div v-for="module in filteredSummaryModules" :key="module.id"
+                class="module-card summary-module card-hover" :draggable="true"
+                @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
                 <div class="module-icon">🧮</div>
                 <div class="module-info">
                   <div class="module-title">{{ module.title }}</div>
@@ -124,18 +115,14 @@
           <!-- 格式化模块 -->
           <div class="module-category">
             <div class="category-header">
-              <el-icon><Brush /></el-icon>
+              <el-icon>
+                <Brush />
+              </el-icon>
               <span>格式化</span>
             </div>
             <div class="module-list">
-              <div 
-                v-for="module in filteredFormatModules" 
-                :key="module.id"
-                class="module-card format-module card-hover"
-                :draggable="true"
-                @dragstart="handleDragStart($event, module)"
-                @click="insertModule(module)"
-              >
+              <div v-for="module in filteredFormatModules" :key="module.id" class="module-card format-module card-hover"
+                :draggable="true" @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
                 <div class="module-icon">🎨</div>
                 <div class="module-info">
                   <div class="module-title">{{ module.title }}</div>
@@ -162,42 +149,28 @@
             </div>
           </div>
         </div>
-        
+
         <el-divider />
-        
+
         <el-form :model="dateForm" label-width="80px">
           <el-form-item label="年份">
             <el-select v-model="dateForm.year" placeholder="选择年份" style="width: 100%">
-              <el-option 
-                v-for="year in getYearOptions()" 
-                :key="year" 
-                :label="year + '年'" 
-                :value="year" 
-              />
+              <el-option v-for="year in getYearOptions()" :key="year" :label="year + '年'" :value="year" />
             </el-select>
           </el-form-item>
           <el-form-item label="月份">
             <el-select v-model="dateForm.month" placeholder="选择月份" style="width: 100%">
-              <el-option 
-                v-for="month in 12" 
-                :key="month" 
-                :label="month + '月'" 
-                :value="month" 
-              />
+              <el-option v-for="month in 12" :key="month" :label="month + '月'" :value="month" />
             </el-select>
           </el-form-item>
         </el-form>
-        
+
         <div class="preview-info">
-          <el-alert 
-            :title="`将插入 ${dateForm.year}年${dateForm.month}月 的${selectedModule?.category}数据（31行）`"
-            type="info" 
-            :closable="false"
-            show-icon
-          />
+          <el-alert :title="`将插入 ${dateForm.year}年${dateForm.month}月 的${selectedModule?.category}数据（31行）`" type="info"
+            :closable="false" show-icon />
         </div>
       </div>
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dateSelectVisible = false">取消</el-button>
@@ -215,12 +188,7 @@
           <el-input v-model="templateForm.name" placeholder="请输入模板名称" />
         </el-form-item>
         <el-form-item label="描述">
-          <el-input 
-            v-model="templateForm.description" 
-            type="textarea" 
-            placeholder="请输入模板描述"
-            :rows="3"
-          />
+          <el-input v-model="templateForm.description" type="textarea" placeholder="请输入模板描述" :rows="3" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -238,17 +206,16 @@
 <script>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  DocumentAdd, 
-  FolderOpened, 
-  Download, 
-  Delete, 
+import {
+  DocumentAdd,
+  FolderOpened,
+  Download,
+  Delete,
   Search,
   Document,
   Calendar,
   DataAnalysis,
-  Brush,
-  ArrowDown
+  Brush
 } from '@element-plus/icons-vue'
 
 export default {
@@ -262,8 +229,7 @@ export default {
     Document,
     Calendar,
     DataAnalysis,
-    Brush,
-    ArrowDown
+    Brush
   },
   setup() {
     const saving = ref(false)
@@ -272,12 +238,12 @@ export default {
     const dateSelectVisible = ref(false)
     const luckysheetInstance = ref(null)
     const selectedModule = ref(null)
-    
+
     const templateForm = reactive({
       name: '',
       description: ''
     })
-    
+
     const dateForm = reactive({
       year: new Date().getFullYear(),
       month: new Date().getMonth() + 1
@@ -532,25 +498,25 @@ export default {
 
     // 过滤后的模块 - 基础信息模块已移除
 
-    const filteredDailyModules = computed(() => 
-      dailyModules.filter(m => 
-        m.title.includes(searchText.value) || 
+    const filteredDailyModules = computed(() =>
+      dailyModules.filter(m =>
+        m.title.includes(searchText.value) ||
         m.description.includes(searchText.value) ||
         m.category.includes(searchText.value)
       )
     )
 
-    const filteredSummaryModules = computed(() => 
-      summaryModules.filter(m => 
-        m.title.includes(searchText.value) || 
+    const filteredSummaryModules = computed(() =>
+      summaryModules.filter(m =>
+        m.title.includes(searchText.value) ||
         m.description.includes(searchText.value) ||
         m.category.includes(searchText.value)
       )
     )
 
-    const filteredFormatModules = computed(() => 
-      formatModules.filter(m => 
-        m.title.includes(searchText.value) || 
+    const filteredFormatModules = computed(() =>
+      formatModules.filter(m =>
+        m.title.includes(searchText.value) ||
         m.description.includes(searchText.value)
       )
     )
@@ -608,17 +574,17 @@ export default {
               dataVerification: {}
             }],
             hook: {
-              cellDragStop: function(cell, postion, sheetFile, ctx) {
+              cellDragStop: function (cell, postion, sheetFile, ctx) {
                 console.log('拖拽结束', cell, postion)
               }
             }
           }
-          
+
           window.luckysheet.create(options)
           luckysheetInstance.value = window.luckysheet
-          
+
           console.log('Luckysheet初始化完成')
-          
+
           setupDropTarget()
         } else {
           console.error('Luckysheet未加载')
@@ -634,7 +600,7 @@ export default {
         container.addEventListener('dragover', (e) => {
           e.preventDefault()
         })
-        
+
         container.addEventListener('drop', (e) => {
           e.preventDefault()
           const moduleData = JSON.parse(e.dataTransfer.getData('application/json'))
@@ -652,16 +618,16 @@ export default {
     // 处理拖拽到表格
     const handleDropToSheet = (module, event) => {
       if (!luckysheetInstance.value) return
-      
+
       const selection = luckysheetInstance.value.getRange()
       if (!selection || selection.length === 0) {
         ElMessage.warning('请先选择要插入数据的单元格')
         return
       }
-      
+
       const startRow = selection[0].row[0]
       const startCol = selection[0].column[0]
-      
+
       insertModuleData(module, startRow, startCol)
     }
 
@@ -689,12 +655,12 @@ export default {
         ElMessage.error('Excel组件未初始化')
         return
       }
-      
+
       try {
         // 使用Luckysheet的全局API获取选择区域
         let startRow = 0
         let startCol = 0
-        
+
         if (window.luckysheet && window.luckysheet.getRange) {
           const selection = window.luckysheet.getRange()
           if (selection && selection.length > 0) {
@@ -705,16 +671,16 @@ export default {
           // 如果无法获取选择区域，使用默认位置
           ElMessage.info('使用默认位置插入数据')
         }
-        
+
         console.log('插入位置:', `行${startRow}, 列${startCol}`)
-        
+
         // 创建带有年月份信息的模块
         const moduleWithDate = {
           ...selectedModule.value,
           selectedYear: dateForm.year,
           selectedMonth: dateForm.month
         }
-        
+
         insertModuleData(moduleWithDate, startRow, startCol)
         dateSelectVisible.value = false
       } catch (error) {
@@ -730,16 +696,16 @@ export default {
       } else {
         // 非每日数据模块直接插入
         if (!luckysheetInstance.value) return
-        
+
         const selection = luckysheetInstance.value.getRange()
         if (!selection || selection.length === 0) {
           ElMessage.warning('请先选择要插入数据的单元格')
           return
         }
-        
+
         const startRow = selection[0].row[0]
         const startCol = selection[0].column[0]
-        
+
         insertModuleData(module, startRow, startCol)
       }
     }
@@ -749,39 +715,39 @@ export default {
       if (module.type === 'daily') {
         // 31列数据 - 直接插入，不检查空间限制
         // Luckysheet会自动扩展列数
-        
+
         const year = module.selectedYear || module.defaultYear
         const month = module.selectedMonth || module.defaultMonth
-        
+
         // 按列导出：31天数据垂直排列（按行）
         try {
           console.log(`开始插入31行数据，起始位置: 行${startRow}, 列${startCol}`)
-          
+
           // 插入31行数据（1日到31日垂直排列）
           for (let i = 0; i < 31; i++) {
             const day = i + 1
             const targetRow = startRow + i  // 按行递增
             const cellValue = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}.${module.category}`
-            
+
             console.log(`插入第${day}日数据到行${targetRow}: ${cellValue}`)
-            
+
             // 使用最基本的方式设置单元格
             if (window.luckysheet) {
               window.luckysheet.setCellValue(targetRow, startCol, cellValue)
             }
           }
-          
+
           ElMessage.success(`已插入${year}年${month}月${module.title}（31行数据）`)
-          
+
         } catch (error) {
           console.error('插入数据失败:', error)
           ElMessage.error('插入数据失败: ' + error.message)
         }
-        
+
       } else if (module.type === 'summary') {
         const cellValue = `{${module.dataField}}`
         luckysheetInstance.value.setCellValue(startRow, startCol, cellValue)
-        
+
         luckysheetInstance.value.setRangeStyle({
           row: [startRow, startRow],
           column: [startCol, startCol]
@@ -790,9 +756,9 @@ export default {
           fc: '#52c41a',
           bl: 1
         })
-        
+
         ElMessage.success(`已插入${module.title}`)
-        
+
       } else if (module.type === 'format') {
         applyFormat(module.action, startRow, startCol)
       }
@@ -802,12 +768,12 @@ export default {
     const applyFormat = (action, row, col) => {
       const selection = luckysheetInstance.value.getRange()
       if (!selection || selection.length === 0) return
-      
+
       const range = {
         row: selection[0].row,
         column: selection[0].column
       }
-      
+
       switch (action) {
         case 'merge':
           luckysheetInstance.value.merge(range)
@@ -819,7 +785,7 @@ export default {
           luckysheetInstance.value.setRangeStyle(range, { vt: 1, ht: 1 })
           break
         case 'border':
-          luckysheetInstance.value.setRangeStyle(range, { 
+          luckysheetInstance.value.setRangeStyle(range, {
             bd: {
               color: '#000000',
               style: 1
@@ -830,7 +796,7 @@ export default {
           luckysheetInstance.value.setRangeFormat(range, 'currency')
           break
       }
-      
+
       ElMessage.success('格式应用成功')
     }
 
@@ -840,7 +806,7 @@ export default {
         ElMessage.error('Excel组件未初始化')
         return
       }
-      
+
       templateForm.name = ''
       templateForm.description = ''
       saveDialogVisible.value = true
@@ -856,7 +822,7 @@ export default {
       saving.value = true
       try {
         const sheetData = luckysheetInstance.value.getAllSheets()
-        
+
         const templateData = {
           name: templateForm.name,
           description: templateForm.description,
@@ -870,7 +836,7 @@ export default {
           id: Date.now()
         })
         localStorage.setItem('reportDesignerTemplates', JSON.stringify(templates))
-        
+
         ElMessage.success('模板保存成功')
         saveDialogVisible.value = false
       } catch (error) {
@@ -884,7 +850,7 @@ export default {
     // 加载模板
     const loadTemplate = async () => {
       const templates = JSON.parse(localStorage.getItem('reportDesignerTemplates') || '[]')
-      
+
       if (templates.length === 0) {
         ElMessage.warning('没有保存的模板')
         return
@@ -916,79 +882,30 @@ export default {
       }
     }
 
-    // 处理导出命令
-    const handleExportCommand = (command) => {
-      switch (command) {
-        case 'luckysheet':
-          exportExcel()
-          break
-        case 'manual':
-          manualExport()
-          break
-        case 'simple':
-          simpleExport()
-          break
-      }
-    }
 
-    // 导出Excel
-    const exportExcel = () => {
-      if (!window.luckysheet) {
-        ElMessage.error('Excel组件未初始化')
-        return
-      }
-      
-      try {
-        console.log('开始导出Excel...')
-        
-        // 使用Luckysheet的导出功能
-        if (window.luckysheet.exportXlsx) {
-          window.luckysheet.exportXlsx('食堂报表模板.xlsx')
-          ElMessage.success('Excel导出成功')
-        } else if (window.luckysheet.toJson) {
-          // 如果没有直接导出功能，使用JSON转换方式
-          const data = window.luckysheet.toJson()
-          console.log('获取到数据:', data)
-          
-          // 使用XLSX库手动导出
-          if (window.XLSX) {
-            const wb = window.XLSX.utils.book_new()
-            const ws = window.XLSX.utils.aoa_to_sheet(convertLuckysheetToArray(data))
-            window.XLSX.utils.book_append_sheet(wb, ws, '报表设计')
-            window.XLSX.writeFile(wb, '食堂报表模板.xlsx')
-            ElMessage.success('Excel导出成功')
-          } else {
-            ElMessage.error('导出功能不可用，请检查XLSX库')
-          }
-        } else {
-          ElMessage.error('导出功能不可用')
-        }
-      } catch (error) {
-        console.error('导出Excel失败:', error)
-        ElMessage.error('导出Excel失败: ' + error.message)
-      }
-    }
-    
+
+
+
     // 转换Luckysheet数据为数组格式
     const convertLuckysheetToArray = (data) => {
       if (!data || !data[0] || !data[0].celldata) {
         return [['暂无数据']]
       }
-      
+
       const celldata = data[0].celldata
       const maxRow = Math.max(...celldata.map(cell => cell.r)) + 1
       const maxCol = Math.max(...celldata.map(cell => cell.c)) + 1
-      
+
       // 创建二维数组
       const result = Array(maxRow).fill().map(() => Array(maxCol).fill(''))
-      
+
       // 填充数据
       celldata.forEach(cell => {
         if (cell.v && cell.v.v !== undefined) {
           result[cell.r][cell.c] = cell.v.v
         }
       })
-      
+
       return result
     }
 
@@ -1002,10 +919,10 @@ export default {
 
         // 创建一个简单的工作簿
         const wb = window.XLSX.utils.book_new()
-        
+
         // 获取当前设计的数据
         let sheetData = [['食堂报表设计器导出']]
-        
+
         if (window.luckysheet && window.luckysheet.getAllSheets) {
           try {
             const sheets = window.luckysheet.getAllSheets()
@@ -1017,11 +934,11 @@ export default {
             console.log('获取Luckysheet数据失败，使用默认数据')
           }
         }
-        
+
         const ws = window.XLSX.utils.aoa_to_sheet(sheetData)
         window.XLSX.utils.book_append_sheet(wb, ws, '报表设计')
         window.XLSX.writeFile(wb, '食堂报表模板.xlsx')
-        
+
         ElMessage.success('手动导出成功')
       } catch (error) {
         console.error('手动导出失败:', error)
@@ -1041,20 +958,20 @@ export default {
 
         // 解析Luckysheet中的数据占位符
         const cellData = await parseLuckysheetData()
-        
+
         // 获取实际数据
         const realData = await fetchRealData(cellData)
-        
+
         // 生成Excel
         const wb = window.XLSX.utils.book_new()
         const ws = window.XLSX.utils.aoa_to_sheet(realData)
-        
+
         // 设置列宽
         ws['!cols'] = Array(realData[0]?.length || 10).fill({ wch: 12 })
-        
+
         window.XLSX.utils.book_append_sheet(wb, ws, '食堂报表')
         window.XLSX.writeFile(wb, `食堂报表_${new Date().toLocaleDateString()}.xlsx`)
-        
+
         ElMessage.success('导出成功！已填入实际数据')
       } catch (error) {
         console.error('导出失败:', error)
@@ -1065,13 +982,13 @@ export default {
     // 解析Luckysheet中的数据占位符
     const parseLuckysheetData = async () => {
       const cellData = []
-      
+
       try {
         if (window.luckysheet && window.luckysheet.getAllSheets) {
           const sheets = window.luckysheet.getAllSheets()
           if (sheets && sheets[0] && sheets[0].celldata) {
             const cells = sheets[0].celldata
-            
+
             cells.forEach(cell => {
               if (cell.v && cell.v.v) {
                 const value = cell.v.v.toString()
@@ -1103,7 +1020,7 @@ export default {
       } catch (error) {
         console.error('解析Luckysheet数据失败:', error)
       }
-      
+
       return cellData
     }
 
@@ -1112,13 +1029,13 @@ export default {
       // 找出最大行列数
       const maxRow = Math.max(...cellData.map(cell => cell.row), 0) + 1
       const maxCol = Math.max(...cellData.map(cell => cell.col), 0) + 1
-      
+
       // 创建二维数组
       const result = Array(maxRow).fill().map(() => Array(maxCol).fill(''))
-      
+
       // 收集需要获取的数据请求
       const dataRequests = new Map()
-      
+
       cellData.forEach(cell => {
         if (cell.isText) {
           // 普通文本直接填入
@@ -1142,15 +1059,15 @@ export default {
               month: request.month
             }
           })
-          
+
           const reportData = response.data
-          
+
           // 填充实际数据
           request.cells.forEach(cell => {
             const value = getRealValue(reportData, cell.year, cell.month, cell.day, cell.category)
             result[cell.row][cell.col] = value
           })
-          
+
         } catch (error) {
           console.error(`获取${request.year}年${request.month}月数据失败:`, error)
           // 如果获取失败，使用占位符
@@ -1159,7 +1076,7 @@ export default {
           })
         }
       }
-      
+
       return result
     }
 
@@ -1169,7 +1086,7 @@ export default {
         // 根据分类获取对应的数据
         const categoryMap = {
           '蔬菜类': 'vegetables',
-          '鲜肉类': 'meat', 
+          '鲜肉类': 'meat',
           '冷冻类': 'frozen',
           '豆制品类': 'tofu',
           '禽蛋类': 'eggs',
@@ -1181,12 +1098,12 @@ export default {
           '合计': 'total',
           '就餐人数': 'diners'
         }
-        
+
         const fieldName = categoryMap[category]
         if (!fieldName) {
           return `未知分类: ${category}`
         }
-        
+
         // 从每日数据中查找对应日期的数据
         if (reportData.dailyTotals && reportData.dailyTotals.length > 0) {
           const dayData = reportData.dailyTotals.find(d => parseInt(d.day) === day)
@@ -1194,7 +1111,7 @@ export default {
             return dayData[fieldName]
           }
         }
-        
+
         // 如果没有每日数据，尝试从分类总计中获取平均值
         if (reportData.categoryTotals && reportData.categoryTotals.length > 0) {
           const categoryData = reportData.categoryTotals.find(c => c.category === category)
@@ -1204,59 +1121,17 @@ export default {
             return (categoryData.total / daysInMonth).toFixed(2)
           }
         }
-        
+
         // 如果都没有，返回0
         return 0
-        
+
       } catch (error) {
         console.error('获取实际值失败:', error)
         return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}.${category}`
       }
     }
 
-    // 简单导出（保持原有功能）
-    const simpleExport = () => {
-      try {
-        if (!window.XLSX) {
-          ElMessage.error('XLSX库未加载')
-          return
-        }
 
-        // 创建一个包含示例数据的简单表格
-        const sampleData = [
-          ['食堂食材月度出库汇总表'],
-          [''],
-          ['日期', '蔬菜类', '鲜肉类', '冷冻类', '合计'],
-          ['1日', '{2024-12-01.蔬菜类}', '{2024-12-01.鲜肉类}', '{2024-12-01.冷冻类}', ''],
-          ['2日', '{2024-12-02.蔬菜类}', '{2024-12-02.鲜肉类}', '{2024-12-02.冷冻类}', ''],
-          ['3日', '{2024-12-03.蔬菜类}', '{2024-12-03.鲜肉类}', '{2024-12-03.冷冻类}', ''],
-          ['...', '...', '...', '...', '...'],
-          ['31日', '{2024-12-31.蔬菜类}', '{2024-12-31.鲜肉类}', '{2024-12-31.冷冻类}', ''],
-          [''],
-          ['合计', '{蔬菜类月度合计}', '{鲜肉类月度合计}', '{冷冻类月度合计}', '{月度总合计}']
-        ]
-
-        const wb = window.XLSX.utils.book_new()
-        const ws = window.XLSX.utils.aoa_to_sheet(sampleData)
-        
-        // 设置列宽
-        ws['!cols'] = [
-          { wch: 8 },  // 日期
-          { wch: 20 }, // 蔬菜类
-          { wch: 20 }, // 鲜肉类
-          { wch: 20 }, // 冷冻类
-          { wch: 15 }  // 合计
-        ]
-        
-        window.XLSX.utils.book_append_sheet(wb, ws, '报表模板')
-        window.XLSX.writeFile(wb, '食堂报表模板示例.xlsx')
-        
-        ElMessage.success('简单导出成功！已生成示例模板')
-      } catch (error) {
-        console.error('简单导出失败:', error)
-        ElMessage.error('简单导出失败: ' + error.message)
-      }
-    }
 
     // 清空所有
     const clearAll = async () => {
@@ -1264,7 +1139,7 @@ export default {
         await ElMessageBox.confirm('确定要清空所有内容吗？', '确认清空', {
           type: 'warning'
         })
-        
+
         if (luckysheetInstance.value) {
           luckysheetInstance.value.clearRange()
           ElMessage.success('已清空所有内容')
@@ -1280,7 +1155,7 @@ export default {
         // 清除可能的扩展错误
         console.log('忽略Chrome扩展错误')
       }
-      
+
       if (window.luckysheet) {
         initLuckysheet()
       } else {
@@ -1313,10 +1188,7 @@ export default {
       saveTemplate,
       confirmSaveTemplate,
       loadTemplate,
-      handleExportCommand,
-      exportExcel,
       manualExport,
-      simpleExport,
       clearAll
     }
   }
@@ -1356,11 +1228,12 @@ export default {
   padding: 15px 20px;
   background: white;
   border-bottom: 1px solid #e8e8e8;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
 }
 
-.toolbar-left, .toolbar-right {
+.toolbar-left,
+.toolbar-right {
   display: flex;
   gap: 10px;
 }
@@ -1377,7 +1250,7 @@ export default {
   background: white;
   margin: 10px 0 10px 10px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .modules-panel {
@@ -1385,7 +1258,7 @@ export default {
   background: white;
   margin: 10px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
 }
@@ -1450,7 +1323,7 @@ export default {
 
 .module-card:hover {
   border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24,144,255,0.15);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
   transform: translateY(-1px);
 }
 
