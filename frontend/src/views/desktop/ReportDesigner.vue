@@ -28,14 +28,6 @@
           导出Excel
         </el-button>
       </div>
-      <div class="toolbar-right">
-        <el-button @click="clearAll" type="danger" plain>
-          <el-icon>
-            <Delete />
-          </el-icon>
-          清空
-        </el-button>
-      </div>
     </div>
 
     <div class="designer-main">
@@ -112,25 +104,7 @@
             </div>
           </div>
 
-          <!-- 格式化模块 -->
-          <div class="module-category">
-            <div class="category-header">
-              <el-icon>
-                <Brush />
-              </el-icon>
-              <span>格式化</span>
-            </div>
-            <div class="module-list">
-              <div v-for="module in filteredFormatModules" :key="module.id" class="module-card format-module"
-                :draggable="true" @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
-                <div class="module-icon">🎨</div>
-                <div class="module-info">
-                  <div class="module-title">{{ module.title }}</div>
-                  <div class="module-desc">{{ module.description }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
@@ -266,8 +240,7 @@ import {
   Search,
   Document,
   Calendar,
-  DataAnalysis,
-  Brush
+  DataAnalysis
 } from '@element-plus/icons-vue'
 
 export default {
@@ -280,8 +253,7 @@ export default {
     Search,
     Document,
     Calendar,
-    DataAnalysis,
-    Brush
+    DataAnalysis
   },
   setup() {
     const saving = ref(false)
@@ -512,44 +484,7 @@ export default {
       }
     ]
 
-    // 格式化模块
-    const formatModules = [
-      {
-        id: 'merge_title',
-        title: '合并标题单元格',
-        description: '将标题单元格合并居中',
-        type: 'format',
-        action: 'merge'
-      },
-      {
-        id: 'bold_header',
-        title: '表头加粗',
-        description: '设置表头文字为粗体',
-        type: 'format',
-        action: 'bold'
-      },
-      {
-        id: 'center_align',
-        title: '居中对齐',
-        description: '设置单元格内容居中对齐',
-        type: 'format',
-        action: 'center'
-      },
-      {
-        id: 'add_border',
-        title: '添加边框',
-        description: '为选中区域添加边框',
-        type: 'format',
-        action: 'border'
-      },
-      {
-        id: 'currency_format',
-        title: '货币格式',
-        description: '设置为货币格式显示',
-        type: 'format',
-        action: 'currency'
-      }
-    ]
+
 
     // 过滤后的模块 - 基础信息模块已移除
 
@@ -569,12 +504,7 @@ export default {
       )
     )
 
-    const filteredFormatModules = computed(() =>
-      formatModules.filter(m =>
-        m.title.includes(searchText.value) ||
-        m.description.includes(searchText.value)
-      )
-    )
+
 
     // 初始化Luckysheet
     const initLuckysheet = () => {
@@ -597,6 +527,47 @@ export default {
             enableAddCol: true,
             userInfo: false,
             myFolderUrl: '',
+            toolbarConfig: {
+              undoRedo: true, // 撤销重做
+              paintFormat: true, // 格式刷
+              currencyFormat: true, // 货币格式
+              percentageFormat: true, // 百分比格式
+              numberDecrease: true, // 减少小数位数
+              numberIncrease: true, // 增加小数位数
+              moreFormats: true, // 更多格式
+              font: true, // 字体
+              fontSize: true, // 字号
+              bold: true, // 粗体
+              italic: true, // 斜体
+              strikethrough: true, // 删除线
+              underline: true, // 下划线
+              textColor: true, // 文字颜色
+              fillColor: true, // 背景颜色
+              border: true, // 边框
+              mergeCell: true, // 合并单元格
+              horizontalAlignMode: true, // 水平对齐
+              verticalAlignMode: true, // 垂直对齐
+              textWrapMode: true, // 文字换行
+              textRotateMode: true, // 文字旋转
+              image: true, // 插入图片
+              link: true, // 插入链接
+              chart: true, // 图表
+              postil: true, // 批注
+              pivotTable: true, // 数据透视表
+              function: true, // 公式
+              frozenMode: true, // 冻结
+              sortAndFilter: true, // 排序和筛选
+              findAndReplace: true, // 查找替换
+              sum: true, // 求和
+              autoSum: true, // 自动求和
+              moreFunction: true, // 更多函数
+              conditionalFormat: true, // 条件格式
+              dataVerification: true, // 数据验证
+              splitColumn: true, // 分列
+              screenshot: true, // 截图
+              protection: true, // 工作表保护
+              print: true // 打印
+            },
             data: [{
               name: "报表设计",
               color: "",
@@ -1280,6 +1251,47 @@ export default {
               enableAddCol: true,
               userInfo: false,
               myFolderUrl: '',
+              toolbarConfig: {
+                undoRedo: true, // 撤销重做
+                paintFormat: true, // 格式刷
+                currencyFormat: true, // 货币格式
+                percentageFormat: true, // 百分比格式
+                numberDecrease: true, // 减少小数位数
+                numberIncrease: true, // 增加小数位数
+                moreFormats: true, // 更多格式
+                font: true, // 字体
+                fontSize: true, // 字号
+                bold: true, // 粗体
+                italic: true, // 斜体
+                strikethrough: true, // 删除线
+                underline: true, // 下划线
+                textColor: true, // 文字颜色
+                fillColor: true, // 背景颜色
+                border: true, // 边框
+                mergeCell: true, // 合并单元格
+                horizontalAlignMode: true, // 水平对齐
+                verticalAlignMode: true, // 垂直对齐
+                textWrapMode: true, // 文字换行
+                textRotateMode: true, // 文字旋转
+                image: true, // 插入图片
+                link: true, // 插入链接
+                chart: true, // 图表
+                postil: true, // 批注
+                pivotTable: true, // 数据透视表
+                function: true, // 公式
+                frozenMode: true, // 冻结
+                sortAndFilter: true, // 排序和筛选
+                findAndReplace: true, // 查找替换
+                sum: true, // 求和
+                autoSum: true, // 自动求和
+                moreFunction: true, // 更多函数
+                conditionalFormat: true, // 条件格式
+                dataVerification: true, // 数据验证
+                splitColumn: true, // 分列
+                screenshot: true, // 截图
+                protection: true, // 工作表保护
+                print: true // 打印
+              },
               data: selectedTemplate.sheetData
             }
             
@@ -1591,21 +1603,7 @@ export default {
 
 
 
-    // 清空所有
-    const clearAll = async () => {
-      try {
-        await ElMessageBox.confirm('确定要清空所有内容吗？', '确认清空', {
-          type: 'warning'
-        })
 
-        if (luckysheetInstance.value) {
-          luckysheetInstance.value.clearRange()
-          ElMessage.success('已清空所有内容')
-        }
-      } catch (error) {
-        // 用户取消
-      }
-    }
 
     onMounted(() => {
       // 忽略Chrome扩展的端口错误
@@ -1640,7 +1638,6 @@ export default {
       selectedTemplateIndex,
       filteredDailyModules,
       filteredSummaryModules,
-      filteredFormatModules,
       handleDragStart,
       insertModule,
       showDateSelector,
@@ -1652,8 +1649,7 @@ export default {
       confirmLoadTemplate,
       deleteTemplate,
       formatDate,
-      manualExport,
-      clearAll
+      manualExport
     }
   }
 }
