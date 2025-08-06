@@ -100,18 +100,12 @@
     box-shadow: 0 8px 24px rgba(82, 196, 26, 0.15) !important;
 }
 
-/* 报表设计器特殊样式 */
+/* 报表设计器特殊样式 - 移除悬浮效果 */
 .excel-container {
     border-radius: 12px !important;
     overflow: hidden !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
     border: 1px solid #e4e7ed !important;
-    transition: all 0.3s ease !important;
-}
-
-.excel-container:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-    border-color: #409eff !important;
 }
 
 .modules-panel {
@@ -119,43 +113,15 @@
     border-radius: 12px !important;
     border: 1px solid #e4e7ed !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
-    transition: all 0.3s ease !important;
 }
 
-.modules-panel:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-    border-color: #409eff !important;
-}
-
-/* 模块卡片样式 */
+/* 模块卡片样式 - 移除悬浮效果 */
 .module-card {
     border-radius: 8px !important;
     border: 1px solid #e4e7ed !important;
     background: #ffffff !important;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.3s ease !important;
     cursor: pointer !important;
-}
-
-.module-card:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    border-color: #409eff !important;
-}
-
-.daily-module:hover {
-    border-color: #52c41a !important;
-    box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15) !important;
-}
-
-.summary-module:hover {
-    border-color: #fa8c16 !important;
-    box-shadow: 0 4px 12px rgba(250, 140, 22, 0.15) !important;
-}
-
-.format-module:hover {
-    border-color: #722ed1 !important;
-    box-shadow: 0 4px 12px rgba(114, 46, 209, 0.15) !important;
 }
 
 /* 表格容器美化 */

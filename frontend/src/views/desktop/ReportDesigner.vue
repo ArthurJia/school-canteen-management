@@ -40,13 +40,13 @@
 
     <div class="designer-main">
       <!-- 左侧：Luckysheet Excel区域 -->
-      <div class="excel-container card-hover">
+      <div class="excel-container">
         <div id="luckysheet"
           style="margin:0px;padding:0px;position:absolute;width:100%;height:100%;left: 0px;top: 0px;"></div>
       </div>
 
       <!-- 右侧：数据模块面板 -->
-      <div class="modules-panel card-hover">
+      <div class="modules-panel">
         <div class="panel-header">
           <h3>数据模块库</h3>
           <p class="panel-desc">拖拽或点击模块到左侧Excel中</p>
@@ -71,7 +71,7 @@
               <span>每日数据 (31行)</span>
             </div>
             <div class="module-list">
-              <div v-for="module in filteredDailyModules" :key="module.id" class="module-card daily-module card-hover"
+              <div v-for="module in filteredDailyModules" :key="module.id" class="module-card daily-module"
                 @click="showDateSelector(module)">
                 <div class="module-icon">📊</div>
                 <div class="module-info">
@@ -100,7 +100,7 @@
             </div>
             <div class="module-list">
               <div v-for="module in filteredSummaryModules" :key="module.id"
-                class="module-card summary-module card-hover" :draggable="true"
+                class="module-card summary-module" :draggable="true"
                 @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
                 <div class="module-icon">🧮</div>
                 <div class="module-info">
@@ -121,7 +121,7 @@
               <span>格式化</span>
             </div>
             <div class="module-list">
-              <div v-for="module in filteredFormatModules" :key="module.id" class="module-card format-module card-hover"
+              <div v-for="module in filteredFormatModules" :key="module.id" class="module-card format-module"
                 :draggable="true" @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
                 <div class="module-icon">🎨</div>
                 <div class="module-info">
@@ -181,6 +181,58 @@
       </template>
     </el-dialog>
 
+    <!-- 加载模板对话框 -->
+    <el-dialog v-model="loadDialogVisible" title="选择模板" width="800px">
+      <div class="template-selector">
+        <div v-if="availableTemplates.length === 0" class="no-templates">
+          <el-empty description="暂无保存的模板">
+            <el-button type="primary" @click="loadDialogVisible = false">确定</el-button>
+          </el-empty>
+        </div>
+        <div v-else class="templates-grid">
+          <div 
+            v-for="(template, index) in availableTemplates" 
+            :key="template.id"
+            class="template-card"
+            :class="{ 'selected': selectedTemplateIndex === index }"
+            @click="selectedTemplateIndex = index"
+          >
+            <div class="template-header">
+              <div class="template-icon">📊</div>
+              <div class="template-info">
+                <h4 class="template-name">{{ template.name }}</h4>
+                <p class="template-desc">{{ template.description || '无描述' }}</p>
+              </div>
+            </div>
+            <div class="template-meta">
+              <span class="template-date">{{ formatDate(template.createdAt) }}</span>
+              <el-button 
+                type="danger" 
+                size="small" 
+                text 
+                @click.stop="deleteTemplate(index)"
+                title="删除模板"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="loadDialogVisible = false">取消</el-button>
+          <el-button 
+            type="primary" 
+            @click="confirmLoadTemplate" 
+            :disabled="selectedTemplateIndex === -1 || availableTemplates.length === 0"
+          >
+            加载模板
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <!-- 保存模板对话框 -->
     <el-dialog v-model="saveDialogVisible" title="保存模板" width="500px">
       <el-form :model="templateForm" label-width="100px">
@@ -235,9 +287,12 @@ export default {
     const saving = ref(false)
     const searchText = ref('')
     const saveDialogVisible = ref(false)
+    const loadDialogVisible = ref(false)
     const dateSelectVisible = ref(false)
     const luckysheetInstance = ref(null)
     const selectedModule = ref(null)
+    const availableTemplates = ref([])
+    const selectedTemplateIndex = ref(-1)
 
     const templateForm = reactive({
       name: '',
@@ -1167,7 +1222,7 @@ export default {
           name: templateForm.name,
           description: templateForm.description,
           sheetData: sheetData,
-          created_at: new Date().toISOString()
+          createdAt: new Date().toISOString()
         }
 
         const templates = JSON.parse(localStorage.getItem('reportDesignerTemplates') || '[]')
@@ -1188,38 +1243,101 @@ export default {
     }
 
     // 加载模板
-    const loadTemplate = async () => {
+    const loadTemplate = () => {
       const templates = JSON.parse(localStorage.getItem('reportDesignerTemplates') || '[]')
+      availableTemplates.value = templates
+      selectedTemplateIndex.value = -1
+      loadDialogVisible.value = true
+    }
 
-      if (templates.length === 0) {
-        ElMessage.warning('没有保存的模板')
+    // 确认加载模板
+    const confirmLoadTemplate = () => {
+      if (selectedTemplateIndex.value === -1 || availableTemplates.value.length === 0) {
         return
       }
 
+      const selectedTemplate = availableTemplates.value[selectedTemplateIndex.value]
+      if (selectedTemplate && window.luckysheet) {
+        try {
+          // 使用Luckysheet的正确API来加载数据
+          if (selectedTemplate.sheetData && selectedTemplate.sheetData.length > 0) {
+            window.luckysheet.destroy()
+            
+            // 重新初始化Luckysheet并加载模板数据
+            const options = {
+              container: 'luckysheet',
+              title: '报表设计器',
+              lang: 'zh',
+              allowCopy: true,
+              allowEdit: true,
+              allowDelete: true,
+              showtoolbar: true,
+              showinfobar: true,
+              showsheetbar: true,
+              showstatisticBar: true,
+              sheetBottomConfig: false,
+              enableAddRow: true,
+              enableAddCol: true,
+              userInfo: false,
+              myFolderUrl: '',
+              data: selectedTemplate.sheetData
+            }
+            
+            window.luckysheet.create(options)
+            luckysheetInstance.value = window.luckysheet
+            
+            ElMessage.success(`已加载模板: ${selectedTemplate.name}`)
+            loadDialogVisible.value = false
+          } else {
+            ElMessage.error('模板数据格式错误')
+          }
+        } catch (error) {
+          console.error('加载模板失败:', error)
+          ElMessage.error('加载模板失败: ' + error.message)
+        }
+      }
+    }
+
+    // 删除模板
+    const deleteTemplate = async (index) => {
       try {
-        const templateNames = templates.map((t, i) => `${i + 1}. ${t.name}`).join('\n')
-        const { value: templateIndex } = await ElMessageBox.prompt(
-          '请选择要加载的模板：\n' + templateNames,
-          '选择模板',
+        await ElMessageBox.confirm(
+          `确定要删除模板 "${availableTemplates.value[index].name}" 吗？`,
+          '确认删除',
           {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
-            inputPattern: /^[1-9]\d*$/,
-            inputErrorMessage: '请输入有效的模板编号'
+            type: 'warning'
           }
         )
 
-        const selectedTemplate = templates[parseInt(templateIndex) - 1]
-        if (selectedTemplate && luckysheetInstance.value) {
-          luckysheetInstance.value.loadUrl(selectedTemplate.sheetData)
-          ElMessage.success(`已加载模板: ${selectedTemplate.name}`)
+        availableTemplates.value.splice(index, 1)
+        localStorage.setItem('reportDesignerTemplates', JSON.stringify(availableTemplates.value))
+        
+        // 如果删除的是当前选中的模板，重置选择
+        if (selectedTemplateIndex.value === index) {
+          selectedTemplateIndex.value = -1
+        } else if (selectedTemplateIndex.value > index) {
+          selectedTemplateIndex.value--
         }
+
+        ElMessage.success('模板删除成功')
       } catch (error) {
-        if (error !== 'cancel') {
-          console.error('加载模板失败:', error)
-          ElMessage.error('加载模板失败')
-        }
+        // 用户取消删除
       }
+    }
+
+    // 格式化日期
+    const formatDate = (dateString) => {
+      if (!dateString) return '未知时间'
+      const date = new Date(dateString)
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     }
 
 
@@ -1513,10 +1631,13 @@ export default {
       saving,
       searchText,
       saveDialogVisible,
+      loadDialogVisible,
       dateSelectVisible,
       templateForm,
       dateForm,
       selectedModule,
+      availableTemplates,
+      selectedTemplateIndex,
       filteredDailyModules,
       filteredSummaryModules,
       filteredFormatModules,
@@ -1528,6 +1649,9 @@ export default {
       saveTemplate,
       confirmSaveTemplate,
       loadTemplate,
+      confirmLoadTemplate,
+      deleteTemplate,
+      formatDate,
       manualExport,
       clearAll
     }
@@ -1822,5 +1946,154 @@ export default {
 
 :deep(.luckysheet-modal-dialog-mask) {
   z-index: 1000 !important;
+}
+
+/* 模板选择器样式 */
+.template-selector {
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.no-templates {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.template-card {
+  border: 1px solid #e4e7ed;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.template-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #409eff, #67c23a);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.template-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  border-color: #409eff;
+}
+
+.template-card:hover::before {
+  opacity: 1;
+}
+
+.template-card.selected {
+  border-color: #409eff;
+  background: linear-gradient(135deg, #e6f7ff 0%, #ffffff 100%);
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.template-card.selected::before {
+  opacity: 1;
+}
+
+.template-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.template-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.template-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-name {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+}
+
+.template-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.template-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 16px;
+}
+
+.template-date {
+  font-size: 12px;
+  color: #999;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.template-card .el-button {
+  opacity: 0;
+  transition: all 0.3s ease;
+  transform: translateX(10px);
+}
+
+.template-card:hover .el-button {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.template-card.selected .el-button {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .templates-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .template-card {
+    padding: 16px;
+  }
+  
+  .template-icon {
+    font-size: 28px;
+  }
+  
+  .template-name {
+    font-size: 16px;
+  }
 }
 </style>

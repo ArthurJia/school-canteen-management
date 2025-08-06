@@ -4,7 +4,7 @@
       <div class="sidebar-header">
         <div class="logo-container">
           <div class="logo-icon">
-            <el-icon size="24"><i-ep-Menu /></el-icon>
+            <el-icon size="24"><Menu /></el-icon>
           </div>
           <div class="logo-text">操作目录</div>
         </div>
@@ -18,23 +18,23 @@
           text-color="#606266"
           active-text-color="#409eff">
           <el-menu-item index="/desktop/inbound" class="menu-item">
-            <el-icon><i-ep-Goods /></el-icon>
+            <el-icon><Goods /></el-icon>
             <span>入库管理</span>
           </el-menu-item>
           <el-menu-item index="/desktop/stock" class="menu-item">
-            <el-icon><i-ep-PieChart /></el-icon>
+            <el-icon><PieChart /></el-icon>
             <span>库存查询</span>
           </el-menu-item>
           <el-menu-item index="/desktop/supplier" class="menu-item">
-            <el-icon><i-ep-User /></el-icon>
+            <el-icon><User /></el-icon>
             <span>供应商管理</span>
           </el-menu-item>
           <el-menu-item index="/desktop/report" class="menu-item">
-            <el-icon><i-ep-Document /></el-icon>
+            <el-icon><Document /></el-icon>
             <span>月度报表</span>
           </el-menu-item>
           <el-menu-item index="/desktop/report-designer" class="menu-item">
-            <el-icon><i-ep-Edit /></el-icon>
+            <el-icon><Edit /></el-icon>
             <span>报表设计及导出</span>
           </el-menu-item>
         </el-menu>
@@ -47,7 +47,7 @@
           <div class="system-title">中华路小学食堂管理系统</div>
           <div class="header-actions">
             <el-button type="text" class="user-info">
-              <el-icon><i-ep-User /></el-icon>
+              <el-icon><User /></el-icon>
               <span>管理员</span>
             </el-button>
           </div>
