@@ -411,18 +411,6 @@ export default {
         rows: 31,
         defaultYear: new Date().getFullYear(),
         defaultMonth: new Date().getMonth() + 1
-      },
-      {
-        id: 'daily_diners',
-        title: '就餐人数',
-        description: '31天每日就餐人数（按行排列）',
-        sampleData: '58, 58, 58...',
-        type: 'daily',
-        category: '就餐人数',
-        dataField: 'daily.diners',
-        rows: 31,
-        defaultYear: new Date().getFullYear(),
-        defaultMonth: new Date().getMonth() + 1
       }
     ]
 
@@ -463,24 +451,6 @@ export default {
         type: 'summary',
         category: '总计',
         dataField: 'totals.all'
-      },
-      {
-        id: 'avg_daily',
-        title: '日均支出',
-        description: '平均每日支出金额',
-        sampleData: '865.80',
-        type: 'summary',
-        category: '平均值',
-        dataField: 'totals.avgDaily'
-      },
-      {
-        id: 'total_diners',
-        title: '月度就餐总人次',
-        description: '本月就餐总人次',
-        sampleData: '1,798',
-        type: 'summary',
-        category: '就餐人次',
-        dataField: 'totals.totalDiners'
       }
     ]
 
@@ -769,15 +739,7 @@ export default {
             const response = await fetch(`/api/monthly-report/data?year=${year}&month=${month}`)
             const data = await response.json()
             return data.monthlyTotal || 0
-          } else if (category === '平均值') {
-            // 日均支出
-            const response = await fetch(`/api/monthly-report/data?year=${year}&month=${month}`)
-            const data = await response.json()
-            const daysWithExpense = data.dailyTotals ? data.dailyTotals.filter(day => day.total > 0).length : 1
-            return daysWithExpense ? (data.monthlyTotal / daysWithExpense) : 0
-          } else if (category === '就餐人次') {
-            // 月度就餐总人次 - 这里需要根据实际业务逻辑计算
-            return 1800 // 示例值，实际应该从数据库获取
+
           } else {
             // 特定分类的月度合计
             const categoryValue = categoryMapping[category] || category
@@ -837,11 +799,7 @@ export default {
         const dailyData = new Array(31).fill(0)
 
         // 填充实际数据
-        if (category === '就餐人数') {
-          // 就餐人数的特殊处理 - 这里使用固定值，实际应该从数据库获取
-          dailyData.fill(58) // 示例：每天58人就餐
-          console.log('使用固定就餐人数: 58人/天')
-        } else if (category === '合计') {
+        if (category === '合计') {
           // 合计数据需要汇总所有分类
           console.log('开始计算合计数据，汇总所有分类...')
           const categories = ['vegetable', 'meat', 'frozen', 'tofu', 'egg', 'fruit', 'dessert', 'flour', 'rice', 'oil', 'seasoning']
@@ -940,13 +898,8 @@ export default {
 
             // 根据数据类型格式化显示值
             let cellValue, displayValue
-            if (module.category === '就餐人数') {
-              cellValue = Math.round(dailyData[i]) // 就餐人数为整数
-              displayValue = cellValue.toString()
-            } else {
-              cellValue = parseFloat(dailyData[i].toFixed(2)) // 金额保留两位小数
-              displayValue = cellValue.toFixed(2)
-            }
+            cellValue = parseFloat(dailyData[i].toFixed(2)) // 金额保留两位小数
+            displayValue = cellValue.toFixed(2)
 
             console.log(`插入第${day}日数据到行${targetRow}: ${displayValue}`)
 
@@ -1022,13 +975,8 @@ export default {
 
           // 根据数据类型格式化显示值
           let displayValue, cellValue
-          if (module.category === '就餐人次') {
-            cellValue = Math.round(summaryValue)
-            displayValue = cellValue.toString()
-          } else {
-            cellValue = parseFloat(summaryValue.toFixed(2))
-            displayValue = cellValue.toFixed(2)
-          }
+          cellValue = parseFloat(summaryValue.toFixed(2))
+          displayValue = cellValue.toFixed(2)
 
           // 设置汇总数据单元格值 - 使用多种方法尝试
           let success = false
@@ -1565,8 +1513,7 @@ export default {
           '大米': 'rice',
           '面粉制品': 'flour',
           '食用油类': 'oil',
-          '合计': 'total',
-          '就餐人数': 'diners'
+          '合计': 'total'
         }
 
         const fieldName = categoryMap[category]
@@ -1582,11 +1529,11 @@ export default {
           }
         }
 
-        // 如果没有每日数据，尝试从分类总计中获取平均值
+        // 如果没有每日数据，尝试从分类总计中获取数据
         if (reportData.categoryTotals && reportData.categoryTotals.length > 0) {
           const categoryData = reportData.categoryTotals.find(c => c.category === category)
           if (categoryData) {
-            // 返回月度总计除以天数的平均值
+            // 返回月度总计除以天数的数据
             const daysInMonth = new Date(year, month, 0).getDate()
             return (categoryData.total / daysInMonth).toFixed(2)
           }
