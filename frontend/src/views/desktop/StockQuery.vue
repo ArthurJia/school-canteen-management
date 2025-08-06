@@ -20,11 +20,9 @@
               placeholder="输入查询内容"
               style="width: 300px"
               clearable
-            >
-              <template #append>
-                <el-button :icon="Search" @click="fetchStockData" />
-              </template>
-            </el-input>
+              @input="handleSearchInput"
+              @clear="handleSearchClear"
+            />
             <el-button type="success" :icon="Download" @click="exportToExcel">导出Excel</el-button>
           </div>
         </div>
@@ -182,7 +180,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, Refresh, Download } from '@element-plus/icons-vue'
+import { Refresh, Download } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -284,23 +282,8 @@ const formatDate = (dateString) => {
 }
 
 const filteredStock = computed(() => {
-  if (!searchQuery.value) return stockData.value
-  
-  return stockData.value.filter(item => {
-    // 搜索食材名称
-    if (item.name.includes(searchQuery.value)) return true
-    
-    // 搜索分类名称和value
-    const categoryLabel = [...dailyCategories, ...storageCategories]
-      .find(cat => cat.value === item.category)?.label || ''
-    if (categoryLabel.includes(searchQuery.value) || item.category.includes(searchQuery.value)) return true
-    
-    // 搜索供应商名称和value
-    const supplierLabel = suppliers.value.find(s => s.value === item.supplier)?.label || ''
-    if (supplierLabel.includes(searchQuery.value) || item.supplier?.includes(searchQuery.value)) return true
-    
-    return false
-  })
+  // 直接返回从后端获取的数据，因为搜索已经在后端完成
+  return stockData.value
 })
 
 const editDialogVisible = ref(false)
@@ -366,46 +349,36 @@ const handleDelete = async row => {
   }
 }
 
-// 获取所有符合当前搜索条件的数据（不分页）
-const fetchAllStockData = async () => {
-  try {
-    let url = '/api/stock-ins?'
-    
-    if (dateRange.value && dateRange.value.length === 2) {
-      const [startTime, endTime] = dateRange.value
-      url += `startTime=${startTime}&endTime=${endTime}&`
-    }
-    
-    // 不使用分页参数，获取所有数据
-    url += `pageSize=1000` // 设置一个足够大的数值来获取所有数据
-    
-    if (searchQuery.value) {
-      url += `&search=${searchQuery.value}`
-    }
-
-    const response = await axios.get(url)
-    return response.data.data || []
-  } catch (error) {
-    console.error('获取所有库存数据失败:', error)
-    ElMessage.error('获取所有库存数据失败')
-    return []
-  }
+// 处理搜索输入
+const handleSearchInput = () => {
+  // 重置到第一页
+  currentPage.value = 1
+  fetchStockData()
 }
+
+// 处理搜索清空
+const handleSearchClear = () => {
+  // 重置到第一页
+  currentPage.value = 1
+  fetchStockData()
+}
+
+
 
 const exportToExcel = async () => {
   try {
     ElMessage.info('正在准备导出数据，请稍候...')
     
-    // 获取所有符合当前搜索条件的数据
-    const allStockData = await fetchAllStockData()
+    // 使用当前搜索结果进行导出
+    const exportStockData = filteredStock.value
     
-    if (allStockData.length === 0) {
+    if (exportStockData.length === 0) {
       ElMessage.warning('没有数据可导出')
       return
     }
     
     // 准备导出数据
-    const exportData = allStockData.map(item => {
+    const exportData = exportStockData.map(item => {
       // 查找分类名称
       const categoryObj = [...dailyCategories, ...storageCategories].find(
         cat => cat.value === item.category
