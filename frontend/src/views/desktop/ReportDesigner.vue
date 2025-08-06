@@ -401,6 +401,18 @@ export default {
         defaultMonth: new Date().getMonth() + 1
       },
       {
+        id: 'daily_seasoning',
+        title: '调味品类支出',
+        description: '31天调味品类每日支出金额（按行排列）',
+        sampleData: '25.00, 30.00, 20.00...',
+        type: 'daily',
+        category: '调味品类',
+        dataField: 'daily.seasoning',
+        rows: 31,
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
+      },
+      {
         id: 'daily_total',
         title: '支出合计',
         description: '31天每日支出总计金额（按行排列）',
