@@ -28,17 +28,30 @@
           导出Excel
         </el-button>
       </div>
+      
+      <div class="toolbar-right">
+        <el-tooltip :content="showModulesPanel ? '隐藏数据模块库' : '显示数据模块库'" placement="bottom">
+          <el-button @click="toggleModulesPanel" :type="showModulesPanel ? 'primary' : 'default'">
+            <el-icon>
+              <View v-if="!showModulesPanel" />
+              <Hide v-else />
+            </el-icon>
+            {{ showModulesPanel ? '隐藏面板' : '显示面板' }}
+          </el-button>
+        </el-tooltip>
+      </div>
     </div>
 
     <div class="designer-main">
-      <!-- 左侧：Luckysheet Excel区域 -->
+      <!-- Luckysheet Excel区域 - 占满整个空间 -->
       <div class="excel-container">
         <div id="luckysheet"
           style="margin:0px;padding:0px;position:absolute;width:100%;height:100%;left: 0px;top: 0px;"></div>
       </div>
 
-      <!-- 右侧：数据模块面板 -->
-      <div class="modules-panel">
+      <!-- 悬浮的数据模块面板 -->
+      <div class="modules-panel-overlay" v-show="showModulesPanel">
+        <div class="modules-panel">
         <div class="panel-header">
           <h3>数据模块库</h3>
           <p class="panel-desc">拖拽或点击模块到左侧Excel中</p>
@@ -105,6 +118,7 @@
           </div>
 
 
+        </div>
         </div>
       </div>
     </div>
@@ -240,7 +254,9 @@ import {
   Search,
   Document,
   Calendar,
-  DataAnalysis
+  DataAnalysis,
+  View,
+  Hide
 } from '@element-plus/icons-vue'
 
 export default {
@@ -253,7 +269,9 @@ export default {
     Search,
     Document,
     Calendar,
-    DataAnalysis
+    DataAnalysis,
+    View,
+    Hide
   },
   setup() {
     const saving = ref(false)
@@ -265,6 +283,9 @@ export default {
     const selectedModule = ref(null)
     const availableTemplates = ref([])
     const selectedTemplateIndex = ref(-1)
+    
+    // 面板显示状态 - 默认隐藏
+    const showModulesPanel = ref(false)
 
     const templateForm = reactive({
       name: '',
@@ -1312,6 +1333,12 @@ export default {
       })
     }
 
+    // 切换数据模块面板显示/隐藏
+    const toggleModulesPanel = () => {
+      showModulesPanel.value = !showModulesPanel.value
+      ElMessage.success(showModulesPanel.value ? '已显示数据模块库' : '已隐藏数据模块库')
+    }
+
 
 
 
@@ -1573,6 +1600,137 @@ export default {
 
       if (window.luckysheet) {
         initLuckysheet()
+        
+        // 修复工具栏下拉菜单定位并添加拖动功能
+        setTimeout(() => {
+          const setupDraggableToolbar = () => {
+            try {
+              // 监听所有工具栏按钮的点击事件
+              const toolbar = document.querySelector('.luckysheet-toolbar');
+              if (toolbar) {
+                toolbar.addEventListener('click', (e) => {
+                  // 检查是否点击了更多按钮
+                  if (e.target.closest('.luckysheet-toolbar-more-vertical')) {
+                    setTimeout(() => {
+                      const dropdown = document.querySelector('.luckysheet-toolbar-more-vertical-content');
+                      if (dropdown && dropdown.style.display !== 'none') {
+                        // 重置定位样式，使用fixed定位以便拖动
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.zIndex = '9999';
+                        dropdown.style.cursor = 'move';
+                        
+                        // 获取初始位置
+                        const moreButton = document.querySelector('.luckysheet-toolbar-more-vertical');
+                        const buttonRect = moreButton.getBoundingClientRect();
+                        dropdown.style.top = (buttonRect.bottom + 5) + 'px';
+                        dropdown.style.left = buttonRect.left + 'px';
+                        dropdown.style.transform = 'none';
+                        dropdown.style.marginTop = '0';
+                        
+                        // 让整个工具栏可拖动
+                        dropdown.style.userSelect = 'none';
+                        dropdown.title = '可拖动工具栏';
+                        
+                        // 实现拖动功能
+                        makeDraggable(dropdown);
+                        
+                        console.log('工具栏下拉菜单已设置为可拖动');
+                      }
+                    }, 10);
+                  }
+                });
+              }
+            } catch (error) {
+              console.log('设置可拖动工具栏失败:', error);
+            }
+          };
+          
+          // 拖动功能实现
+          const makeDraggable = (element) => {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+            
+            // 直接使用整个工具栏作为拖动目标
+            const dragTarget = element;
+            
+            dragTarget.addEventListener('mousedown', (e) => {
+              // 检查是否点击了工具栏按钮，如果是则不启动拖动
+              if (e.target.closest('.luckysheet-toolbar-button') || 
+                  e.target.closest('.luckysheet-toolbar-menu-button') ||
+                  e.target.tagName === 'BUTTON' ||
+                  e.target.closest('button')) {
+                return;
+              }
+              
+              isDragging = true;
+              startX = e.clientX;
+              startY = e.clientY;
+              
+              const rect = element.getBoundingClientRect();
+              initialX = rect.left;
+              initialY = rect.top;
+              
+              element.style.transition = 'none';
+              document.body.style.userSelect = 'none';
+              element.style.cursor = 'grabbing';
+              
+              e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+              if (!isDragging) return;
+              
+              const deltaX = e.clientX - startX;
+              const deltaY = e.clientY - startY;
+              
+              const newX = initialX + deltaX;
+              const newY = initialY + deltaY;
+              
+              // 限制在视窗范围内
+              const maxX = window.innerWidth - element.offsetWidth;
+              const maxY = window.innerHeight - element.offsetHeight;
+              
+              const constrainedX = Math.max(0, Math.min(newX, maxX));
+              const constrainedY = Math.max(0, Math.min(newY, maxY));
+              
+              element.style.left = constrainedX + 'px';
+              element.style.top = constrainedY + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => {
+              if (isDragging) {
+                isDragging = false;
+                element.style.transition = '';
+                document.body.style.userSelect = '';
+                element.style.cursor = 'move';
+              }
+            });
+            
+            // 双击重置位置（只在空白区域有效）
+            dragTarget.addEventListener('dblclick', (e) => {
+              // 检查是否双击了工具栏按钮，如果是则不重置
+              if (e.target.closest('.luckysheet-toolbar-button') || 
+                  e.target.closest('.luckysheet-toolbar-menu-button') ||
+                  e.target.tagName === 'BUTTON' ||
+                  e.target.closest('button')) {
+                return;
+              }
+              
+              const moreButton = document.querySelector('.luckysheet-toolbar-more-vertical');
+              if (moreButton) {
+                const buttonRect = moreButton.getBoundingClientRect();
+                element.style.top = (buttonRect.bottom + 5) + 'px';
+                element.style.left = buttonRect.left + 'px';
+                element.style.transition = 'all 0.3s ease';
+                setTimeout(() => {
+                  element.style.transition = '';
+                }, 300);
+              }
+            });
+          };
+          
+          setupDraggableToolbar();
+        }, 1000);
       } else {
         ElMessage.error('Luckysheet未加载，请检查网络连接')
       }
@@ -1595,6 +1753,7 @@ export default {
       selectedModule,
       availableTemplates,
       selectedTemplateIndex,
+      showModulesPanel,
       filteredDailyModules,
       filteredSummaryModules,
       handleDragStart,
@@ -1608,7 +1767,8 @@ export default {
       confirmLoadTemplate,
       deleteTemplate,
       formatDate,
-      manualExport
+      manualExport,
+      toggleModulesPanel
     }
   }
 }
@@ -1651,35 +1811,89 @@ export default {
   z-index: 1000;
 }
 
-.toolbar-left,
+.toolbar-left {
+  display: flex;
+  gap: 10px;
+}
+
 .toolbar-right {
   display: flex;
   gap: 10px;
+  margin-left: auto;
 }
 
 .designer-main {
   flex: 1;
   display: flex;
   overflow: hidden;
+  position: relative;
 }
 
 .excel-container {
   flex: 1;
   position: relative;
   background: white;
-  margin: 10px 0 10px 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.modules-panel {
-  width: 380px;
-  background: white;
   margin: 10px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  /* 确保内部定位元素有正确的基准 */
+  transform: translateZ(0);
+  overflow: hidden;
+}
+
+/* 悬浮的数据模块面板覆盖层 */
+.modules-panel-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  width: 400px;
+  z-index: 1000;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modules-panel {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid #e4e7ed;
+  backdrop-filter: blur(10px);
+  transform: translateX(0);
+}
+
+/* 面板显示/隐藏动画 */
+.modules-panel-overlay {
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 面板内容样式调整 */
+.modules-panel .panel-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #e4e7ed;
+  border-radius: 12px 12px 0 0;
+}
+
+.modules-panel .modules-content {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .panel-header {
@@ -1901,6 +2115,77 @@ export default {
 
 :deep(.luckysheet-modal-dialog-mask) {
   z-index: 1000 !important;
+}
+
+/* 修复Luckysheet工具栏下拉菜单定位问题 */
+:deep(.luckysheet-toolbar-more-vertical-content) {
+  position: fixed !important;
+  z-index: 1001 !important;
+}
+
+/* 确保工具栏容器有正确的定位上下文 */
+:deep(.luckysheet-toolbar) {
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+/* 修复工具栏下拉菜单的定位基准 */
+:deep(.luckysheet-toolbar-more-vertical) {
+  position: relative !important;
+}
+
+/* 工具栏下拉菜单内容定位修复 */
+:deep(.luckysheet-toolbar-more-vertical-content) {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+  transform: none !important;
+  margin-top: 0 !important;
+}
+
+/* 确保下拉菜单不受页面滚动影响 */
+:deep(.luckysheet-toolbar-more-vertical.luckysheet-toolbar-more-vertical-active .luckysheet-toolbar-more-vertical-content) {
+  display: flex !important;
+  position: fixed !important;
+  background: #fff !important;
+  border: 1px solid #e4e7ed !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  z-index: 9999 !important;
+  min-width: 200px !important;
+  flex-direction: column !important;
+}
+
+/* 拖动工具栏样式增强 */
+:deep(.luckysheet-toolbar-more-vertical-content) {
+  transition: all 0.2s ease !important;
+}
+
+:deep(.luckysheet-toolbar-more-vertical-content:hover) {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 整个工具栏可拖动的视觉提示 */
+:deep(.luckysheet-toolbar-more-vertical-content) {
+  cursor: move !important;
+  user-select: none !important;
+}
+
+:deep(.luckysheet-toolbar-more-vertical-content:active) {
+  cursor: grabbing !important;
+}
+
+/* 工具栏按钮在拖动状态下的样式 */
+:deep(.luckysheet-toolbar-more-vertical-content .luckysheet-toolbar-button) {
+  margin: 2px !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+:deep(.luckysheet-toolbar-more-vertical-content .luckysheet-toolbar-button:hover) {
+  background: #f0f9ff !important;
+  transform: translateY(-1px) !important;
 }
 
 /* 模板选择器样式 */
