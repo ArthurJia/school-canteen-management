@@ -104,7 +104,19 @@ watch(sidebarCollapsed, () => {
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
   transition: width 0.3s ease;
   position: relative;
-  overflow: hidden; /* 防止出现滚动条 */
+  overflow: visible; /* 允许折叠按钮超出边界 */
+}
+
+/* 为了防止内容滚动，只对内容区域设置overflow */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 /* 折叠按钮 */
@@ -121,12 +133,13 @@ watch(sidebarCollapsed, () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 1000;
+  z-index: 1001; /* 提高层级确保显示在最上层 */
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
   transition: all 0.3s ease;
   color: white;
   border: none;
   outline: none;
+  overflow: visible; /* 确保按钮内容不被裁切 */
 }
 
 /* 确保折叠按钮内的图标完全显示 */
@@ -153,6 +166,7 @@ watch(sidebarCollapsed, () => {
 .sidebar.collapsed .logo-container {
   justify-content: center;
   gap: 0;
+  width: 100%;
 }
 
 .sidebar.collapsed .side-menu {
@@ -167,6 +181,7 @@ watch(sidebarCollapsed, () => {
   background: linear-gradient(135deg, #409eff 0%, #67c23a 100%);
   position: relative;
   overflow: hidden;
+  z-index: 1; /* 确保不会覆盖折叠按钮 */
 }
 
 .sidebar-header::before {
@@ -213,6 +228,7 @@ watch(sidebarCollapsed, () => {
   overflow: hidden; /* 防止菜单容器出现滚动条 */
   display: flex;
   flex-direction: column;
+  z-index: 1; /* 确保不会覆盖折叠按钮 */
 }
 
 .side-menu {
