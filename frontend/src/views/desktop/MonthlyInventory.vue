@@ -20,6 +20,7 @@
       >
         <el-table-column prop="date" label="时间（年月）" min-width="140" />
         <el-table-column prop="name" label="名称" min-width="180" />
+        <el-table-column prop="category" label="分类" min-width="120" />
         <el-table-column prop="unitPrice" label="单价（元）" min-width="120" align="right">
           <template #default="{ row }">
             {{ row.unitPrice.toFixed(2) }}
@@ -102,8 +103,8 @@
           />
         </el-form-item>
         <el-form-item label="名称" prop="name">
-          <el-select v-model="newInventoryItem.name" placeholder="请选择分类" style="width: 100%">
-            <el-option value="">请选择分类</el-option>
+          <el-select v-model="newInventoryItem.name" placeholder="请选择分类名称" style="width: 100%">
+            <el-option value="">请选择分类名称</el-option>
             <el-option 
               v-for="category in categoryList" 
               :key="category.name" 
@@ -112,13 +113,20 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="分类" prop="category">
+          <el-input 
+            v-model="newInventoryItem.category" 
+            placeholder="自动填充"
+            readonly
+          />
+        </el-form-item>
         <el-form-item label="单价（元）" prop="unitPrice">
           <el-input 
             v-model.number="newInventoryItem.unitPrice" 
             type="number"
             :step="0.01"
-            placeholder="请输入单价"
-            :readonly="selectedCategoryPrice !== null"
+            placeholder="自动填充"
+            readonly
           />
         </el-form-item>
         <el-form-item label="库存数量" prop="quantity">
@@ -140,7 +148,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="closeAddInventoryDialog">取消</el-button>
-          <el-button type="primary" @click="addInventoryItem">确认添加</el-button>
+          <el-button type="primary" @click="addOrUpdateInventoryItem">
+            {{ editingInventoryIndex !== -1 ? '确认修改' : '确认添加' }}
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -208,6 +218,7 @@ const categoryFormRef = ref(null)
 const newInventoryItem = ref({
   date: '',
   name: '',
+  category: '',
   unitPrice: 0,
   quantity: 0
 })
@@ -220,6 +231,25 @@ const newCategory = ref({
   specification: ''
 })
 
+// 监听器 - 当选择名称时自动填充分类和单价
+watch(() => newInventoryItem.value.name, (newName) => {
+  const selectedCategory = categoryList.value.find(cat => cat.name === newName)
+  if (selectedCategory) {
+    // 根据名称设置分类显示规则
+    if (newName === '大米') {
+      newInventoryItem.value.category = '大米'
+    } else if (newName === '大豆油') {
+      newInventoryItem.value.category = '食用油类'
+    } else {
+      newInventoryItem.value.category = '调味品类'
+    }
+    newInventoryItem.value.unitPrice = selectedCategory.unitPrice
+  } else {
+    newInventoryItem.value.category = ''
+    newInventoryItem.value.unitPrice = 0
+  }
+})
+
 // 表单验证规则
 const inventoryRules = {
   date: [
@@ -227,10 +257,6 @@ const inventoryRules = {
   ],
   name: [
     { required: true, message: '请选择名称', trigger: 'change' }
-  ],
-  unitPrice: [
-    { required: true, message: '请输入单价', trigger: 'blur' },
-    { type: 'number', min: 0, message: '单价必须大于等于0', trigger: 'blur' }
   ],
   quantity: [
     { required: true, message: '请输入库存数量', trigger: 'blur' },
@@ -241,7 +267,7 @@ const inventoryRules = {
 const categoryRules = {
   name: [
     { required: true, message: '请输入分类名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+    { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
   ],
   unit: [
     { required: true, message: '请选择单位', trigger: 'change' }
@@ -252,19 +278,6 @@ const categoryRules = {
   ]
 }
 
-// 计算属性
-const selectedCategoryPrice = computed(() => {
-  const selectedCategory = categoryList.value.find(cat => cat.name === newInventoryItem.value.name)
-  return selectedCategory ? selectedCategory.unitPrice : null
-})
-
-// 监听器
-watch(() => newInventoryItem.value.name, (newName) => {
-  const selectedCategory = categoryList.value.find(cat => cat.name === newName)
-  if (selectedCategory) {
-    newInventoryItem.value.unitPrice = selectedCategory.unitPrice
-  }
-})
 
 // 方法
 const loadData = () => {
@@ -306,6 +319,7 @@ const addOrUpdateInventoryItem = async () => {
           inventoryList.value[editingInventoryIndex.value] = {
             date: newInventoryItem.value.date,
             name: newInventoryItem.value.name,
+            category: newInventoryItem.value.category,
             unitPrice: newInventoryItem.value.unitPrice,
             quantity: newInventoryItem.value.quantity
           }
@@ -315,6 +329,7 @@ const addOrUpdateInventoryItem = async () => {
           inventoryList.value.push({
             date: newInventoryItem.value.date,
             name: newInventoryItem.value.name,
+            category: newInventoryItem.value.category,
             unitPrice: newInventoryItem.value.unitPrice,
             quantity: newInventoryItem.value.quantity
           })
@@ -419,6 +434,7 @@ const closeAddInventoryDialog = () => {
   newInventoryItem.value = {
     date: '',
     name: '',
+    category: '',
     unitPrice: 0,
     quantity: 0
   }
