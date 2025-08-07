@@ -10,7 +10,8 @@
       <template #header>
         <div class="card-header">
           <div class="header-info">
-            <span class="card-subtitle">上传Excel或CSV文件导入库存查询数据</span>
+            <span class="card-title">库存查询数据导入</span>
+            <span class="card-subtitle">上传Excel或CSV文件导入库存查询数据，用于入库记录管理</span>
           </div>
           <div class="header-actions">
             <el-button type="success" :icon="Download" @click="downloadStockTemplate">
@@ -22,6 +23,18 @@
           </div>
         </div>
       </template>
+      
+      <div class="card-description">
+        <div class="desc-content">
+          <h4>功能说明</h4>
+          <ul>
+            <li><strong>数据用途：</strong>导入食材入库记录，包括入库时间、食材名称、分类、供应商、数量等信息</li>
+            <li><strong>支持格式：</strong>Excel文件(.xlsx, .xls)和CSV文件，文件大小不超过10MB</li>
+            <li><strong>必填字段：</strong>入库时间、食材名称、分类、供应商、数量、单位、单价、小计</li>
+            <li><strong>导入方式：</strong>支持新增数据和覆盖数据两种模式</li>
+          </ul>
+        </div>
+      </div>
       
       <div class="import-content">
         <div class="upload-area" @drop="handleStockFileDrop" @dragover.prevent @dragenter.prevent>
@@ -93,7 +106,7 @@
         <div class="card-header">
           <div class="header-info">
             <span class="card-title">月底库存数据导入</span>
-            <span class="card-subtitle">导入月底库存卡片的数据</span>
+            <span class="card-subtitle">上传Excel或CSV文件导入月底库存数据，用于库存统计和成本核算</span>
           </div>
           <div class="header-actions">
             <el-button type="success" :icon="Download" @click="downloadInventoryTemplate">
@@ -105,6 +118,18 @@
           </div>
         </div>
       </template>
+      
+      <div class="card-description">
+        <div class="desc-content">
+          <h4>功能说明</h4>
+          <ul>
+            <li><strong>数据用途：</strong>导入每月月底的库存盘点数据，包括食材名称、分类、单价和库存数量</li>
+            <li><strong>支持格式：</strong>Excel文件(.xlsx, .xls)和CSV文件，文件大小不超过10MB</li>
+            <li><strong>必填字段：</strong>时间（年月）、名称、分类、单价、库存数量</li>
+            <li><strong>导入方式：</strong>支持新增数据和覆盖数据两种模式</li>
+          </ul>
+        </div>
+      </div>
       
       <div class="import-content">
         <div class="upload-area" @drop="handleInventoryFileDrop" @dragover.prevent @dragenter.prevent>
@@ -876,6 +901,38 @@ const downloadInventoryTemplate = () => {
   gap: 10px;
 }
 
+.card-description {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 8px;
+  border-left: 4px solid #409eff;
+}
+
+.desc-content h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.desc-content ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #666;
+}
+
+.desc-content li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.desc-content li strong {
+  color: #409eff;
+  font-weight: 600;
+}
+
 .import-content {
   padding: 20px 0;
 }
@@ -1013,6 +1070,20 @@ const downloadInventoryTemplate = () => {
   
   .header-actions {
     justify-content: center;
+  }
+  
+  .card-description {
+    margin-bottom: 15px;
+    padding: 12px;
+  }
+  
+  .desc-content h4 {
+    font-size: 14px;
+  }
+  
+  .desc-content li {
+    font-size: 13px;
+    margin-bottom: 6px;
   }
   
   .upload-area {
