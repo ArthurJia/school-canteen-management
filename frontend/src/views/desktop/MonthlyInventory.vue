@@ -1,584 +1,580 @@
 <template>
   <div class="monthly-inventory">
-    <div class="page-header">
-      <h2>月底盘点明细</h2>
-    </div>
-
     <!-- 月底库存卡片 -->
-    <div class="card">
-      <div class="card-header">
-        <h3>月底库存</h3>
-        <button class="btn btn-primary" @click="showAddInventoryDialog = true">
-          添加库存记录
-        </button>
-      </div>
-      <div class="card-body">
-        <div class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>时间（年月）</th>
-                <th>名称</th>
-                <th>单价（元）</th>
-                <th>库存数量</th>
-                <th>库存金额（元）</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in inventoryList" :key="index">
-                <td>{{ item.date }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.unitPrice.toFixed(2) }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ (item.unitPrice * item.quantity).toFixed(2) }}</td>
-                <td>
-                  <button class="btn btn-sm btn-danger" @click="deleteInventoryItem(index)">
-                    删除
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="inventoryList.length === 0">
-                <td colspan="6" class="text-center">暂无数据</td>
-              </tr>
-            </tbody>
-          </table>
+    <el-card class="form-card card-hover card-glow">
+      <template #header>
+        <div class="card-header">
+          <span>月底库存</span>
+          <el-button type="primary" :icon="Plus" @click="showAddInventoryDialog = true">
+            添加库存记录
+          </el-button>
         </div>
-      </div>
-    </div>
+      </template>
+      
+      <el-table 
+        :data="inventoryList" 
+        border 
+        style="width: 100%" 
+        v-loading="loading"
+        stripe
+      >
+        <el-table-column prop="date" label="时间（年月）" min-width="140" />
+        <el-table-column prop="name" label="名称" min-width="180" />
+        <el-table-column prop="unitPrice" label="单价（元）" min-width="120" align="right">
+          <template #default="{ row }">
+            {{ row.unitPrice.toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="quantity" label="库存数量" min-width="120" align="right" />
+        <el-table-column label="库存金额（元）" min-width="140" align="right">
+          <template #default="{ row }">
+            {{ (row.unitPrice * row.quantity).toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ $index }">
+            <el-button size="small" @click="editInventoryItem($index)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteInventoryItem($index)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+        <template #empty>
+          <el-empty description="暂无库存记录" />
+        </template>
+      </el-table>
+    </el-card>
 
     <!-- 出库分类卡片 -->
-    <div class="card">
-      <div class="card-header">
-        <h3>出库分类</h3>
-        <button class="btn btn-primary" @click="showAddCategoryDialog = true">
-          添加分类
-        </button>
-      </div>
-      <div class="card-body">
-        <div class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>分类名称</th>
-                <th>单位</th>
-                <th>单价（元）</th>
-                <th>规格</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(category, index) in categoryList" :key="index">
-                <td>{{ category.name }}</td>
-                <td>{{ category.unit }}</td>
-                <td>{{ category.unitPrice.toFixed(2) }}</td>
-                <td>{{ category.specification }}</td>
-                <td>
-                  <button class="btn btn-sm btn-warning" @click="editCategory(index)">
-                    编辑
-                  </button>
-                  <button class="btn btn-sm btn-danger" @click="deleteCategory(index)">
-                    删除
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="categoryList.length === 0">
-                <td colspan="5" class="text-center">暂无数据</td>
-              </tr>
-            </tbody>
-          </table>
+    <el-card class="query-card card-hover card-glow">
+      <template #header>
+        <div class="card-header">
+          <span>出库分类</span>
+          <el-button type="primary" :icon="Plus" @click="showAddCategoryDialog = true">
+            添加分类
+          </el-button>
         </div>
-      </div>
-    </div>
+      </template>
+      
+      <el-table 
+        :data="categoryList" 
+        border 
+        style="width: 100%" 
+        v-loading="loading"
+        stripe
+      >
+        <el-table-column prop="name" label="分类名称" width="200" />
+        <el-table-column prop="unit" label="单位" width="120" />
+        <el-table-column prop="unitPrice" label="单价（元）" width="120" align="right">
+          <template #default="{ row }">
+            {{ row.unitPrice.toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="specification" label="规格" />
+        <el-table-column label="操作" width="180">
+          <template #default="{ $index }">
+            <el-button size="small" @click="editCategory($index)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteCategory($index)">删除</el-button>
+          </template>
+        </el-table-column>
+        <template #empty>
+          <el-empty description="暂无分类数据" />
+        </template>
+      </el-table>
+    </el-card>
 
-    <!-- 添加库存记录对话框 -->
-    <div v-if="showAddInventoryDialog" class="modal-overlay" @click="closeAddInventoryDialog">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h4>添加库存记录</h4>
-          <button class="close-btn" @click="closeAddInventoryDialog">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="addInventoryItem">
-            <div class="form-group">
-              <label>时间（年月）：</label>
-              <input 
-                type="month" 
-                v-model="newInventoryItem.date" 
-                class="form-control" 
-                required
-              >
-            </div>
-            <div class="form-group">
-              <label>名称：</label>
-              <select v-model="newInventoryItem.name" class="form-control" required>
-                <option value="">请选择分类</option>
-                <option v-for="category in categoryList" :key="category.name" :value="category.name">
-                  {{ category.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>单价（元）：</label>
-              <input 
-                type="number" 
-                step="0.01" 
-                v-model.number="newInventoryItem.unitPrice" 
-                class="form-control" 
-                required
-                :readonly="selectedCategoryPrice !== null"
-              >
-            </div>
-            <div class="form-group">
-              <label>库存数量：</label>
-              <input 
-                type="number" 
-                step="0.01" 
-                v-model.number="newInventoryItem.quantity" 
-                class="form-control" 
-                required
-              >
-            </div>
-            <div class="form-group">
-              <label>库存金额（元）：</label>
-              <input 
-                type="text" 
-                :value="(newInventoryItem.unitPrice * newInventoryItem.quantity || 0).toFixed(2)" 
-                class="form-control" 
-                readonly
-              >
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary">确认添加</button>
-              <button type="button" class="btn btn-secondary" @click="closeAddInventoryDialog">取消</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <!-- 添加/编辑库存记录对话框 -->
+    <el-dialog 
+      v-model="showAddInventoryDialog" 
+      :title="editingInventoryIndex !== -1 ? '编辑库存记录' : '添加库存记录'" 
+      width="50%"
+      @closed="closeAddInventoryDialog"
+    >
+      <el-form :model="newInventoryItem" :rules="inventoryRules" ref="inventoryFormRef" label-width="120px">
+        <el-form-item label="时间（年月）" prop="date">
+          <el-date-picker
+            v-model="newInventoryItem.date"
+            type="month"
+            format="YYYY年MM月"
+            value-format="YYYY-MM"
+            placeholder="选择月份"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="名称" prop="name">
+          <el-select v-model="newInventoryItem.name" placeholder="请选择分类" style="width: 100%">
+            <el-option value="">请选择分类</el-option>
+            <el-option 
+              v-for="category in categoryList" 
+              :key="category.name" 
+              :value="category.name"
+              :label="category.name"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="单价（元）" prop="unitPrice">
+          <el-input 
+            v-model.number="newInventoryItem.unitPrice" 
+            type="number"
+            :step="0.01"
+            placeholder="请输入单价"
+            :readonly="selectedCategoryPrice !== null"
+          />
+        </el-form-item>
+        <el-form-item label="库存数量" prop="quantity">
+          <el-input 
+            v-model.number="newInventoryItem.quantity" 
+            type="number"
+            :step="0.01"
+            placeholder="请输入库存数量"
+          />
+        </el-form-item>
+        <el-form-item label="库存金额（元）">
+          <el-input 
+            :value="(newInventoryItem.unitPrice * newInventoryItem.quantity || 0).toFixed(2)" 
+            readonly
+            placeholder="自动计算"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeAddInventoryDialog">取消</el-button>
+          <el-button type="primary" @click="addInventoryItem">确认添加</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <!-- 添加/编辑分类对话框 -->
-    <div v-if="showAddCategoryDialog" class="modal-overlay" @click="closeAddCategoryDialog">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h4>{{ editingCategoryIndex !== -1 ? '编辑分类' : '添加分类' }}</h4>
-          <button class="close-btn" @click="closeAddCategoryDialog">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="addOrUpdateCategory">
-            <div class="form-group">
-              <label>分类名称：</label>
-              <input 
-                type="text" 
-                v-model="newCategory.name" 
-                class="form-control" 
-                required
-              >
-            </div>
-            <div class="form-group">
-              <label>单位：</label>
-              <select v-model="newCategory.unit" class="form-control" required>
-                <option value="千克">千克</option>
-                <option value="升">升</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>单价（元）：</label>
-              <input 
-                type="number" 
-                step="0.01" 
-                v-model.number="newCategory.unitPrice" 
-                class="form-control" 
-                required
-              >
-            </div>
-            <div class="form-group">
-              <label>规格：</label>
-              <input 
-                type="text" 
-                v-model="newCategory.specification" 
-                class="form-control" 
-                placeholder="选填"
-              >
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary">
-                {{ editingCategoryIndex !== -1 ? '确认修改' : '确认添加' }}
-              </button>
-              <button type="button" class="btn btn-secondary" @click="closeAddCategoryDialog">取消</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <el-dialog 
+      v-model="showAddCategoryDialog" 
+      :title="editingCategoryIndex !== -1 ? '编辑分类' : '添加分类'" 
+      width="50%"
+      @closed="closeAddCategoryDialog"
+    >
+      <el-form :model="newCategory" :rules="categoryRules" ref="categoryFormRef" label-width="120px">
+        <el-form-item label="分类名称" prop="name">
+          <el-input v-model="newCategory.name" placeholder="请输入分类名称" />
+        </el-form-item>
+        <el-form-item label="单位" prop="unit">
+          <el-select v-model="newCategory.unit" placeholder="请选择单位" style="width: 100%">
+            <el-option label="千克" value="千克" />
+            <el-option label="升" value="升" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="单价（元）" prop="unitPrice">
+          <el-input 
+            v-model.number="newCategory.unitPrice" 
+            type="number"
+            :step="0.01"
+            placeholder="请输入单价"
+          />
+        </el-form-item>
+        <el-form-item label="规格" prop="specification">
+          <el-input v-model="newCategory.specification" placeholder="选填" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeAddCategoryDialog">取消</el-button>
+          <el-button type="primary" @click="addOrUpdateCategory">
+            {{ editingCategoryIndex !== -1 ? '确认修改' : '确认添加' }}
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'MonthlyInventory',
-  data() {
-    return {
-      // 库存列表
-      inventoryList: [],
-      // 分类列表
-      categoryList: [],
-      // 对话框显示状态
-      showAddInventoryDialog: false,
-      showAddCategoryDialog: false,
-      // 新库存记录
-      newInventoryItem: {
-        date: '',
-        name: '',
-        unitPrice: 0,
-        quantity: 0
-      },
-      // 新分类
-      newCategory: {
-        name: '',
-        unit: '千克',
-        unitPrice: 0,
-        specification: ''
-      },
-      // 编辑状态
-      editingCategoryIndex: -1
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { Plus } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+// 响应式数据
+const loading = ref(false)
+const inventoryList = ref([])
+const categoryList = ref([])
+const showAddInventoryDialog = ref(false)
+const showAddCategoryDialog = ref(false)
+const editingCategoryIndex = ref(-1)
+const editingInventoryIndex = ref(-1)
+
+// 表单引用
+const inventoryFormRef = ref(null)
+const categoryFormRef = ref(null)
+
+// 新库存记录
+const newInventoryItem = ref({
+  date: '',
+  name: '',
+  unitPrice: 0,
+  quantity: 0
+})
+
+// 新分类
+const newCategory = ref({
+  name: '',
+  unit: '千克',
+  unitPrice: 0,
+  specification: ''
+})
+
+// 表单验证规则
+const inventoryRules = {
+  date: [
+    { required: true, message: '请选择时间', trigger: 'change' }
+  ],
+  name: [
+    { required: true, message: '请选择名称', trigger: 'change' }
+  ],
+  unitPrice: [
+    { required: true, message: '请输入单价', trigger: 'blur' },
+    { type: 'number', min: 0, message: '单价必须大于等于0', trigger: 'blur' }
+  ],
+  quantity: [
+    { required: true, message: '请输入库存数量', trigger: 'blur' },
+    { type: 'number', min: 0, message: '库存数量必须大于等于0', trigger: 'blur' }
+  ]
+}
+
+const categoryRules = {
+  name: [
+    { required: true, message: '请输入分类名称', trigger: 'blur' },
+    { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+  ],
+  unit: [
+    { required: true, message: '请选择单位', trigger: 'change' }
+  ],
+  unitPrice: [
+    { required: true, message: '请输入单价', trigger: 'blur' },
+    { type: 'number', min: 0, message: '单价必须大于等于0', trigger: 'blur' }
+  ]
+}
+
+// 计算属性
+const selectedCategoryPrice = computed(() => {
+  const selectedCategory = categoryList.value.find(cat => cat.name === newInventoryItem.value.name)
+  return selectedCategory ? selectedCategory.unitPrice : null
+})
+
+// 监听器
+watch(() => newInventoryItem.value.name, (newName) => {
+  const selectedCategory = categoryList.value.find(cat => cat.name === newName)
+  if (selectedCategory) {
+    newInventoryItem.value.unitPrice = selectedCategory.unitPrice
+  }
+})
+
+// 方法
+const loadData = () => {
+  try {
+    const savedInventory = localStorage.getItem('monthlyInventory')
+    const savedCategories = localStorage.getItem('outboundCategories')
+    
+    if (savedInventory) {
+      inventoryList.value = JSON.parse(savedInventory)
     }
-  },
-  computed: {
-    selectedCategoryPrice() {
-      const selectedCategory = this.categoryList.find(cat => cat.name === this.newInventoryItem.name);
-      return selectedCategory ? selectedCategory.unitPrice : null;
+    
+    if (savedCategories) {
+      categoryList.value = JSON.parse(savedCategories)
     }
-  },
-  watch: {
-    'newInventoryItem.name'(newName) {
-      const selectedCategory = this.categoryList.find(cat => cat.name === newName);
-      if (selectedCategory) {
-        this.newInventoryItem.unitPrice = selectedCategory.unitPrice;
+  } catch (error) {
+    console.error('加载数据失败:', error)
+    ElMessage.error('加载数据失败')
+  }
+}
+
+const saveData = () => {
+  try {
+    localStorage.setItem('monthlyInventory', JSON.stringify(inventoryList.value))
+    localStorage.setItem('outboundCategories', JSON.stringify(categoryList.value))
+  } catch (error) {
+    console.error('保存数据失败:', error)
+    ElMessage.error('保存数据失败')
+  }
+}
+
+const addOrUpdateInventoryItem = async () => {
+  if (!inventoryFormRef.value) return
+  
+  inventoryFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        if (editingInventoryIndex.value !== -1) {
+          // 编辑模式
+          inventoryList.value[editingInventoryIndex.value] = {
+            date: newInventoryItem.value.date,
+            name: newInventoryItem.value.name,
+            unitPrice: newInventoryItem.value.unitPrice,
+            quantity: newInventoryItem.value.quantity
+          }
+          ElMessage.success('修改库存记录成功')
+        } else {
+          // 添加模式
+          inventoryList.value.push({
+            date: newInventoryItem.value.date,
+            name: newInventoryItem.value.name,
+            unitPrice: newInventoryItem.value.unitPrice,
+            quantity: newInventoryItem.value.quantity
+          })
+          ElMessage.success('添加库存记录成功')
+        }
+        
+        saveData()
+        closeAddInventoryDialog()
+      } catch (error) {
+        console.error('操作库存记录失败:', error)
+        ElMessage.error('操作库存记录失败')
       }
     }
-  },
-  mounted() {
-    this.loadData();
-  },
-  methods: {
-    // 加载数据
-    loadData() {
-      // 从localStorage加载数据
-      const savedInventory = localStorage.getItem('monthlyInventory');
-      const savedCategories = localStorage.getItem('outboundCategories');
-      
-      if (savedInventory) {
-        this.inventoryList = JSON.parse(savedInventory);
+  })
+}
+
+const editInventoryItem = (index) => {
+  editingInventoryIndex.value = index
+  newInventoryItem.value = { ...inventoryList.value[index] }
+  showAddInventoryDialog.value = true
+}
+
+const deleteInventoryItem = async (index) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这条库存记录吗？',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
       }
-      
-      if (savedCategories) {
-        this.categoryList = JSON.parse(savedCategories);
-      }
-    },
+    )
     
-    // 保存数据到localStorage
-    saveData() {
-      localStorage.setItem('monthlyInventory', JSON.stringify(this.inventoryList));
-      localStorage.setItem('outboundCategories', JSON.stringify(this.categoryList));
-    },
-    
-    // 添加库存记录
-    addInventoryItem() {
-      this.inventoryList.push({
-        date: this.newInventoryItem.date,
-        name: this.newInventoryItem.name,
-        unitPrice: this.newInventoryItem.unitPrice,
-        quantity: this.newInventoryItem.quantity
-      });
-      
-      this.saveData();
-      this.closeAddInventoryDialog();
-    },
-    
-    // 删除库存记录
-    deleteInventoryItem(index) {
-      if (confirm('确定要删除这条库存记录吗？')) {
-        this.inventoryList.splice(index, 1);
-        this.saveData();
-      }
-    },
-    
-    // 添加或更新分类
-    addOrUpdateCategory() {
-      if (this.editingCategoryIndex !== -1) {
-        // 编辑模式
-        this.categoryList[this.editingCategoryIndex] = { ...this.newCategory };
-      } else {
-        // 添加模式
-        this.categoryList.push({ ...this.newCategory });
-      }
-      
-      this.saveData();
-      this.closeAddCategoryDialog();
-    },
-    
-    // 编辑分类
-    editCategory(index) {
-      this.editingCategoryIndex = index;
-      this.newCategory = { ...this.categoryList[index] };
-      this.showAddCategoryDialog = true;
-    },
-    
-    // 删除分类
-    deleteCategory(index) {
-      if (confirm('确定要删除这个分类吗？')) {
-        this.categoryList.splice(index, 1);
-        this.saveData();
-      }
-    },
-    
-    // 关闭添加库存对话框
-    closeAddInventoryDialog() {
-      this.showAddInventoryDialog = false;
-      this.newInventoryItem = {
-        date: '',
-        name: '',
-        unitPrice: 0,
-        quantity: 0
-      };
-    },
-    
-    // 关闭添加分类对话框
-    closeAddCategoryDialog() {
-      this.showAddCategoryDialog = false;
-      this.editingCategoryIndex = -1;
-      this.newCategory = {
-        name: '',
-        unit: '千克',
-        unitPrice: 0,
-        specification: ''
-      };
+    inventoryList.value.splice(index, 1)
+    saveData()
+    ElMessage.success('删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
     }
   }
 }
+
+const addOrUpdateCategory = async () => {
+  if (!categoryFormRef.value) return
+  
+  categoryFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        if (editingCategoryIndex.value !== -1) {
+          // 编辑模式
+          categoryList.value[editingCategoryIndex.value] = { ...newCategory.value }
+          ElMessage.success('修改分类成功')
+        } else {
+          // 添加模式
+          categoryList.value.push({ ...newCategory.value })
+          ElMessage.success('添加分类成功')
+        }
+        
+        saveData()
+        closeAddCategoryDialog()
+      } catch (error) {
+        console.error('操作分类失败:', error)
+        ElMessage.error('操作分类失败')
+      }
+    }
+  })
+}
+
+const editCategory = (index) => {
+  editingCategoryIndex.value = index
+  newCategory.value = { ...categoryList.value[index] }
+  showAddCategoryDialog.value = true
+}
+
+const deleteCategory = async (index) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这个分类吗？',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    categoryList.value.splice(index, 1)
+    saveData()
+    ElMessage.success('删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+const closeAddInventoryDialog = () => {
+  showAddInventoryDialog.value = false
+  editingInventoryIndex.value = -1
+  newInventoryItem.value = {
+    date: '',
+    name: '',
+    unitPrice: 0,
+    quantity: 0
+  }
+  inventoryFormRef.value?.resetFields()
+}
+
+const closeAddCategoryDialog = () => {
+  showAddCategoryDialog.value = false
+  editingCategoryIndex.value = -1
+  newCategory.value = {
+    name: '',
+    unit: '千克',
+    unitPrice: 0,
+    specification: ''
+  }
+  categoryFormRef.value?.resetFields()
+}
+
+// 生命周期
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style scoped>
 .monthly-inventory {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
-.page-header {
-  margin-bottom: 30px;
+.form-card {
+  margin-bottom: 20px;
 }
 
-.page-header h2 {
-  color: #333;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
-  overflow: hidden;
+.query-card {
+  margin-bottom: 20px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.card-header h3 {
-  margin: 0;
-  color: #333;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: bold;
 }
 
-.card-body {
-  padding: 20px;
+/* 减少表单项之间的间距 */
+:deep(.el-form-item) {
+  margin-bottom: 15px;
 }
 
-.table-container {
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
+/* 调整表格样式 */
+:deep(.el-table) {
   margin-top: 10px;
 }
 
-.data-table th,
-.data-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #e9ecef;
+/* 对话框样式调整 */
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #e4e7ed;
+  border-radius: 12px 12px 0 0;
 }
 
-.data-table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #333;
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
-.data-table tbody tr:hover {
-  background: #f8f9fa;
+/* 表格行悬浮效果 */
+:deep(.el-table tbody tr:hover > td) {
+  background-color: #f8f9fa !important;
 }
 
-.text-center {
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
+/* 按钮组样式 */
+:deep(.el-button-group .el-button) {
+  border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  display: inline-block;
-  transition: all 0.2s;
+:deep(.el-button-group .el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #0056b3;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #545b62;
-}
-
-.btn-warning {
-  background: #ffc107;
-  color: #212529;
-}
-
-.btn-warning:hover {
-  background: #e0a800;
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #c82333;
-}
-
-.btn-sm {
-  padding: 4px 8px;
-  font-size: 12px;
-  margin-right: 5px;
-}
-
-/* 模态框样式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
+/* 输入框美化 */
+:deep(.el-input__wrapper) {
   border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
+  transition: all 0.3s ease;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 选择器美化 */
+:deep(.el-select .el-input__wrapper) {
+  border-radius: 8px;
+}
+
+/* 日期选择器美化 */
+:deep(.el-date-editor.el-input) {
+  border-radius: 8px;
+}
+
+/* 空状态样式 */
+:deep(.el-empty) {
+  padding: 40px 0;
+}
+
+:deep(.el-empty__description) {
+  color: #909399;
+  font-size: 14px;
+}
+
+/* 表格边框美化 */
+:deep(.el-table--border) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table--border::after) {
+  display: none;
+}
+
+:deep(.el-table--border::before) {
+  display: none;
+}
+
+/* 表格头部样式 */
+:deep(.el-table th.el-table__cell) {
+  background: #f8f9fa;
+  color: #333;
+  font-weight: 600;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+/* 表格单元格样式 */
+:deep(.el-table td.el-table__cell) {
   border-bottom: 1px solid #e9ecef;
 }
 
-.modal-header h4 {
-  margin: 0;
-  color: #333;
+/* 加载状态美化 */
+:deep(.el-loading-mask) {
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #6c757d;
+/* 消息框美化 */
+:deep(.el-message-box) {
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
 }
 
-.close-btn:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: #333;
-}
-
-.form-control {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.form-control[readonly] {
-  background-color: #e9ecef;
-  opacity: 1;
-}
-
-.form-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 30px;
+:deep(.el-message-box__header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #e4e7ed;
+  border-radius: 12px 12px 0 0;
 }
 
 /* 响应式设计 */
@@ -593,22 +589,55 @@ export default {
     align-items: stretch;
   }
   
-  .data-table {
+  :deep(.el-table) {
     font-size: 12px;
   }
   
-  .data-table th,
-  .data-table td {
+  :deep(.el-table th.el-table__cell),
+  :deep(.el-table td.el-table__cell) {
     padding: 8px;
   }
   
-  .modal-content {
-    width: 95%;
+  :deep(.el-dialog) {
+    width: 95% !important;
     margin: 10px;
   }
   
-  .form-actions {
+  :deep(.el-form-item__content) {
     flex-direction: column;
   }
+}
+
+/* 卡片动画效果 */
+.form-card,
+.query-card {
+  animation: cardFadeIn 0.3s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 按钮悬浮效果增强 */
+:deep(.el-button:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 表格条纹效果 */
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
+  background: #fafafa;
+}
+
+/* 表格选中行效果 */
+:deep(.el-table__body tr.current-row > td) {
+  background-color: #ecf5ff !important;
 }
 </style>
