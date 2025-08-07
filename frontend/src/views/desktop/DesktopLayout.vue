@@ -1,12 +1,20 @@
 <template>
   <el-container class="desktop-layout">
-    <el-aside width="220px" class="sidebar">
+    <el-aside :width="sidebarCollapsed ? '60px' : '220px'" class="sidebar" :class="{ 'collapsed': sidebarCollapsed }">
+      <!-- 折叠按钮 -->
+      <div class="collapse-button" @click="toggleSidebar">
+        <el-icon>
+          <ArrowLeft v-if="!sidebarCollapsed" />
+          <ArrowRight v-if="sidebarCollapsed" />
+        </el-icon>
+      </div>
+      
       <div class="sidebar-header">
         <div class="logo-container">
           <div class="logo-icon">
             <el-icon size="24"><Menu /></el-icon>
           </div>
-          <div class="logo-text">操作目录</div>
+          <div class="logo-text" v-show="!sidebarCollapsed">操作目录</div>
         </div>
       </div>
       <div class="menu-container">
@@ -14,6 +22,7 @@
           router
           :default-active="$route.path"
           class="side-menu"
+          :collapse="sidebarCollapsed"
           background-color="transparent"
           text-color="#606266"
           active-text-color="#409eff">
@@ -62,8 +71,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, provide, watch } from 'vue'
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+
 const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png')
+const sidebarCollapsed = ref(false)
+
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
+
+// 提供导航栏状态给子组件
+provide('sidebarCollapsed', sidebarCollapsed)
+
+// 监听导航栏状态变化，触发窗口resize事件以便Luckysheet重新调整大小
+watch(sidebarCollapsed, () => {
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'))
+  }, 300) // 等待CSS动画完成
+})
 </script>
 
 <style scoped>
@@ -77,6 +103,51 @@ const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c672
   background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
   border-right: 1px solid #e4e7ed;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+/* 折叠按钮 */
+.collapse-button {
+  position: absolute;
+  top: 50%;
+  right: -15px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: #409eff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.collapse-button:hover {
+  background: #337ecc;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+
+/* 侧边栏收缩状态 */
+.sidebar.collapsed {
+  overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 0 8px;
+}
+
+.sidebar.collapsed .logo-container {
+  justify-content: center;
+}
+
+.sidebar.collapsed .side-menu {
+  padding: 16px 4px;
 }
 
 .sidebar-header {

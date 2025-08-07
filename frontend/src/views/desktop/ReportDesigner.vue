@@ -244,7 +244,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, inject, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   DocumentAdd,
@@ -286,6 +286,9 @@ export default {
     
     // 面板显示状态 - 默认隐藏
     const showModulesPanel = ref(false)
+    
+    // 注入导航栏状态
+    const sidebarCollapsed = inject('sidebarCollapsed', ref(false))
 
     const templateForm = reactive({
       name: '',
@@ -1591,6 +1594,20 @@ export default {
 
 
 
+    // 监听导航栏状态变化，重新调整Luckysheet大小
+    watch(sidebarCollapsed, () => {
+      setTimeout(() => {
+        if (luckysheetInstance.value && window.luckysheet) {
+          try {
+            // 触发Luckysheet重新计算大小
+            window.luckysheet.resize()
+          } catch (error) {
+            console.log('Luckysheet resize failed:', error)
+          }
+        }
+      }, 350) // 等待CSS动画完成后再调整
+    })
+
     onMounted(() => {
       // 忽略Chrome扩展的端口错误
       if (window.chrome && window.chrome.runtime && window.chrome.runtime.lastError) {
@@ -1776,7 +1793,7 @@ export default {
 
 <style scoped>
 .report-designer {
-  height: 100vh;
+  height: calc(100vh - 64px); /* 减去头部高度 */
   display: flex;
   flex-direction: column;
   background-color: #f5f5f5;
@@ -1839,6 +1856,7 @@ export default {
   /* 确保内部定位元素有正确的基准 */
   transform: translateZ(0);
   overflow: hidden;
+  min-height: 0; /* 确保flex子元素能正确收缩 */
 }
 
 /* 悬浮的数据模块面板覆盖层 */
@@ -2317,6 +2335,23 @@ export default {
   transform: translateX(0);
 }
 
+/* 导航栏收缩时的适配 */
+@media screen and (min-width: 769px) {
+  /* 当导航栏收缩时，确保表格有足够空间 */
+  .report-designer {
+    transition: all 0.3s ease;
+  }
+  
+  .excel-container {
+    transition: all 0.3s ease;
+  }
+  
+  /* 悬浮面板在导航栏收缩时的调整 */
+  .modules-panel-overlay {
+    transition: all 0.3s ease;
+  }
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .templates-grid {
@@ -2334,6 +2369,11 @@ export default {
   
   .template-name {
     font-size: 16px;
+  }
+  
+  /* 移动端时调整面板宽度 */
+  .modules-panel-overlay {
+    width: 300px;
   }
 }
 </style>
