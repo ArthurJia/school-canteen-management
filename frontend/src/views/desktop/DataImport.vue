@@ -51,6 +51,14 @@
           </div>
         </div>
         
+        <div class="import-options">
+          <span class="option-label">导入方式：</span>
+          <el-radio-group v-model="importMode" size="small">
+            <el-radio-button :value="'append'">新增数据</el-radio-button>
+            <el-radio-button :value="'overwrite'">覆盖数据</el-radio-button>
+          </el-radio-group>
+        </div>
+        
         <div class="import-actions">
           <el-button 
             type="primary" 
@@ -126,6 +134,14 @@
           </div>
         </div>
         
+        <div class="import-options">
+          <span class="option-label">导入方式：</span>
+          <el-radio-group v-model="inventoryImportMode" size="small">
+            <el-radio-button :value="'append'">新增数据</el-radio-button>
+            <el-radio-button :value="'overwrite'">覆盖数据</el-radio-button>
+          </el-radio-group>
+        </div>
+        
         <div class="import-actions">
           <el-button 
             type="primary" 
@@ -168,6 +184,9 @@ import {
 } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 
+// API基础URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+
 // 响应式数据
 const stockFile = ref(null)
 const inventoryFile = ref(null)
@@ -175,6 +194,8 @@ const stockImporting = ref(false)
 const inventoryImporting = ref(false)
 const stockImportResult = ref(null)
 const inventoryImportResult = ref(null)
+const importMode = ref('append') // 导入模式：append(新增数据) 或 overwrite(覆盖数据)
+const inventoryImportMode = ref('append') // 月底库存导入模式：append(新增数据) 或 overwrite(覆盖数据)
 
 // 文件输入引用
 const stockFileInput = ref(null)
@@ -233,6 +254,60 @@ const clearStockImport = () => {
   removeStockFile()
 }
 
+// 导入axios
+import axios from 'axios'
+
+// API函数：导入库存查询数据
+const importStockDataToAPI = async (data, mode) => {
+  try {
+    // 使用axios直接调用后端API
+    const response = await axios.post(`${API_BASE_URL}/api/stock-ins/batch`, {
+      data: data,
+      mode: mode // 'append' 或 'overwrite'
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('API导入失败:', error);
+    
+    // 如果API调用失败，使用localStorage作为备用
+    console.log('使用localStorage作为备用存储');
+    
+    // 获取现有数据
+    const existingData = JSON.parse(localStorage.getItem('stockQueryData') || '[]');
+    let result = {
+      success: true,
+      overwritten: existingData.length,
+      imported: data.length
+    };
+    
+    // 根据模式处理数据
+    if (mode === 'append') {
+      localStorage.setItem('stockQueryData', JSON.stringify([...existingData, ...data]));
+    } else {
+      localStorage.setItem('stockQueryData', JSON.stringify(data));
+    }
+    
+    throw error; // 继续抛出错误，让调用者知道API调用失败了
+  }
+}
+
+// API函数：导入月底库存数据
+const importInventoryDataToAPI = async (data, mode) => {
+  try {
+    // 使用axios直接调用后端API
+    const response = await axios.post(`${API_BASE_URL}/api/inventory-import`, {
+      data: data,
+      mode: mode // 'append' 或 'overwrite'
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('API导入失败:', error)
+    throw error
+  }
+}
+
 const importStockData = async () => {
   if (!stockFile.value) {
     ElMessage.error('请先选择要导入的文件')
@@ -259,35 +334,108 @@ const importStockData = async () => {
       throw new Error(`缺少必要的列：${missingColumns.join(', ')}`)
     }
     
-    // 处理数据并保存到localStorage
-    const processedData = data.map((row, index) => ({
-      id: Date.now() + index, // 生成唯一ID
-      in_time: row['入库时间'],
-      name: row['食材名称'],
-      category: row['分类'],
-      supplier: row['供应商'],
-      quantity: parseFloat(row['数量']) || 0,
-      unit: row['单位'] || 'kg',
-      price: parseFloat(row['单价']) || 0,
-      subtotal: parseFloat(row['小计']) || 0,
-      note: row['备注'] || ''
-    }))
-    
-    // 保存到localStorage
-    const existingData = JSON.parse(localStorage.getItem('stockQueryData') || '[]')
-    const mergedData = [...existingData, ...processedData]
-    localStorage.setItem('stockQueryData', JSON.stringify(mergedData))
-    
-    stockImportResult.value = {
-      success: true,
-      message: '库存查询数据导入成功',
-      details: {
-        success: processedData.length,
-        failed: 0
+    // 处理数据 - 将中文字段名映射为英文字段名
+    const processedData = data.map((row, index) => {
+      // 处理日期格式
+      let inTime = row['入库时间'];
+      
+      // 检查是否是Excel日期数值格式（如45352）
+      if (typeof inTime === 'number' || (typeof inTime === 'string' && !isNaN(inTime) && !inTime.includes('-') && !inTime.includes('/'))) {
+        // 将Excel日期数值转换为JavaScript日期对象
+        // Excel日期是从1900年1月1日开始的天数，而JavaScript日期是从1970年1月1日开始的毫秒数
+        // 需要考虑Excel的1900年错误（Excel错误地认为1900年是闰年）
+        const excelDate = parseInt(inTime);
+        const millisecondsPerDay = 24 * 60 * 60 * 1000;
+        
+        // 创建1900年1月1日的日期（Excel的起始日期）
+        const excelStartDate = new Date(1900, 0, 1);
+        
+        // 如果日期大于60（1900年2月29日之后），需要减去1天（因为1900年不是闰年，但Excel认为是）
+        const daysToAdd = excelDate > 60 ? excelDate - 1 : excelDate;
+        
+        // 计算JavaScript日期
+        const jsDate = new Date(excelStartDate.getTime() + daysToAdd * millisecondsPerDay);
+        
+        // 格式化为YYYY-MM-DD
+        inTime = jsDate.toISOString().split('T')[0];
       }
-    }
+      
+      return {
+        id: Date.now() + index, // 生成唯一ID
+        in_time: inTime,
+        name: row['食材名称'],
+        category: row['分类'],
+        supplier: row['供应商'],
+        quantity: parseFloat(row['数量']) || 0,
+        unit: row['单位'] || 'kg',
+        price: parseFloat(row['单价']) || 0,
+        subtotal: parseFloat(row['小计']) || 0,
+        note: row['备注'] || ''
+      };
+    });
     
-    ElMessage.success(`成功导入 ${processedData.length} 条库存查询数据`)
+    try {
+      // 调用API将数据导入到后端数据库
+      const apiResult = await importStockDataToAPI(processedData, importMode.value)
+      
+      // 导入成功后，更新结果显示
+      if (importMode.value === 'append') {
+        stockImportResult.value = {
+          success: true,
+          message: '库存查询数据已成功添加',
+          details: {
+            success: processedData.length,
+            failed: 0
+          }
+        }
+        ElMessage.success(`成功添加 ${processedData.length} 条库存查询数据`)
+      } else {
+        stockImportResult.value = {
+          success: true,
+          message: '库存查询数据已成功覆盖',
+          details: {
+            success: processedData.length,
+            failed: 0,
+            overwritten: apiResult.overwritten || 0
+          }
+        }
+        ElMessage.success(`已覆盖原有数据，导入 ${processedData.length} 条新数据`)
+      }
+    } catch (apiError) {
+      console.error('API调用失败，使用本地存储作为备用:', apiError)
+      
+      // API调用失败，使用localStorage作为备用
+      const existingData = JSON.parse(localStorage.getItem('stockQueryData') || '[]')
+      let finalData = []
+      
+      if (importMode.value === 'append') {
+        finalData = [...existingData, ...processedData]
+        stockImportResult.value = {
+          success: true,
+          message: '库存查询数据已成功添加到本地存储（API调用失败）',
+          details: {
+            success: processedData.length,
+            failed: 0
+          }
+        }
+        ElMessage.warning(`API调用失败，数据已保存到本地存储。成功添加 ${processedData.length} 条库存查询数据`)
+      } else {
+        finalData = [...processedData]
+        stockImportResult.value = {
+          success: true,
+          message: '库存查询数据已成功覆盖到本地存储（API调用失败）',
+          details: {
+            success: processedData.length,
+            failed: 0,
+            overwritten: existingData.length
+          }
+        }
+        ElMessage.warning(`API调用失败，数据已保存到本地存储。已覆盖原有 ${existingData.length} 条数据，导入 ${processedData.length} 条新数据`)
+      }
+      
+      // 更新localStorage
+      localStorage.setItem('stockQueryData', JSON.stringify(finalData))
+    }
     
   } catch (error) {
     console.error('导入库存查询数据失败:', error)
@@ -380,30 +528,101 @@ const importInventoryData = async () => {
       throw new Error(`缺少必要的列：${missingColumns.join(', ')}`)
     }
     
-    // 处理数据并保存到localStorage
-    const processedData = data.map(row => ({
-      date: row['时间（年月）'],
-      name: row['名称'],
-      category: row['分类'],
-      unitPrice: parseFloat(row['单价']) || 0,
-      quantity: parseFloat(row['库存数量']) || 0
-    }))
-    
-    // 保存到localStorage
-    const existingData = JSON.parse(localStorage.getItem('monthlyInventory') || '[]')
-    const mergedData = [...existingData, ...processedData]
-    localStorage.setItem('monthlyInventory', JSON.stringify(mergedData))
-    
-    inventoryImportResult.value = {
-      success: true,
-      message: '月底库存数据导入成功',
-      details: {
-        success: processedData.length,
-        failed: 0
+    // 处理数据 - 将中文字段名映射为英文字段名
+    const processedData = data.map(row => {
+      // 处理日期格式
+      let dateValue = row['时间（年月）'];
+      
+      // 检查是否是Excel日期数值格式
+      if (typeof dateValue === 'number' || (typeof dateValue === 'string' && !isNaN(dateValue) && !dateValue.includes('-') && !dateValue.includes('/'))) {
+        // 将Excel日期数值转换为JavaScript日期对象
+        const excelDate = parseInt(dateValue);
+        const millisecondsPerDay = 24 * 60 * 60 * 1000;
+        
+        // 创建1900年1月1日的日期（Excel的起始日期）
+        const excelStartDate = new Date(1900, 0, 1);
+        
+        // 如果日期大于60（1900年2月29日之后），需要减去1天（因为1900年不是闰年，但Excel认为是）
+        const daysToAdd = excelDate > 60 ? excelDate - 1 : excelDate;
+        
+        // 计算JavaScript日期
+        const jsDate = new Date(excelStartDate.getTime() + daysToAdd * millisecondsPerDay);
+        
+        // 格式化为YYYY-MM（月底库存只需要年月）
+        dateValue = `${jsDate.getFullYear()}-${String(jsDate.getMonth() + 1).padStart(2, '0')}`;
       }
-    }
+      
+      return {
+        date: dateValue,
+        name: row['名称'],
+        category: row['分类'],
+        unitPrice: parseFloat(row['单价']) || 0,
+        quantity: parseFloat(row['库存数量']) || 0
+      };
+    });
     
-    ElMessage.success(`成功导入 ${processedData.length} 条月底库存数据`)
+    try {
+      // 调用API将数据导入到后端数据库
+      const apiResult = await importInventoryDataToAPI(processedData, inventoryImportMode.value)
+      
+      // 导入成功后，更新结果显示
+      if (inventoryImportMode.value === 'append') {
+        inventoryImportResult.value = {
+          success: true,
+          message: '月底库存数据已成功添加',
+          details: {
+            success: processedData.length,
+            failed: 0
+          }
+        }
+        ElMessage.success(`成功添加 ${processedData.length} 条月底库存数据`)
+      } else {
+        inventoryImportResult.value = {
+          success: true,
+          message: '月底库存数据已成功覆盖',
+          details: {
+            success: processedData.length,
+            failed: 0,
+            overwritten: apiResult.overwritten || 0
+          }
+        }
+        ElMessage.success(`已覆盖原有数据，导入 ${processedData.length} 条新数据`)
+      }
+    } catch (apiError) {
+      console.error('API调用失败，使用本地存储作为备用:', apiError)
+      
+      // API调用失败，使用localStorage作为备用
+      const existingData = JSON.parse(localStorage.getItem('monthlyInventory') || '[]')
+      let finalData = []
+      
+      if (inventoryImportMode.value === 'append') {
+        finalData = [...existingData, ...processedData]
+        inventoryImportResult.value = {
+          success: true,
+          message: '月底库存数据已成功添加到本地存储（API调用失败）',
+          details: {
+            success: processedData.length,
+            failed: 0
+          }
+        }
+        ElMessage.warning(`API调用失败，数据已保存到本地存储。成功添加 ${processedData.length} 条月底库存数据`)
+      } else {
+        finalData = [...processedData]
+        inventoryImportResult.value = {
+          success: true,
+          message: '月底库存数据已成功覆盖到本地存储（API调用失败）',
+          details: {
+            success: processedData.length,
+            failed: 0,
+            overwritten: existingData.length
+          }
+        }
+        ElMessage.warning(`API调用失败，数据已保存到本地存储。已覆盖原有 ${existingData.length} 条数据，导入 ${processedData.length} 条新数据`)
+      }
+      
+      // 更新localStorage
+      localStorage.setItem('monthlyInventory', JSON.stringify(finalData))
+    }
     
   } catch (error) {
     console.error('导入月底库存数据失败:', error)
@@ -737,6 +956,23 @@ const downloadInventoryTemplate = () => {
   color: #666;
   font-size: 14px;
   margin: 0;
+}
+
+.import-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.option-label {
+  margin-right: 10px;
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
 }
 
 .import-actions {

@@ -3,6 +3,7 @@ from flask_cors import CORS
 import sqlite3
 from datetime import datetime
 from database import get_db_connection
+from import_handler import import_stock_data, import_inventory_data
 
 app = Flask(__name__)
 # 增强CORS配置
@@ -998,6 +999,57 @@ def get_report_template():
     except Exception as e:
         print(f"Error fetching report template: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# 数据导入API
+@app.route('/api/stock-ins/batch', methods=['POST'])
+def batch_import_stock_ins():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '没有提供数据'}), 400
+            
+        import_data = data.get('data', [])
+        import_mode = data.get('mode', 'append')  # 默认为新增模式
+        
+        if not import_data or not isinstance(import_data, list):
+            return jsonify({'error': '数据格式不正确，应为数组'}), 400
+            
+        # 调用导入处理函数
+        result = import_stock_data(import_data, import_mode)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        print(f"批量导入库存数据失败: {str(e)}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
+@app.route('/api/inventory-import', methods=['POST'])
+def import_monthly_inventory():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '没有提供数据'}), 400
+            
+        import_data = data.get('data', [])
+        import_mode = data.get('mode', 'append')  # 默认为新增模式
+        
+        if not import_data or not isinstance(import_data, list):
+            return jsonify({'error': '数据格式不正确，应为数组'}), 400
+            
+        # 调用导入处理函数
+        result = import_inventory_data(import_data, import_mode)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        print(f"批量导入月底库存数据失败: {str(e)}")
+        return jsonify({'error': str(e), 'success': False}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
