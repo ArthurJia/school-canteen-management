@@ -10,8 +10,7 @@
       <template #header>
         <div class="card-header">
           <div class="header-info">
-            <span class="card-title">库存查询数据导入</span>
-            <span class="card-subtitle">导入库存查询页面的数据</span>
+            <span class="card-subtitle">上传Excel或CSV文件导入库存查询数据</span>
           </div>
           <div class="header-actions">
             <el-button type="success" :icon="Download" @click="downloadStockTemplate">
@@ -252,7 +251,7 @@ const importStockData = async () => {
     }
     
     // 验证必要的列
-    const requiredColumns = ['日期', '分类', '名称', '数量', '单价', '小计']
+    const requiredColumns = ['入库时间', '食材名称', '分类', '供应商', '数量', '单位', '单价', '小计']
     const headers = Object.keys(data[0])
     const missingColumns = requiredColumns.filter(col => !headers.includes(col))
     
@@ -261,13 +260,17 @@ const importStockData = async () => {
     }
     
     // 处理数据并保存到localStorage
-    const processedData = data.map(row => ({
-      date: row['日期'],
+    const processedData = data.map((row, index) => ({
+      id: Date.now() + index, // 生成唯一ID
+      in_time: row['入库时间'],
+      name: row['食材名称'],
       category: row['分类'],
-      name: row['名称'],
+      supplier: row['供应商'],
       quantity: parseFloat(row['数量']) || 0,
-      unitPrice: parseFloat(row['单价']) || 0,
-      subtotal: parseFloat(row['小计']) || 0
+      unit: row['单位'] || 'kg',
+      price: parseFloat(row['单价']) || 0,
+      subtotal: parseFloat(row['小计']) || 0,
+      note: row['备注'] || ''
     }))
     
     // 保存到localStorage
@@ -452,16 +455,104 @@ const formatFileSize = (bytes) => {
 const downloadStockTemplate = () => {
   const templateData = [
     {
-      '日期': '2024-01',
-      '分类': '大米',
-      '名称': '优质大米',
+      '入库时间': '2024-01-01',
+      '食材名称': '优质大米',
+      '分类': 'rice',
+      '供应商': 'maidelong',
       '数量': 100,
+      '单位': 'kg',
       '单价': 5.5,
-      '小计': 550
+      '小计': 550,
+      '备注': '示例数据'
+    },
+    {
+      '入库时间': '2024-01-02',
+      '食材名称': '大豆油',
+      '分类': 'oil',
+      '供应商': 'yurun',
+      '数量': 50,
+      '单位': 'L',
+      '单价': 12.8,
+      '小计': 640,
+      '备注': '食用油'
+    },
+    {
+      '入库时间': '2024-01-03',
+      '食材名称': '白菜',
+      '分类': 'vegetable',
+      '供应商': 'hetianyu',
+      '数量': 30,
+      '单位': 'kg',
+      '单价': 2.5,
+      '小计': 75,
+      '备注': '新鲜蔬菜'
     }
   ]
   
-  downloadExcelTemplate(templateData, '库存查询数据模板.xlsx')
+  // 添加分类和供应商代码说明
+  const categorySheet = [
+    { '分类代码': 'vegetable', '分类名称': '蔬菜类' },
+    { '分类代码': 'meat', '分类名称': '鲜肉类' },
+    { '分类代码': 'frozen', '分类名称': '冷冻类' },
+    { '分类代码': 'tofu', '分类名称': '豆制品类' },
+    { '分类代码': 'egg', '分类名称': '禽蛋类' },
+    { '分类代码': 'fruit', '分类名称': '水果类' },
+    { '分类代码': 'dessert', '分类名称': '点心类' },
+    { '分类代码': 'flour', '分类名称': '面粉制品' },
+    { '分类代码': 'rice', '分类名称': '大米' },
+    { '分类代码': 'oil', '分类名称': '食用油类' },
+    { '分类代码': 'seasoning', '分类名称': '调味品类' }
+  ]
+  
+  const supplierSheet = [
+    { '供应商代码': 'maidelong', '供应商名称': '麦德龙' },
+    { '供应商代码': 'hetianyu', '供应商名称': '禾田裕' },
+    { '供应商代码': 'tianyuan', '供应商名称': '天源' },
+    { '供应商代码': 'hejiahuang', '供应商名称': '合家欢' },
+    { '供应商代码': 'yurun', '供应商名称': '雨润' },
+    { '供应商代码': 'zhonghe', '供应商名称': '中合' },
+    { '供应商代码': 'zhongxin', '供应商名称': '中鑫' },
+    { '供应商代码': 'suhe', '供应商名称': '苏合' },
+    { '供应商代码': 'huacheng', '供应商名称': '华诚' },
+    { '供应商代码': 'xuezihan', '供应商名称': '学子膳' },
+    { '供应商代码': 'yaozhiwei', '供应商名称': '肴之味' },
+    { '供应商代码': 'yuanwei', '供应商名称': '原味' },
+    { '供应商代码': 'huihai', '供应商名称': '汇海' },
+    { '供应商代码': 'zuming', '供应商名称': '祖名' },
+    { '供应商代码': 'yafu', '供应商名称': '亚夫' },
+    { '供应商代码': 'longmen', '供应商名称': '龙门' },
+    { '供应商代码': 'weigang', '供应商名称': '卫岗' },
+    { '供应商代码': 'tiangu', '供应商名称': '天谷' },
+    { '供应商代码': 'sushi', '供应商名称': '苏食' },
+    { '供应商代码': 'hengshun', '供应商名称': '恒顺' },
+    { '供应商代码': 'zhongrun', '供应商名称': '中润' },
+    { '供应商代码': 'guoguo', '供应商名称': '果果' },
+    { '供应商代码': 'furun', '供应商名称': '富润' }
+  ]
+  
+  try {
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new()
+    
+    // 添加示例数据工作表
+    const dataSheet = XLSX.utils.json_to_sheet(templateData)
+    XLSX.utils.book_append_sheet(workbook, dataSheet, '示例数据')
+    
+    // 添加分类代码说明工作表
+    const catSheet = XLSX.utils.json_to_sheet(categorySheet)
+    XLSX.utils.book_append_sheet(workbook, catSheet, '分类代码说明')
+    
+    // 添加供应商代码说明工作表
+    const supSheet = XLSX.utils.json_to_sheet(supplierSheet)
+    XLSX.utils.book_append_sheet(workbook, supSheet, '供应商代码说明')
+    
+    // 导出Excel文件
+    XLSX.writeFile(workbook, '库存查询数据模板.xlsx')
+    ElMessage.success('模板下载成功')
+  } catch (error) {
+    console.error('下载模板失败:', error)
+    ElMessage.error('下载模板失败')
+  }
 }
 
 const downloadInventoryTemplate = () => {
@@ -472,18 +563,28 @@ const downloadInventoryTemplate = () => {
       '分类': '大米',
       '单价': 5.5,
       '库存数量': 100
+    },
+    {
+      '时间（年月）': '2024-01',
+      '名称': '大豆油',
+      '分类': '食用油类',
+      '单价': 12.8,
+      '库存数量': 50
+    },
+    {
+      '时间（年月）': '2024-01',
+      '名称': '食盐',
+      '分类': '调味品类',
+      '单价': 3.2,
+      '库存数量': 20
     }
   ]
   
-  downloadExcelTemplate(templateData, '月底库存数据模板.xlsx')
-}
-
-const downloadExcelTemplate = (data, filename) => {
   try {
-    const worksheet = XLSX.utils.json_to_sheet(data)
+    const worksheet = XLSX.utils.json_to_sheet(templateData)
     const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-    XLSX.writeFile(workbook, filename)
+    XLSX.utils.book_append_sheet(workbook, worksheet, '月底库存数据')
+    XLSX.writeFile(workbook, '月底库存数据模板.xlsx')
     ElMessage.success('模板下载成功')
   } catch (error) {
     console.error('下载模板失败:', error)
