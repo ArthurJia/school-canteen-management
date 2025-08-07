@@ -1865,7 +1865,7 @@ export default {
   top: 10px;
   right: 10px;
   bottom: 10px;
-  width: 400px;
+  width: 320px; /* 调整宽度以适应卡片内容 */
   z-index: 1000;
   pointer-events: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1962,14 +1962,15 @@ export default {
 
 .module-card {
   display: flex;
-  align-items: center;
-  padding: 12px;
+  align-items: flex-start; /* 改为顶部对齐，适应多行文字 */
+  padding: 10px; /* 稍微减少内边距 */
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   cursor: grab;
   transition: all 0.2s;
   background: white;
   position: relative;
+  min-height: 60px; /* 设置最小高度确保内容显示 */
 }
 
 .module-card:hover {
@@ -1991,6 +1992,8 @@ export default {
 .module-info {
   flex: 1;
   min-width: 0;
+  word-wrap: break-word; /* 确保长文字能够换行 */
+  overflow-wrap: break-word;
 }
 
 .module-title {
@@ -1998,6 +2001,8 @@ export default {
   font-size: 13px;
   margin-bottom: 4px;
   color: #333;
+  line-height: 1.3; /* 改善行高 */
+  word-break: keep-all; /* 保持中文词汇完整性 */
 }
 
 .module-desc {
@@ -2005,6 +2010,8 @@ export default {
   color: #666;
   line-height: 1.4;
   margin-bottom: 4px;
+  word-break: keep-all; /* 保持中文词汇完整性 */
+  hyphens: auto; /* 自动断词 */
 }
 
 .module-data {
@@ -2373,7 +2380,7 @@ export default {
   
   /* 移动端时调整面板宽度 */
   .modules-panel-overlay {
-    width: 300px;
+    width: 280px;
   }
 }
 </style>
