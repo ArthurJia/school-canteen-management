@@ -480,10 +480,82 @@ export default {
         dataField: 'totals.frozen'
       },
       {
+        id: 'total_tofu',
+        title: '豆制品类月度合计',
+        description: '本月豆制品类支出总计',
+        sampleData: '1,395.00',
+        type: 'summary',
+        category: '豆制品类',
+        dataField: 'totals.tofu'
+      },
+      {
+        id: 'total_eggs',
+        title: '禽蛋类月度合计',
+        description: '本月禽蛋类支出总计',
+        sampleData: '1,860.00',
+        type: 'summary',
+        category: '禽蛋类',
+        dataField: 'totals.eggs'
+      },
+      {
+        id: 'total_fruits',
+        title: '水果类月度合计',
+        description: '本月水果类支出总计',
+        sampleData: '930.00',
+        type: 'summary',
+        category: '水果类',
+        dataField: 'totals.fruits'
+      },
+      {
+        id: 'total_snacks',
+        title: '点心类月度合计',
+        description: '本月点心类支出总计',
+        sampleData: '620.00',
+        type: 'summary',
+        category: '点心类',
+        dataField: 'totals.snacks'
+      },
+      {
+        id: 'total_rice',
+        title: '大米月度合计',
+        description: '本月大米支出总计',
+        sampleData: '3,100.00',
+        type: 'summary',
+        category: '大米',
+        dataField: 'totals.rice'
+      },
+      {
+        id: 'total_flour',
+        title: '面粉制品月度合计',
+        description: '本月面粉制品支出总计',
+        sampleData: '2,480.00',
+        type: 'summary',
+        category: '面粉制品',
+        dataField: 'totals.flour'
+      },
+      {
+        id: 'total_oil',
+        title: '食用油类月度合计',
+        description: '本月食用油类支出总计',
+        sampleData: '1,240.00',
+        type: 'summary',
+        category: '食用油类',
+        dataField: 'totals.oil'
+      },
+      {
+        id: 'total_seasoning',
+        title: '调味品类月度合计',
+        description: '本月调味品类支出总计',
+        sampleData: '775.00',
+        type: 'summary',
+        category: '调味品类',
+        dataField: 'totals.seasoning'
+      },
+      {
         id: 'total_all',
         title: '月度总合计',
         description: '本月所有支出总计',
-        sampleData: '26,850.00',
+        sampleData: '28,210.00',
         type: 'summary',
         category: '总计',
         dataField: 'totals.all'
