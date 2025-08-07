@@ -74,7 +74,6 @@
 import { ref, provide, watch } from 'vue'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 
-const userAvatar = ref('https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png')
 const sidebarCollapsed = ref(false)
 
 const toggleSidebar = () => {
@@ -105,6 +104,7 @@ watch(sidebarCollapsed, () => {
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
   transition: width 0.3s ease;
   position: relative;
+  overflow: hidden; /* 防止出现滚动条 */
 }
 
 /* 折叠按钮 */
@@ -125,6 +125,18 @@ watch(sidebarCollapsed, () => {
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
   transition: all 0.3s ease;
   color: white;
+  border: none;
+  outline: none;
+}
+
+/* 确保折叠按钮内的图标完全显示 */
+.collapse-button .el-icon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .collapse-button:hover {
@@ -134,16 +146,13 @@ watch(sidebarCollapsed, () => {
 }
 
 /* 侧边栏收缩状态 */
-.sidebar.collapsed {
-  overflow: hidden;
-}
-
 .sidebar.collapsed .sidebar-header {
   padding: 0 8px;
 }
 
 .sidebar.collapsed .logo-container {
   justify-content: center;
+  gap: 0;
 }
 
 .sidebar.collapsed .side-menu {
@@ -201,14 +210,18 @@ watch(sidebarCollapsed, () => {
 
 .menu-container {
   height: calc(100vh - 64px);
-  overflow: hidden;
+  overflow: hidden; /* 防止菜单容器出现滚动条 */
+  display: flex;
+  flex-direction: column;
 }
 
 .side-menu {
   border: none;
   background: transparent;
-  height: 100%;
+  flex: 1;
   padding: 16px 8px;
+  overflow: hidden; /* 防止菜单出现滚动条 */
+  min-height: 0; /* 确保flex子元素能正确收缩 */
 }
 
 .menu-item {
@@ -245,6 +258,44 @@ watch(sidebarCollapsed, () => {
 .menu-item span {
   font-weight: 500;
   transition: all 0.3s ease;
+}
+
+/* 确保Element Plus菜单组件不出现滚动条 */
+:deep(.el-menu) {
+  overflow: hidden !important;
+}
+
+:deep(.el-menu-item) {
+  overflow: hidden !important;
+}
+
+/* 防止菜单项文字溢出 */
+:deep(.el-menu-item span) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 收缩状态下菜单图标居中显示 */
+.sidebar.collapsed :deep(.el-menu-item) {
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.sidebar.collapsed :deep(.el-menu-item .el-icon) {
+  margin-right: 0 !important;
+}
+
+/* 收缩状态下的菜单项样式调整 */
+.sidebar.collapsed .menu-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px 2px;
+}
+
+.sidebar.collapsed .menu-item .el-icon {
+  margin-right: 0;
 }
 
 /* 头部样式 */
