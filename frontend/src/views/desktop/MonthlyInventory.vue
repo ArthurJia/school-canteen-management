@@ -62,6 +62,7 @@
       >
         <el-table-column prop="date" label="时间（年月）" min-width="140" />
         <el-table-column prop="name" label="名称" min-width="180" />
+        <el-table-column prop="unit" label="单位" min-width="80" />
         <el-table-column prop="category" label="分类" min-width="120" />
         <el-table-column prop="unitPrice" label="单价（元）" min-width="120" align="right">
           <template #default="{ row }">
@@ -154,6 +155,13 @@
               :label="category.name"
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="单位" prop="unit">
+          <el-input 
+            v-model="newInventoryItem.unit" 
+            placeholder="自动填充"
+            readonly
+          />
         </el-form-item>
         <el-form-item label="分类" prop="category">
           <el-input 
@@ -277,7 +285,8 @@ const newInventoryItem = ref({
   name: '',
   category: '',
   unitPrice: 0,
-  quantity: 0
+  quantity: 0,
+  unit: ''
 })
 
 // 新分类
@@ -288,7 +297,7 @@ const newCategory = ref({
   specification: ''
 })
 
-// 监听器 - 当选择名称时自动填充分类和单价
+// 监听器 - 当选择名称时自动填充分类、单价和单位
 watch(() => newInventoryItem.value.name, (newName) => {
   const selectedCategory = categoryList.value.find(cat => cat.name === newName)
   if (selectedCategory) {
@@ -301,9 +310,11 @@ watch(() => newInventoryItem.value.name, (newName) => {
       newInventoryItem.value.category = '调味品类'
     }
     newInventoryItem.value.unitPrice = selectedCategory.unitPrice
+    newInventoryItem.value.unit = selectedCategory.unit // 自动填充单位
   } else {
     newInventoryItem.value.category = ''
     newInventoryItem.value.unitPrice = 0
+    newInventoryItem.value.unit = ''
   }
 })
 
@@ -378,7 +389,8 @@ const addOrUpdateInventoryItem = async () => {
             name: newInventoryItem.value.name,
             category: newInventoryItem.value.category,
             unitPrice: newInventoryItem.value.unitPrice,
-            quantity: newInventoryItem.value.quantity
+            quantity: newInventoryItem.value.quantity,
+            unit: newInventoryItem.value.unit
           }
           ElMessage.success('修改库存记录成功')
         } else {
@@ -388,7 +400,8 @@ const addOrUpdateInventoryItem = async () => {
             name: newInventoryItem.value.name,
             category: newInventoryItem.value.category,
             unitPrice: newInventoryItem.value.unitPrice,
-            quantity: newInventoryItem.value.quantity
+            quantity: newInventoryItem.value.quantity,
+            unit: newInventoryItem.value.unit
           })
           ElMessage.success('添加库存记录成功')
         }
@@ -493,7 +506,8 @@ const closeAddInventoryDialog = () => {
     name: '',
     category: '',
     unitPrice: 0,
-    quantity: 0
+    quantity: 0,
+    unit: ''
   }
   inventoryFormRef.value?.resetFields()
 }
