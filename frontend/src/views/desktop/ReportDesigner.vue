@@ -69,13 +69,16 @@
 
           <!-- 每日数据模块 (31行) -->
           <div class="module-category">
-            <div class="category-header">
+            <div class="category-header" @click="toggleCategory('daily')">
               <el-icon>
                 <Calendar />
               </el-icon>
               <span>每日数据 (31行)</span>
+              <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.daily }">
+                <ArrowDown />
+              </el-icon>
             </div>
-            <div class="module-list">
+            <div class="module-list" v-show="categoryExpanded.daily">
               <div v-for="module in filteredDailyModules" :key="module.id" class="module-card daily-module"
                 @click="showDateSelector(module)">
                 <div class="module-icon">📊</div>
@@ -97,13 +100,16 @@
 
           <!-- 汇总数据模块 -->
           <div class="module-category">
-            <div class="category-header">
+            <div class="category-header" @click="toggleCategory('summary')">
               <el-icon>
                 <DataAnalysis />
               </el-icon>
               <span>汇总统计</span>
+              <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.summary }">
+                <ArrowDown />
+              </el-icon>
             </div>
-            <div class="module-list">
+            <div class="module-list" v-show="categoryExpanded.summary">
               <div v-for="module in filteredSummaryModules" :key="module.id"
                 class="module-card summary-module" :draggable="true"
                 @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
@@ -256,7 +262,8 @@ import {
   Calendar,
   DataAnalysis,
   View,
-  Hide
+  Hide,
+  ArrowDown
 } from '@element-plus/icons-vue'
 
 export default {
@@ -271,7 +278,8 @@ export default {
     Calendar,
     DataAnalysis,
     View,
-    Hide
+    Hide,
+    ArrowDown
   },
   setup() {
     const saving = ref(false)
@@ -286,6 +294,12 @@ export default {
     
     // 面板显示状态 - 默认隐藏
     const showModulesPanel = ref(false)
+    
+    // 分类展开状态 - 默认收起
+    const categoryExpanded = reactive({
+      daily: false,    // 每日数据分类
+      summary: false   // 汇总统计分类
+    })
     
     // 注入导航栏状态
     const sidebarCollapsed = inject('sidebarCollapsed', ref(false))
@@ -1414,6 +1428,11 @@ export default {
       ElMessage.success(showModulesPanel.value ? '已显示数据模块库' : '已隐藏数据模块库')
     }
 
+    // 切换分类展开/收起状态
+    const toggleCategory = (categoryKey) => {
+      categoryExpanded[categoryKey] = !categoryExpanded[categoryKey]
+    }
+
 
 
 
@@ -1843,6 +1862,7 @@ export default {
       availableTemplates,
       selectedTemplateIndex,
       showModulesPanel,
+      categoryExpanded,
       filteredDailyModules,
       filteredSummaryModules,
       handleDragStart,
@@ -1857,7 +1877,8 @@ export default {
       deleteTemplate,
       formatDate,
       manualExport,
-      toggleModulesPanel
+      toggleModulesPanel,
+      toggleCategory
     }
   }
 }
@@ -2024,12 +2045,66 @@ export default {
   font-weight: bold;
   color: #333;
   font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.category-header:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.category-header:active {
+  transform: translateY(0);
+}
+
+/* 分类箭头样式 */
+.category-arrow {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+  color: #666;
+}
+
+.category-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* 分类标题文字 */
+.category-header span {
+  flex: 1;
 }
 
 .module-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* 模块列表展开/收起动画 */
+.module-list {
+  max-height: 1000px; /* 设置一个足够大的最大高度 */
+}
+
+/* 当使用v-show时，可以通过CSS来控制动画 */
+.module-category .module-list {
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+}
+
+/* 淡入动画 */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .module-card {
