@@ -33,6 +33,11 @@ const routes = [
         meta: { title: '供应商管理' }
       },
       {
+        path: 'monthly-inventory',
+        component: () => import('@/views/desktop/MonthlyInventory.vue'),
+        meta: { title: '月底盘点明细' }
+      },
+      {
         path: 'report',
         component: () => import('@/views/desktop/MonthlyReport.vue'),
         meta: { title: '月度报表' }

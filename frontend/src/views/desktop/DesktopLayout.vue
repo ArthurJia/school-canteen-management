@@ -38,6 +38,10 @@
             <el-icon><User /></el-icon>
             <span>供应商管理</span>
           </el-menu-item>
+          <el-menu-item index="/desktop/monthly-inventory" class="menu-item">
+            <el-icon><Document /></el-icon>
+            <span>月底盘点明细</span>
+          </el-menu-item>
           <el-menu-item index="/desktop/report" class="menu-item">
             <el-icon><Document /></el-icon>
             <span>月度报表</span>
