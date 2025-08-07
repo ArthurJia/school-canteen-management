@@ -46,6 +46,11 @@ const routes = [
         path: 'report-designer',
         component: () => import('@/views/desktop/ReportDesigner.vue'),
         meta: { title: '报表设计及导出' }
+      },
+      {
+        path: 'data-import',
+        component: () => import('@/views/desktop/DataImport.vue'),
+        meta: { title: '数据导入' }
       }
     ]
   },

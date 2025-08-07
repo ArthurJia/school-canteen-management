@@ -50,6 +50,10 @@
             <el-icon><Edit /></el-icon>
             <span>报表设计及导出</span>
           </el-menu-item>
+          <el-menu-item index="/desktop/data-import" class="menu-item">
+            <el-icon><Upload /></el-icon>
+            <span>数据导入</span>
+          </el-menu-item>
         </el-menu>
       </div>
     </el-aside>
