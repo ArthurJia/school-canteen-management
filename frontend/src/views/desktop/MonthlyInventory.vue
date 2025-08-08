@@ -77,11 +77,11 @@
       </el-table>
     </el-card>
 
-    <!-- 出库分类卡片 -->
+    <!-- 储存类食材明细卡片 -->
     <el-card class="query-card card-hover card-glow">
       <template #header>
         <div class="card-header">
-          <span>出库分类</span>
+          <span>储存类食材明细</span>
           <el-button type="primary" :icon="Plus" @click="showAddCategoryDialog = true">
             添加分类
           </el-button>
@@ -89,7 +89,7 @@
       </template>
 
       <el-table :data="categoryList" border style="width: 100%" v-loading="loading" stripe>
-        <el-table-column prop="name" label="分类名称" width="200" />
+        <el-table-column prop="name" label="名称" width="200" />
         <el-table-column prop="unit" label="单位" width="120" />
         <el-table-column prop="unitPrice" label="单价（元）" width="120" align="right">
           <template #default="{ row }">
