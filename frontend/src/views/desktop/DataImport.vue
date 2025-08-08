@@ -320,16 +320,31 @@ const importStockDataToAPI = async (data, mode) => {
 // API函数：导入月底库存数据
 const importInventoryDataToAPI = async (data, mode) => {
   try {
-    // 使用axios直接调用后端API
-    const response = await axios.post(`${API_BASE_URL}/api/inventory-import`, {
+    console.log('开始批量导入月底库存数据:', { dataCount: data.length, mode })
+    
+    // 使用批量导入API
+    const response = await axios.post(`${API_BASE_URL}/api/monthly-inventory/batch`, {
       data: data,
       mode: mode // 'append' 或 'overwrite'
-    });
+    })
     
-    return response.data;
+    console.log('批量导入API响应:', response.data)
+    return response.data
+    
   } catch (error) {
-    console.error('API导入失败:', error)
-    throw error
+    console.error('批量导入API调用失败:', error)
+    
+    // 如果是网络错误或服务器错误，抛出错误
+    if (error.response) {
+      // 服务器返回了错误响应
+      throw new Error(error.response.data?.error || `服务器错误: ${error.response.status}`)
+    } else if (error.request) {
+      // 请求发送了但没有收到响应
+      throw new Error('网络错误：无法连接到服务器')
+    } else {
+      // 其他错误
+      throw new Error(error.message || '未知错误')
+    }
   }
 }
 
@@ -582,7 +597,8 @@ const importInventoryData = async () => {
         name: row['名称'],
         category: row['分类'],
         unitPrice: parseFloat(row['单价']) || 0,
-        quantity: parseFloat(row['库存数量']) || 0
+        quantity: parseFloat(row['库存数量']) || 0,
+        unit: row['单位'] || '千克' // 添加单位字段，默认为千克
       };
     });
     
@@ -590,63 +606,43 @@ const importInventoryData = async () => {
       // 调用API将数据导入到后端数据库
       const apiResult = await importInventoryDataToAPI(processedData, inventoryImportMode.value)
       
-      // 导入成功后，更新结果显示
-      if (inventoryImportMode.value === 'append') {
+      // 根据API返回结果更新显示
+      if (apiResult.success) {
         inventoryImportResult.value = {
           success: true,
-          message: '月底库存数据已成功添加',
+          message: inventoryImportMode.value === 'append' ? 
+            '月底库存数据已成功添加到数据库' : 
+            '月底库存数据已成功覆盖到数据库',
           details: {
-            success: processedData.length,
-            failed: 0
+            success: apiResult.successCount,
+            failed: apiResult.failedCount
           }
         }
-        ElMessage.success(`成功添加 ${processedData.length} 条月底库存数据`)
+        
+        if (apiResult.failedCount === 0) {
+          ElMessage.success(`成功导入 ${apiResult.successCount} 条月底库存数据`)
+        } else {
+          ElMessage.warning(`导入完成：成功 ${apiResult.successCount} 条，失败 ${apiResult.failedCount} 条`)
+        }
       } else {
         inventoryImportResult.value = {
-          success: true,
-          message: '月底库存数据已成功覆盖',
+          success: false,
+          message: `导入部分失败：${apiResult.message}`,
           details: {
-            success: processedData.length,
-            failed: 0,
-            overwritten: apiResult.overwritten || 0
+            success: apiResult.successCount,
+            failed: apiResult.failedCount
           }
         }
-        ElMessage.success(`已覆盖原有数据，导入 ${processedData.length} 条新数据`)
+        ElMessage.error(`导入失败：成功 ${apiResult.successCount} 条，失败 ${apiResult.failedCount} 条`)
       }
+      
     } catch (apiError) {
-      console.error('API调用失败，使用本地存储作为备用:', apiError)
-      
-      // API调用失败，使用localStorage作为备用
-      const existingData = JSON.parse(localStorage.getItem('monthlyInventory') || '[]')
-      let finalData = []
-      
-      if (inventoryImportMode.value === 'append') {
-        finalData = [...existingData, ...processedData]
-        inventoryImportResult.value = {
-          success: true,
-          message: '月底库存数据已成功添加到本地存储（API调用失败）',
-          details: {
-            success: processedData.length,
-            failed: 0
-          }
-        }
-        ElMessage.warning(`API调用失败，数据已保存到本地存储。成功添加 ${processedData.length} 条月底库存数据`)
-      } else {
-        finalData = [...processedData]
-        inventoryImportResult.value = {
-          success: true,
-          message: '月底库存数据已成功覆盖到本地存储（API调用失败）',
-          details: {
-            success: processedData.length,
-            failed: 0,
-            overwritten: existingData.length
-          }
-        }
-        ElMessage.warning(`API调用失败，数据已保存到本地存储。已覆盖原有 ${existingData.length} 条数据，导入 ${processedData.length} 条新数据`)
+      console.error('API调用失败:', apiError)
+      inventoryImportResult.value = {
+        success: false,
+        message: `API调用失败: ${apiError.message || '网络错误'}`
       }
-      
-      // 更新localStorage
-      localStorage.setItem('monthlyInventory', JSON.stringify(finalData))
+      ElMessage.error(`导入失败: ${apiError.message || '网络错误，请检查后端服务是否正常'}`)
     }
     
   } catch (error) {
@@ -802,33 +798,60 @@ const downloadStockTemplate = () => {
 const downloadInventoryTemplate = () => {
   const templateData = [
     {
-      '时间（年月）': '2024-01',
-      '名称': '优质大米',
+      '时间（年月）': '2025-06',
+      '名称': '大米',
       '分类': '大米',
       '单价': 5.5,
-      '库存数量': 100
+      '库存数量': 100,
+      '单位': '千克'
     },
     {
-      '时间（年月）': '2024-01',
+      '时间（年月）': '2025-06',
       '名称': '大豆油',
       '分类': '食用油类',
       '单价': 12.8,
-      '库存数量': 50
+      '库存数量': 20,
+      '单位': '升'
     },
     {
-      '时间（年月）': '2024-01',
-      '名称': '食盐',
+      '时间（年月）': '2025-06',
+      '名称': '生抽',
       '分类': '调味品类',
-      '单价': 3.2,
-      '库存数量': 20
+      '单价': 8.5,
+      '库存数量': 5,
+      '单位': '升'
     }
   ]
   
+  // 添加分类说明
+  const categorySheet = [
+    { '分类名称': '大米', '说明': '主食类，包括各种大米' },
+    { '分类名称': '食用油类', '说明': '各种食用油，如大豆油、花生油等' },
+    { '分类名称': '调味品类', '说明': '调味料，如生抽、老抽、盐等' },
+    { '分类名称': '蔬菜类', '说明': '新鲜蔬菜' },
+    { '分类名称': '鲜肉类', '说明': '新鲜肉类' },
+    { '分类名称': '冷冻类', '说明': '冷冻食品' },
+    { '分类名称': '豆制品类', '说明': '豆腐、豆干等豆制品' },
+    { '分类名称': '禽蛋类', '说明': '鸡蛋、鸭蛋等' },
+    { '分类名称': '水果类', '说明': '各种水果' },
+    { '分类名称': '点心类', '说明': '糕点、面包等' },
+    { '分类名称': '面粉制品', '说明': '面条、面粉等' }
+  ]
+  
   try {
-    const worksheet = XLSX.utils.json_to_sheet(templateData)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, '月底库存数据')
-    XLSX.writeFile(workbook, '月底库存数据模板.xlsx')
+    // 创建工作簿
+    const wb = XLSX.utils.book_new()
+    
+    // 创建数据工作表
+    const ws1 = XLSX.utils.json_to_sheet(templateData)
+    XLSX.utils.book_append_sheet(wb, ws1, '月底库存数据模板')
+    
+    // 创建分类说明工作表
+    const ws2 = XLSX.utils.json_to_sheet(categorySheet)
+    XLSX.utils.book_append_sheet(wb, ws2, '分类说明')
+    
+    // 下载文件
+    XLSX.writeFile(wb, '月底库存数据导入模板.xlsx')
     ElMessage.success('模板下载成功')
   } catch (error) {
     console.error('下载模板失败:', error)

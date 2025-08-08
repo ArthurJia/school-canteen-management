@@ -1051,6 +1051,92 @@ def import_monthly_inventory():
         print(f"批量导入月底库存数据失败: {str(e)}")
         return jsonify({'error': str(e), 'success': False}), 500
 
+# 批量导入月底库存数据API
+@app.route('/api/monthly-inventory/batch', methods=['POST'])
+def batch_import_monthly_inventory():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        inventory_data = data.get('data', [])
+        import_mode = data.get('mode', 'append')  # 'append' 或 'overwrite'
+        
+        if not inventory_data:
+            return jsonify({'error': 'No inventory data provided'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        success_count = 0
+        failed_count = 0
+        errors = []
+        
+        try:
+            # 如果是覆盖模式，先删除所有现有数据
+            if import_mode == 'overwrite':
+                cursor.execute('DELETE FROM monthly_inventory')
+                print(f"覆盖模式：已清空现有数据")
+            
+            # 批量插入新数据
+            for item in inventory_data:
+                try:
+                    # 验证必填字段
+                    required_fields = ['date', 'name', 'category', 'unitPrice', 'quantity']
+                    for field in required_fields:
+                        if field not in item:
+                            raise ValueError(f'Missing required field: {field}')
+                    
+                    cursor.execute('''
+                    INSERT INTO monthly_inventory (date, name, category, unit_price, quantity, unit)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (
+                        item['date'],
+                        item['name'],
+                        item['category'],
+                        float(item['unitPrice']),
+                        float(item['quantity']),
+                        item.get('unit', '千克')
+                    ))
+                    success_count += 1
+                    
+                except Exception as item_error:
+                    failed_count += 1
+                    error_msg = f"{item.get('name', 'Unknown')}: {str(item_error)}"
+                    errors.append(error_msg)
+                    print(f"导入单条记录失败: {error_msg}")
+            
+            conn.commit()
+            
+            # 返回导入结果
+            result = {
+                'success': failed_count == 0,
+                'successCount': success_count,
+                'failedCount': failed_count,
+                'errors': errors,
+                'message': f'成功导入 {success_count} 条记录' + (f'，失败 {failed_count} 条' if failed_count > 0 else '')
+            }
+            
+            print(f"批量导入完成: 成功 {success_count} 条，失败 {failed_count} 条")
+            return jsonify(result), 200
+            
+        except Exception as e:
+            conn.rollback()
+            print(f"批量导入事务失败: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': f'批量导入失败: {str(e)}',
+                'successCount': 0,
+                'failedCount': len(inventory_data)
+            }), 500
+            
+        finally:
+            conn.close()
+        
+    except Exception as e:
+        print(f"批量导入月底库存数据失败: {str(e)}")
+        return jsonify({'error': str(e), 'success': False}), 500
+
 # 月底库存API
 @app.route('/api/monthly-inventory', methods=['GET'])
 def get_monthly_inventory():
