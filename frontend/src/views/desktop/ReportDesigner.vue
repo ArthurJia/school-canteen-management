@@ -126,6 +126,38 @@
               </div>
             </div>
 
+            <!-- 储存类食材出库模块 -->
+            <div class="module-category">
+              <div class="category-header" @click="toggleCategory('storageOutbound')">
+                <el-icon>
+                  <Document />
+                </el-icon>
+                <span>储存类食材出库</span>
+                <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.storageOutbound }">
+                  <ArrowDown />
+                </el-icon>
+              </div>
+              <div class="module-list" v-show="categoryExpanded.storageOutbound">
+                <div v-for="module in filteredStorageOutboundModules" :key="module.id"
+                  class="module-card storage-outbound-module" :draggable="true"
+                  @dragstart="handleDragStart($event, module)" @click="showDateSelector(module)">
+                  <div class="module-icon">📦</div>
+                  <div class="module-info">
+                    <div class="module-title">{{ module.title }}</div>
+                    <div class="module-desc">{{ module.description }}</div>
+                    <div class="module-preview">
+                      <span class="quarter-range">Q1 ↓ Q4</span>
+                      <span class="sample-data">{{ module.sampleData }}</span>
+                    </div>
+                    <div class="module-date-info">
+                      <span class="date-label">默认：{{ module.defaultYear }}年{{ module.defaultMonth }}月</span>
+                    </div>
+                  </div>
+                  <div class="module-badge">4行</div>
+                </div>
+              </div>
+            </div>
+
 
           </div>
         </div>
@@ -288,7 +320,8 @@ export default {
     // 分类展开状态 - 默认收起
     const categoryExpanded = reactive({
       daily: false,    // 每日数据分类
-      summary: false   // 汇总统计分类
+      summary: false,  // 汇总统计分类
+      storageOutbound: false  // 储存类食材出库分类
     })
 
     // 注入导航栏状态
@@ -590,6 +623,46 @@ export default {
       }
     ]
 
+    // 储存类食材出库模块
+    const storageOutboundModules = [
+      {
+        id: 'outbound_rice',
+        title: '大米出库',
+        description: '大米季度出库量',
+        sampleData: '250.00, 250.00, 250.00, 150.00',
+        type: 'storage_outbound',
+        category: '大米',
+        dataField: 'outbound.rice',
+        rows: 4, // 4个季度数据
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
+      },
+      {
+        id: 'outbound_oil',
+        title: '食用油类出库',
+        description: '食用油季度出库量',
+        sampleData: '80.00, 80.00, 80.00, 60.00',
+        type: 'storage_outbound',
+        category: '食用油类',
+        dataField: 'outbound.oil',
+        rows: 4,
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
+      },
+      {
+        id: 'outbound_seasoning',
+        title: '调味品类出库',
+        description: '调味品季度出库量',
+        sampleData: '45.00, 45.00, 45.00, 35.00',
+        type: 'storage_outbound',
+        category: '调味品类',
+        dataField: 'outbound.seasoning',
+        rows: 4,
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
+      }
+    ]
+
 
 
     // 过滤后的模块 - 基础信息模块已移除
@@ -604,6 +677,14 @@ export default {
 
     const filteredSummaryModules = computed(() =>
       summaryModules.filter(m =>
+        m.title.includes(searchText.value) ||
+        m.description.includes(searchText.value) ||
+        m.category.includes(searchText.value)
+      )
+    )
+
+    const filteredStorageOutboundModules = computed(() =>
+      storageOutboundModules.filter(m =>
         m.title.includes(searchText.value) ||
         m.description.includes(searchText.value) ||
         m.category.includes(searchText.value)
@@ -992,6 +1073,99 @@ export default {
       }
     }
 
+    // 获取储存类食材使用量数据
+    const fetchStorageUsageData = async (year, month, category) => {
+      try {
+        console.log(`开始获取储存类食材使用量: ${year}年${month}月 ${category}`)
+
+        // 从localStorage获取月底库存数据
+        const inventoryData = JSON.parse(localStorage.getItem('monthlyInventory') || '[]')
+        console.log('月底库存数据:', inventoryData)
+
+        // 构建当月和上月的年月字符串
+        const currentMonth = `${year}-${month.toString().padStart(2, '0')}`
+        const prevMonth = getPreviousMonth(currentMonth)
+
+        console.log(`当月: ${currentMonth}, 上月: ${prevMonth}`)
+
+        // 计算当月月底库存金额
+        const currentMonthInventory = inventoryData.filter(item => item.date === currentMonth)
+        const currentAmount = currentMonthInventory
+          .filter(item => item.category === category)
+          .reduce((sum, item) => sum + (parseFloat(item.unitPrice || 0) * parseFloat(item.quantity || 0)), 0)
+
+        console.log(`${category} 当月库存金额: ${currentAmount}`)
+
+        // 计算上个月月底库存金额
+        const prevMonthInventory = inventoryData.filter(item => item.date === prevMonth)
+        const prevAmount = prevMonthInventory
+          .filter(item => item.category === category)
+          .reduce((sum, item) => sum + (parseFloat(item.unitPrice || 0) * parseFloat(item.quantity || 0)), 0)
+
+        console.log(`${category} 上月库存金额: ${prevAmount}`)
+
+        // 从库存查询API获取当月入库数据
+        const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
+        const endDate = `${year}-${month.toString().padStart(2, '0')}-31`
+
+        console.log(`获取入库数据时间范围: ${startDate} 到 ${endDate}`)
+
+        const response = await fetch(`/api/stock-ins?startTime=${startDate}&endTime=${endDate}&pageSize=10000`)
+        const stockData = await response.json()
+
+        let stockInAmount = 0
+        if (stockData.data && Array.isArray(stockData.data)) {
+          // 过滤指定分类的入库数据
+          const filteredStockData = stockData.data.filter(record => record.category === category)
+          stockInAmount = filteredStockData.reduce((sum, record) => sum + parseFloat(record.subtotal || 0), 0)
+          console.log(`${category} 当月入库金额: ${stockInAmount}`)
+        }
+
+        // 计算使用量：上月库存 + 当月入库 - 当月库存
+        // 注意：这里的逻辑是 上月库存 + 入库 - 当月库存 = 使用量
+        let monthlyUsage = prevAmount + stockInAmount - currentAmount
+
+        // 确保使用量不为负数
+        monthlyUsage = Math.max(0, monthlyUsage)
+
+        console.log(`${category} 计算过程:`)
+        console.log(`  上月库存: ${prevAmount}`)
+        console.log(`  当月入库: ${stockInAmount}`)
+        console.log(`  当月库存: ${currentAmount}`)
+        console.log(`  月度使用量: ${monthlyUsage}`)
+
+        // 按照您的要求计算4个季度的数据
+        // 将月度使用量除以4，商向下取整
+        const quarterlyBase = Math.floor(monthlyUsage / 4)
+
+        // 计算余数部分
+        const remainder = monthlyUsage - (quarterlyBase * 3)
+
+        // 返回4个数据：前3个季度使用基础值，第4个季度使用余数
+        const quarterlyData = [quarterlyBase, quarterlyBase, quarterlyBase, remainder]
+
+        console.log(`${category} 季度分配:`, quarterlyData)
+        console.log(`验证总和: ${quarterlyData.reduce((sum, val) => sum + val, 0)} = ${monthlyUsage}`)
+
+        return quarterlyData
+      } catch (error) {
+        console.error('获取储存类食材使用量失败:', error)
+        ElMessage.error('获取储存类食材数据失败，将使用默认值')
+        return [0, 0, 0, 0]
+      }
+    }
+
+    // 获取上个月的年月字符串
+    const getPreviousMonth = (yearMonth) => {
+      const [year, month] = yearMonth.split('-').map(Number)
+      const date = new Date(year, month - 1, 1) // month - 1 因为JavaScript月份从0开始
+      date.setMonth(date.getMonth() - 1) // 减去一个月
+
+      const prevYear = date.getFullYear()
+      const prevMonth = String(date.getMonth() + 1).padStart(2, '0')
+      return `${prevYear}-${prevMonth}`
+    }
+
     // 插入模块数据
     const insertModuleData = async (module, startRow, startCol) => {
       if (module.type === 'daily') {
@@ -1156,6 +1330,88 @@ export default {
         } catch (error) {
           console.error('插入汇总数据失败:', error)
           ElMessage.error('插入汇总数据失败: ' + error.message)
+        }
+
+      } else if (module.type === 'storage_outbound') {
+        const year = module.selectedYear || module.defaultYear
+        const month = module.selectedMonth || module.defaultMonth
+
+        try {
+          ElMessage.info('正在获取储存类食材出库数据...')
+
+          // 获取储存类食材使用量数据
+          const quarterlyData = await fetchStorageUsageData(year, month, module.category)
+
+          // 按照您的要求填写到特定行：第1行，第8行，第15行，第22行
+          const targetRows = [startRow, startRow + 7, startRow + 14, startRow + 21] // 第1,8,15,22行
+
+          for (let i = 0; i < 4; i++) {
+            const targetRow = targetRows[i]
+            const cellValue = parseFloat(quarterlyData[i].toFixed(2))
+            const displayValue = cellValue.toFixed(2)
+
+            console.log(`插入第${i + 1}季度数据到行${targetRow + 1}: ${displayValue}`)
+
+            // 设置单元格值 - 使用多种方法尝试
+            let success = false
+
+            // 方法1: 使用setCellValue
+            if (window.luckysheet && typeof window.luckysheet.setCellValue === 'function') {
+              try {
+                window.luckysheet.setCellValue(targetRow, startCol, cellValue)
+                console.log(`方法1成功设置储存出库单元格 [${targetRow}, ${startCol}] 的值: ${cellValue}`)
+                success = true
+              } catch (error) {
+                console.log('储存出库数据方法1失败:', error)
+              }
+            }
+
+            // 方法2: 使用setRangeValue
+            if (!success && window.luckysheet && typeof window.luckysheet.setRangeValue === 'function') {
+              try {
+                window.luckysheet.setRangeValue([{
+                  row: targetRow,
+                  column: startCol,
+                  value: cellValue
+                }])
+                console.log(`方法2成功设置储存出库单元格 [${targetRow}, ${startCol}] 的值: ${cellValue}`)
+                success = true
+              } catch (error) {
+                console.log('储存出库数据方法2失败:', error)
+              }
+            }
+
+            // 方法3: 直接操作数据结构
+            if (!success && window.luckysheet && window.luckysheet.getluckysheetfile) {
+              try {
+                const file = window.luckysheet.getluckysheetfile()
+                if (file && file[0] && file[0].data) {
+                  if (!file[0].data[targetRow]) {
+                    file[0].data[targetRow] = []
+                  }
+                  file[0].data[targetRow][startCol] = {
+                    v: cellValue,
+                    ct: { fa: "General", t: "n" }
+                  }
+                  window.luckysheet.refresh()
+                  console.log(`方法3成功设置储存出库单元格 [${targetRow}, ${startCol}] 的值: ${cellValue}`)
+                  success = true
+                }
+              } catch (error) {
+                console.log('储存出库数据方法3失败:', error)
+              }
+            }
+
+            if (!success) {
+              console.error(`无法设置储存出库单元格 [${targetRow}, ${startCol}] 的值`)
+              ElMessage.warning(`第${i + 1}季度数据设置失败`)
+            }
+          }
+
+          ElMessage.success(`已插入${year}年${month}月${module.title}（4行季度数据）`)
+        } catch (error) {
+          console.error('插入储存出库数据失败:', error)
+          ElMessage.error('插入储存出库数据失败: ' + error.message)
         }
 
       } else if (module.type === 'format') {
@@ -1862,6 +2118,7 @@ export default {
       categoryExpanded,
       filteredDailyModules,
       filteredSummaryModules,
+      filteredStorageOutboundModules,
       handleDragStart,
       showDateSelector,
       getYearOptions,
@@ -2193,6 +2450,12 @@ export default {
   font-weight: bold;
 }
 
+.quarter-range {
+  font-size: 10px;
+  color: #fa541c;
+  font-weight: bold;
+}
+
 .sample-data {
   font-size: 9px;
   color: #999;
@@ -2227,6 +2490,10 @@ export default {
 
 .format-module {
   border-left: 4px solid #722ed1;
+}
+
+.storage-outbound-module {
+  border-left: 4px solid #fa541c;
 }
 
 .module-date-info {
