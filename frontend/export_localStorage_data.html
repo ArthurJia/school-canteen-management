@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导出localStorage数据</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .export-btn {
+            background-color: #28a745;
+        }
+        .export-btn:hover {
+            background-color: #1e7e34;
+        }
+        .clear-btn {
+            background-color: #dc3545;
+        }
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .data-preview {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>导出localStorage数据到SQLite数据库</h1>
+        
+        <div class="info">
+            <strong>说明：</strong>此工具用于将之前存储在浏览器localStorage中的数据导出为JSON格式，然后可以导入到SQLite数据库中。
+        </div>
+
+        <!-- 月底库存数据 -->
+        <div class="section">
+            <h3>1. 月底库存数据 (monthlyInventory)</h3>
+            <button onclick="checkData('monthlyInventory')">检查数据</button>
+            <button class="export-btn" onclick="exportData('monthlyInventory')">导出JSON</button>
+            <button class="clear-btn" onclick="clearData('monthlyInventory')">清除数据</button>
+            <div id="monthlyInventory-preview" class="data-preview" style="display:none;"></div>
+            <textarea id="monthlyInventory-json" placeholder="月底库存数据将显示在这里..." style="display:none;"></textarea>
+        </div>
+
+        <!-- 出库分类数据 -->
+        <div class="section">
+            <h3>2. 出库分类数据 (outboundCategories)</h3>
+            <button onclick="checkData('outboundCategories')">检查数据</button>
+            <button class="export-btn" onclick="exportData('outboundCategories')">导出JSON</button>
+            <button class="clear-btn" onclick="clearData('outboundCategories')">清除数据</button>
+            <div id="outboundCategories-preview" class="data-preview" style="display:none;"></div>
+            <textarea id="outboundCategories-json" placeholder="出库分类数据将显示在这里..." style="display:none;"></textarea>
+        </div>
+
+        <!-- 报表设计器模板数据 -->
+        <div class="section">
+            <h3>3. 报表设计器模板数据 (reportDesignerTemplates)</h3>
+            <button onclick="checkData('reportDesignerTemplates')">检查数据</button>
+            <button class="export-btn" onclick="exportData('reportDesignerTemplates')">导出JSON</button>
+            <button class="clear-btn" onclick="clearData('reportDesignerTemplates')">清除数据</button>
+            <div id="reportDesignerTemplates-preview" class="data-preview" style="display:none;"></div>
+            <textarea id="reportDesignerTemplates-json" placeholder="报表设计器模板数据将显示在这里..." style="display:none;"></textarea>
+        </div>
+
+        <div class="section">
+            <h3>4. 导入到数据库</h3>
+            <div class="warning">
+                <strong>注意：</strong>导出数据后，请按以下步骤将数据导入到SQLite数据库：
+            </div>
+            <ol>
+                <li>将上面导出的JSON数据保存为文件（如 monthly_inventory.json）</li>
+                <li>将文件放到 backend 目录下</li>
+                <li>在 backend 目录运行以下命令：</li>
+            </ol>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace;">
+                # 导入月底库存数据<br>
+                python migrate_localStorage_data.py --import monthly_inventory.json monthly_inventory<br><br>
+                
+                # 导入出库分类数据<br>
+                python migrate_localStorage_data.py --import outbound_categories.json outbound_categories<br><br>
+                
+                # 导入报表设计器模板数据<br>
+                python migrate_localStorage_data.py --import designer_templates.json designer_templates<br><br>
+                
+                # 或者运行示例数据迁移<br>
+                python migrate_localStorage_data.py
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>5. 一键导出所有数据</h3>
+            <button class="export-btn" onclick="exportAllData()">导出所有数据</button>
+            <button onclick="downloadAllData()">下载所有数据文件</button>
+        </div>
+    </div>
+
+    <script>
+        function checkData(key) {
+            const data = localStorage.getItem(key);
+            const preview = document.getElementById(key + '-preview');
+            
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    const count = Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length;
+                    preview.innerHTML = `<strong>找到数据：</strong>${count} 条记录<br><pre>${JSON.stringify(parsed, null, 2).substring(0, 500)}${JSON.stringify(parsed, null, 2).length > 500 ? '...' : ''}</pre>`;
+                    preview.style.display = 'block';
+                } catch (e) {
+                    preview.innerHTML = `<strong style="color: red;">数据格式错误：</strong>${e.message}`;
+                    preview.style.display = 'block';
+                }
+            } else {
+                preview.innerHTML = '<strong style="color: orange;">未找到数据</strong>';
+                preview.style.display = 'block';
+            }
+        }
+
+        function exportData(key) {
+            const data = localStorage.getItem(key);
+            const textarea = document.getElementById(key + '-json');
+            
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    textarea.value = JSON.stringify(parsed, null, 2);
+                    textarea.style.display = 'block';
+                    
+                    // 自动选择文本
+                    textarea.select();
+                    textarea.setSelectionRange(0, 99999);
+                    
+                    alert(`${key} 数据已导出到文本框，您可以复制并保存为JSON文件`);
+                } catch (e) {
+                    alert(`导出失败：${e.message}`);
+                }
+            } else {
+                alert(`未找到 ${key} 数据`);
+            }
+        }
+
+        function clearData(key) {
+            if (confirm(`确定要清除 ${key} 数据吗？此操作不可恢复！`)) {
+                localStorage.removeItem(key);
+                document.getElementById(key + '-preview').style.display = 'none';
+                document.getElementById(key + '-json').style.display = 'none';
+                alert(`${key} 数据已清除`);
+            }
+        }
+
+        function exportAllData() {
+            const keys = ['monthlyInventory', 'outboundCategories', 'reportDesignerTemplates'];
+            let allData = {};
+            let hasData = false;
+
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        allData[key] = JSON.parse(data);
+                        hasData = true;
+                    } catch (e) {
+                        console.error(`解析 ${key} 数据失败:`, e);
+                    }
+                }
+            });
+
+            if (hasData) {
+                const jsonString = JSON.stringify(allData, null, 2);
+                const textarea = document.createElement('textarea');
+                textarea.value = jsonString;
+                textarea.style.width = '100%';
+                textarea.style.height = '300px';
+                textarea.style.marginTop = '10px';
+
+                const section = document.querySelector('.section:last-child');
+                const existingTextarea = section.querySelector('textarea');
+                if (existingTextarea) {
+                    existingTextarea.remove();
+                }
+                section.appendChild(textarea);
+
+                textarea.select();
+                alert('所有数据已导出，您可以复制并保存为 all_data.json 文件');
+            } else {
+                alert('未找到任何localStorage数据');
+            }
+        }
+
+        function downloadAllData() {
+            const keys = ['monthlyInventory', 'outboundCategories', 'reportDesignerTemplates'];
+            
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        const jsonString = JSON.stringify(parsed, null, 2);
+                        
+                        const blob = new Blob([jsonString], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${key}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } catch (e) {
+                        console.error(`下载 ${key} 数据失败:`, e);
+                    }
+                }
+            });
+        }
+
+        // 页面加载时自动检查所有数据
+        window.onload = function() {
+            const keys = ['monthlyInventory', 'outboundCategories', 'reportDesignerTemplates'];
+            keys.forEach(key => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    checkData(key);
+                }
+            });
+        };
+    </script>
+</body>
+</html>

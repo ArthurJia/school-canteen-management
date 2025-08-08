@@ -81,6 +81,46 @@ def init_db():
     )
     ''')
     
+    # 创建月底库存表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS monthly_inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        unit_price REAL NOT NULL,
+        quantity REAL NOT NULL,
+        unit TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
+    # 创建出库分类表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS outbound_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        unit TEXT NOT NULL,
+        unit_price REAL NOT NULL,
+        specification TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
+    # 创建报表设计器模板表
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS designer_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        sheet_data TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
     conn.commit()
     conn.close()
 

@@ -1078,8 +1078,10 @@ export default {
       try {
         console.log(`开始获取储存类食材使用量: ${year}年${month}月 ${category}`)
 
-        // 从localStorage获取月底库存数据
-        const inventoryData = JSON.parse(localStorage.getItem('monthlyInventory') || '[]')
+        // 从API获取月底库存数据
+        const inventoryResponse = await fetch('/api/monthly-inventory')
+        const inventoryResult = await inventoryResponse.json()
+        const inventoryData = inventoryResult.data || []
         console.log('月底库存数据:', inventoryData)
 
         // 构建当月和上月的年月字符串
@@ -1512,22 +1514,23 @@ export default {
       try {
         const sheetData = luckysheetInstance.value.getAllSheets()
 
-        const templateData = {
-          name: templateForm.name,
-          description: templateForm.description,
-          sheetData: sheetData,
-          createdAt: new Date().toISOString()
-        }
-
-        const templates = JSON.parse(localStorage.getItem('reportDesignerTemplates') || '[]')
-        templates.push({
-          ...templateData,
-          id: Date.now()
+        await fetch('/api/designer-templates', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: templateForm.name,
+            description: templateForm.description,
+            sheetData: JSON.stringify(sheetData)
+          })
         })
-        localStorage.setItem('reportDesignerTemplates', JSON.stringify(templates))
 
         ElMessage.success('模板保存成功')
         saveDialogVisible.value = false
+        
+        // 重新加载模板列表
+        await loadTemplateList()
       } catch (error) {
         console.error('保存模板失败:', error)
         ElMessage.error('保存模板失败')
@@ -1536,10 +1539,24 @@ export default {
       }
     }
 
+    // 加载模板列表
+    const loadTemplateList = async () => {
+      try {
+        const response = await fetch('/api/designer-templates')
+        const data = await response.json()
+        availableTemplates.value = data.data.map(template => ({
+          ...template,
+          sheetData: JSON.parse(template.sheetData)
+        }))
+      } catch (error) {
+        console.error('加载模板列表失败:', error)
+        ElMessage.error('加载模板列表失败')
+      }
+    }
+
     // 加载模板
-    const loadTemplate = () => {
-      const templates = JSON.parse(localStorage.getItem('reportDesignerTemplates') || '[]')
-      availableTemplates.value = templates
+    const loadTemplate = async () => {
+      await loadTemplateList()
       selectedTemplateIndex.value = -1
       loadDialogVisible.value = true
     }
@@ -1646,8 +1663,13 @@ export default {
           }
         )
 
-        availableTemplates.value.splice(index, 1)
-        localStorage.setItem('reportDesignerTemplates', JSON.stringify(availableTemplates.value))
+        const template = availableTemplates.value[index]
+        await fetch(`/api/designer-templates/${template.id}`, {
+          method: 'DELETE'
+        })
+        
+        // 重新加载模板列表
+        await loadTemplateList()
 
         // 如果删除的是当前选中的模板，重置选择
         if (selectedTemplateIndex.value === index) {

@@ -250,6 +250,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import axios from 'axios'
 
 // 响应式数据
 const loading = ref(false)
@@ -348,32 +349,28 @@ const categoryRules = {
 
 
 // 方法
-const loadData = () => {
+const loadData = async () => {
   try {
-    const savedInventory = localStorage.getItem('monthlyInventory')
-    const savedCategories = localStorage.getItem('outboundCategories')
+    loading.value = true
     
-    if (savedInventory) {
-      inventoryList.value = JSON.parse(savedInventory)
-    }
+    // 加载月底库存数据
+    const inventoryResponse = await axios.get('/api/monthly-inventory')
+    inventoryList.value = inventoryResponse.data.data || []
     
-    if (savedCategories) {
-      categoryList.value = JSON.parse(savedCategories)
-    }
+    // 加载出库分类数据
+    const categoriesResponse = await axios.get('/api/outbound-categories')
+    categoryList.value = categoriesResponse.data.data || []
+    
   } catch (error) {
     console.error('加载数据失败:', error)
     ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
   }
 }
 
 const saveData = () => {
-  try {
-    localStorage.setItem('monthlyInventory', JSON.stringify(inventoryList.value))
-    localStorage.setItem('outboundCategories', JSON.stringify(categoryList.value))
-  } catch (error) {
-    console.error('保存数据失败:', error)
-    ElMessage.error('保存数据失败')
-  }
+  // 不再需要手动保存，数据通过API实时保存
 }
 
 const addOrUpdateInventoryItem = async () => {
@@ -384,18 +381,19 @@ const addOrUpdateInventoryItem = async () => {
       try {
         if (editingInventoryIndex.value !== -1) {
           // 编辑模式
-          inventoryList.value[editingInventoryIndex.value] = {
+          const inventoryItem = inventoryList.value[editingInventoryIndex.value]
+          await axios.put(`/api/monthly-inventory/${inventoryItem.id}`, {
             date: newInventoryItem.value.date,
             name: newInventoryItem.value.name,
             category: newInventoryItem.value.category,
             unitPrice: newInventoryItem.value.unitPrice,
             quantity: newInventoryItem.value.quantity,
             unit: newInventoryItem.value.unit
-          }
+          })
           ElMessage.success('修改库存记录成功')
         } else {
           // 添加模式
-          inventoryList.value.push({
+          await axios.post('/api/monthly-inventory', {
             date: newInventoryItem.value.date,
             name: newInventoryItem.value.name,
             category: newInventoryItem.value.category,
@@ -406,7 +404,8 @@ const addOrUpdateInventoryItem = async () => {
           ElMessage.success('添加库存记录成功')
         }
         
-        saveData()
+        // 重新加载数据
+        await loadData()
         closeAddInventoryDialog()
       } catch (error) {
         console.error('操作库存记录失败:', error)
@@ -434,11 +433,15 @@ const deleteInventoryItem = async (index) => {
       }
     )
     
-    inventoryList.value.splice(index, 1)
-    saveData()
+    const inventoryItem = inventoryList.value[index]
+    await axios.delete(`/api/monthly-inventory/${inventoryItem.id}`)
+    
+    // 重新加载数据
+    await loadData()
     ElMessage.success('删除成功')
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('删除失败:', error)
       ElMessage.error('删除失败')
     }
   }
@@ -452,15 +455,27 @@ const addOrUpdateCategory = async () => {
       try {
         if (editingCategoryIndex.value !== -1) {
           // 编辑模式
-          categoryList.value[editingCategoryIndex.value] = { ...newCategory.value }
+          const category = categoryList.value[editingCategoryIndex.value]
+          await axios.put(`/api/outbound-categories/${category.id}`, {
+            name: newCategory.value.name,
+            unit: newCategory.value.unit,
+            unitPrice: newCategory.value.unitPrice,
+            specification: newCategory.value.specification
+          })
           ElMessage.success('修改分类成功')
         } else {
           // 添加模式
-          categoryList.value.push({ ...newCategory.value })
+          await axios.post('/api/outbound-categories', {
+            name: newCategory.value.name,
+            unit: newCategory.value.unit,
+            unitPrice: newCategory.value.unitPrice,
+            specification: newCategory.value.specification
+          })
           ElMessage.success('添加分类成功')
         }
         
-        saveData()
+        // 重新加载数据
+        await loadData()
         closeAddCategoryDialog()
       } catch (error) {
         console.error('操作分类失败:', error)
@@ -488,11 +503,15 @@ const deleteCategory = async (index) => {
       }
     )
     
-    categoryList.value.splice(index, 1)
-    saveData()
+    const category = categoryList.value[index]
+    await axios.delete(`/api/outbound-categories/${category.id}`)
+    
+    // 重新加载数据
+    await loadData()
     ElMessage.success('删除成功')
   } catch (error) {
     if (error !== 'cancel') {
+      console.error('删除失败:', error)
       ElMessage.error('删除失败')
     }
   }

@@ -1051,5 +1051,346 @@ def import_monthly_inventory():
         print(f"批量导入月底库存数据失败: {str(e)}")
         return jsonify({'error': str(e), 'success': False}), 500
 
+# 月底库存API
+@app.route('/api/monthly-inventory', methods=['GET'])
+def get_monthly_inventory():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT id, date, name, category, unit_price, quantity, unit, created_at
+        FROM monthly_inventory
+        ORDER BY date DESC, name ASC
+        ''')
+        
+        records = cursor.fetchall()
+        conn.close()
+        
+        inventory_list = []
+        for record in records:
+            inventory = {
+                'id': record[0],
+                'date': record[1],
+                'name': record[2],
+                'category': record[3],
+                'unitPrice': float(record[4]),
+                'quantity': float(record[5]),
+                'unit': record[6],
+                'created_at': record[7]
+            }
+            inventory_list.append(inventory)
+        
+        return jsonify({'data': inventory_list})
+        
+    except Exception as e:
+        print(f"Error fetching monthly inventory: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monthly-inventory', methods=['POST'])
+def create_monthly_inventory():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        required_fields = ['date', 'name', 'category', 'unitPrice', 'quantity', 'unit']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        INSERT INTO monthly_inventory (date, name, category, unit_price, quantity, unit)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data['date'],
+            data['name'],
+            data['category'],
+            float(data['unitPrice']),
+            float(data['quantity']),
+            data['unit']
+        ))
+        
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({'success': True, 'id': last_id}), 201
+        
+    except Exception as e:
+        print(f"Error creating monthly inventory: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monthly-inventory/<int:inventory_id>', methods=['PUT'])
+def update_monthly_inventory(inventory_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        UPDATE monthly_inventory 
+        SET date = ?, name = ?, category = ?, unit_price = ?, quantity = ?, unit = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        ''', (
+            data['date'],
+            data['name'],
+            data['category'],
+            float(data['unitPrice']),
+            float(data['quantity']),
+            data['unit'],
+            inventory_id
+        ))
+        
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Inventory record not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error updating monthly inventory: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/monthly-inventory/<int:inventory_id>', methods=['DELETE'])
+def delete_monthly_inventory(inventory_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM monthly_inventory WHERE id = ?', (inventory_id,))
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Inventory record not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error deleting monthly inventory: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# 出库分类API
+@app.route('/api/outbound-categories', methods=['GET'])
+def get_outbound_categories():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT id, name, unit, unit_price, specification, created_at
+        FROM outbound_categories
+        ORDER BY name ASC
+        ''')
+        
+        records = cursor.fetchall()
+        conn.close()
+        
+        categories = []
+        for record in records:
+            category = {
+                'id': record[0],
+                'name': record[1],
+                'unit': record[2],
+                'unitPrice': float(record[3]),
+                'specification': record[4] or '',
+                'created_at': record[5]
+            }
+            categories.append(category)
+        
+        return jsonify({'data': categories})
+        
+    except Exception as e:
+        print(f"Error fetching outbound categories: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/outbound-categories', methods=['POST'])
+def create_outbound_category():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        required_fields = ['name', 'unit', 'unitPrice']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        INSERT INTO outbound_categories (name, unit, unit_price, specification)
+        VALUES (?, ?, ?, ?)
+        ''', (
+            data['name'],
+            data['unit'],
+            float(data['unitPrice']),
+            data.get('specification', '')
+        ))
+        
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({'success': True, 'id': last_id}), 201
+        
+    except Exception as e:
+        print(f"Error creating outbound category: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/outbound-categories/<int:category_id>', methods=['PUT'])
+def update_outbound_category(category_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        UPDATE outbound_categories 
+        SET name = ?, unit = ?, unit_price = ?, specification = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        ''', (
+            data['name'],
+            data['unit'],
+            float(data['unitPrice']),
+            data.get('specification', ''),
+            category_id
+        ))
+        
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Category not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error updating outbound category: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/outbound-categories/<int:category_id>', methods=['DELETE'])
+def delete_outbound_category(category_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM outbound_categories WHERE id = ?', (category_id,))
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Category not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error deleting outbound category: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# 报表设计器模板API
+@app.route('/api/designer-templates', methods=['GET'])
+def get_designer_templates():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT id, name, description, sheet_data, created_at
+        FROM designer_templates
+        ORDER BY created_at DESC
+        ''')
+        
+        records = cursor.fetchall()
+        conn.close()
+        
+        templates = []
+        for record in records:
+            template = {
+                'id': record[0],
+                'name': record[1],
+                'description': record[2] or '',
+                'sheetData': record[3],
+                'createdAt': record[4]
+            }
+            templates.append(template)
+        
+        return jsonify({'data': templates})
+        
+    except Exception as e:
+        print(f"Error fetching designer templates: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/designer-templates', methods=['POST'])
+def create_designer_template():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        required_fields = ['name', 'sheetData']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        INSERT INTO designer_templates (name, description, sheet_data)
+        VALUES (?, ?, ?)
+        ''', (
+            data['name'],
+            data.get('description', ''),
+            data['sheetData']
+        ))
+        
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({'success': True, 'id': last_id}), 201
+        
+    except Exception as e:
+        print(f"Error creating designer template: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/designer-templates/<int:template_id>', methods=['DELETE'])
+def delete_designer_template(template_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM designer_templates WHERE id = ?', (template_id,))
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Template not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error deleting designer template: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
