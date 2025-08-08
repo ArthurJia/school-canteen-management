@@ -93,7 +93,7 @@
         <div class="card-header">
           <span>储存类食材明细</span>
           <el-button type="primary" :icon="Plus" @click="showAddCategoryDialog = true">
-            添加分类
+            添加食材
           </el-button>
         </div>
       </template>
