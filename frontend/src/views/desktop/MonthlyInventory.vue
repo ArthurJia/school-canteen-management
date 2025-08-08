@@ -47,7 +47,7 @@
         </div>
       </template>
 
-      <el-table :data="inventoryList" border style="width: 100%" v-loading="loading" stripe>
+      <el-table :data="paginatedInventoryList" border style="width: 100%" v-loading="loading" stripe>
         <el-table-column prop="date" label="时间（年月）" min-width="140" />
         <el-table-column prop="name" label="名称" min-width="180" />
         <el-table-column prop="unit" label="单位" min-width="80" />
@@ -75,6 +75,16 @@
           <el-empty description="暂无库存记录" />
         </template>
       </el-table>
+      
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="currentInventoryPage"
+          v-model:page-size="inventoryPageSize"
+          :page-sizes="[10, 20, 30, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="inventoryList.length"
+        />
+      </div>
     </el-card>
 
     <!-- 储存类食材明细卡片 -->
@@ -88,7 +98,7 @@
         </div>
       </template>
 
-      <el-table :data="categoryList" border style="width: 100%" v-loading="loading" stripe>
+      <el-table :data="paginatedCategoryList" border style="width: 100%" v-loading="loading" stripe>
         <el-table-column prop="name" label="名称" width="200" />
         <el-table-column prop="unit" label="单位" width="120" />
         <el-table-column prop="unitPrice" label="单价（元）" width="120" align="right">
@@ -107,6 +117,16 @@
           <el-empty description="暂无分类数据" />
         </template>
       </el-table>
+      
+      <div class="pagination">
+        <el-pagination
+          v-model:current-page="currentCategoryPage"
+          v-model:page-size="categoryPageSize"
+          :page-sizes="[10, 20, 30, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="categoryList.length"
+        />
+      </div>
     </el-card>
 
     <!-- 添加/编辑库存记录对话框 -->
@@ -199,6 +219,12 @@ const showAddCategoryDialog = ref(false)
 const editingCategoryIndex = ref(-1)
 const editingInventoryIndex = ref(-1)
 
+// 分页相关
+const currentInventoryPage = ref(1)
+const inventoryPageSize = ref(10)
+const currentCategoryPage = ref(1)
+const categoryPageSize = ref(10)
+
 // 统计相关数据
 const selectedStatMonth = ref('')
 const riceUsage = ref(0)
@@ -212,6 +238,20 @@ const formatSelectedStatMonth = computed(() => {
   }
   const [year, month] = selectedStatMonth.value.split('-')
   return `${year}年${month}月`
+})
+
+// 计算属性 - 分页后的库存列表
+const paginatedInventoryList = computed(() => {
+  const startIndex = (currentInventoryPage.value - 1) * inventoryPageSize.value
+  const endIndex = startIndex + inventoryPageSize.value
+  return inventoryList.value.slice(startIndex, endIndex)
+})
+
+// 计算属性 - 分页后的分类列表
+const paginatedCategoryList = computed(() => {
+  const startIndex = (currentCategoryPage.value - 1) * categoryPageSize.value
+  const endIndex = startIndex + categoryPageSize.value
+  return categoryList.value.slice(startIndex, endIndex)
 })
 
 // 表单引用
@@ -746,6 +786,13 @@ onMounted(() => {
 
 .query-card {
   margin-bottom: 20px;
+}
+
+/* 分页样式 */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .card-header {
