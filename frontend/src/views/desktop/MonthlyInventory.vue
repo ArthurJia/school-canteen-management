@@ -4,16 +4,10 @@
     <div class="statistics-section">
       <!-- 月份选择器 -->
       <div class="month-selector">
-        <el-date-picker
-          v-model="selectedStatMonth"
-          type="month"
-          format="YYYY年MM月"
-          value-format="YYYY-MM"
-          placeholder="选择统计月份"
-          @change="calculateUsageStatistics"
-        />
+        <el-date-picker v-model="selectedStatMonth" type="month" format="YYYY年MM月" value-format="YYYY-MM"
+          placeholder="选择统计月份" @change="calculateUsageStatistics" />
       </div>
-      
+
       <!-- 统计卡片 -->
       <div class="statistics-cards">
         <el-card class="stat-card card-hover card-glow">
@@ -23,7 +17,7 @@
             <div class="stat-desc">{{ formatSelectedStatMonth }}</div>
           </div>
         </el-card>
-        
+
         <el-card class="stat-card card-hover card-glow">
           <div class="stat-content">
             <div class="stat-title">食用油类使用量</div>
@@ -31,7 +25,7 @@
             <div class="stat-desc">{{ formatSelectedStatMonth }}</div>
           </div>
         </el-card>
-        
+
         <el-card class="stat-card card-hover card-glow">
           <div class="stat-content">
             <div class="stat-title">调味品类使用量</div>
@@ -52,14 +46,8 @@
           </el-button>
         </div>
       </template>
-      
-      <el-table 
-        :data="inventoryList" 
-        border 
-        style="width: 100%" 
-        v-loading="loading"
-        stripe
-      >
+
+      <el-table :data="inventoryList" border style="width: 100%" v-loading="loading" stripe>
         <el-table-column prop="date" label="时间（年月）" min-width="140" />
         <el-table-column prop="name" label="名称" min-width="180" />
         <el-table-column prop="unit" label="单位" min-width="80" />
@@ -99,14 +87,8 @@
           </el-button>
         </div>
       </template>
-      
-      <el-table 
-        :data="categoryList" 
-        border 
-        style="width: 100%" 
-        v-loading="loading"
-        stripe
-      >
+
+      <el-table :data="categoryList" border style="width: 100%" v-loading="loading" stripe>
         <el-table-column prop="name" label="分类名称" width="200" />
         <el-table-column prop="unit" label="单位" width="120" />
         <el-table-column prop="unitPrice" label="单价（元）" width="120" align="right">
@@ -128,71 +110,36 @@
     </el-card>
 
     <!-- 添加/编辑库存记录对话框 -->
-    <el-dialog 
-      v-model="showAddInventoryDialog" 
-      :title="editingInventoryIndex !== -1 ? '编辑库存记录' : '添加库存记录'" 
-      width="50%"
-      @closed="closeAddInventoryDialog"
-    >
+    <el-dialog v-model="showAddInventoryDialog" :title="editingInventoryIndex !== -1 ? '编辑库存记录' : '添加库存记录'" width="50%"
+      @closed="closeAddInventoryDialog">
       <el-form :model="newInventoryItem" :rules="inventoryRules" ref="inventoryFormRef" label-width="120px">
         <el-form-item label="时间（年月）" prop="date">
-          <el-date-picker
-            v-model="newInventoryItem.date"
-            type="month"
-            format="YYYY年MM月"
-            value-format="YYYY-MM"
-            placeholder="选择月份"
-            style="width: 100%"
-          />
+          <el-date-picker v-model="newInventoryItem.date" type="month" format="YYYY年MM月" value-format="YYYY-MM"
+            placeholder="选择月份" style="width: 100%" />
         </el-form-item>
         <el-form-item label="名称" prop="name">
           <el-select v-model="newInventoryItem.name" placeholder="请选择分类名称" style="width: 100%">
             <el-option value="">请选择分类名称</el-option>
-            <el-option 
-              v-for="category in categoryList" 
-              :key="category.name" 
-              :value="category.name"
-              :label="category.name"
-            />
+            <el-option v-for="category in categoryList" :key="category.name" :value="category.name"
+              :label="category.name" />
           </el-select>
         </el-form-item>
         <el-form-item label="单位" prop="unit">
-          <el-input 
-            v-model="newInventoryItem.unit" 
-            placeholder="自动填充"
-            readonly
-          />
+          <el-input v-model="newInventoryItem.unit" placeholder="自动填充" readonly />
         </el-form-item>
         <el-form-item label="分类" prop="category">
-          <el-input 
-            v-model="newInventoryItem.category" 
-            placeholder="自动填充"
-            readonly
-          />
+          <el-input v-model="newInventoryItem.category" placeholder="自动填充" readonly />
         </el-form-item>
         <el-form-item label="单价（元）" prop="unitPrice">
-          <el-input 
-            v-model.number="newInventoryItem.unitPrice" 
-            type="number"
-            :step="0.01"
-            placeholder="自动填充"
-            readonly
-          />
+          <el-input v-model.number="newInventoryItem.unitPrice" type="number" :step="0.01" placeholder="自动填充"
+            readonly />
         </el-form-item>
         <el-form-item label="库存数量" prop="quantity">
-          <el-input 
-            v-model.number="newInventoryItem.quantity" 
-            type="number"
-            :step="0.01"
-            placeholder="请输入库存数量"
-          />
+          <el-input v-model.number="newInventoryItem.quantity" type="number" :step="0.01" placeholder="请输入库存数量" />
         </el-form-item>
         <el-form-item label="库存金额（元）">
-          <el-input 
-            :value="(newInventoryItem.unitPrice * newInventoryItem.quantity || 0).toFixed(2)" 
-            readonly
-            placeholder="自动计算"
-          />
+          <el-input :value="(newInventoryItem.unitPrice * newInventoryItem.quantity || 0).toFixed(2)" readonly
+            placeholder="自动计算" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -206,12 +153,8 @@
     </el-dialog>
 
     <!-- 添加/编辑分类对话框 -->
-    <el-dialog 
-      v-model="showAddCategoryDialog" 
-      :title="editingCategoryIndex !== -1 ? '编辑分类' : '添加分类'" 
-      width="50%"
-      @closed="closeAddCategoryDialog"
-    >
+    <el-dialog v-model="showAddCategoryDialog" :title="editingCategoryIndex !== -1 ? '编辑分类' : '添加分类'" width="50%"
+      @closed="closeAddCategoryDialog">
       <el-form :model="newCategory" :rules="categoryRules" ref="categoryFormRef" label-width="120px">
         <el-form-item label="分类名称" prop="name">
           <el-input v-model="newCategory.name" placeholder="请输入分类名称" />
@@ -223,12 +166,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="单价（元）" prop="unitPrice">
-          <el-input 
-            v-model.number="newCategory.unitPrice" 
-            type="number"
-            :step="0.01"
-            placeholder="请输入单价"
-          />
+          <el-input v-model.number="newCategory.unitPrice" type="number" :step="0.01" placeholder="请输入单价" />
         </el-form-item>
         <el-form-item label="规格" prop="specification">
           <el-input v-model="newCategory.specification" placeholder="选填" />
@@ -352,15 +290,20 @@ const categoryRules = {
 const loadData = async () => {
   try {
     loading.value = true
-    
+
     // 加载月底库存数据
     const inventoryResponse = await axios.get('/api/monthly-inventory')
     inventoryList.value = inventoryResponse.data.data || []
-    
+
     // 加载出库分类数据
     const categoriesResponse = await axios.get('/api/outbound-categories')
     categoryList.value = categoriesResponse.data.data || []
-    
+
+    // 数据加载完成后重新计算统计数据
+    if (selectedStatMonth.value) {
+      await calculateUsageStatistics()
+    }
+
   } catch (error) {
     console.error('加载数据失败:', error)
     ElMessage.error('加载数据失败')
@@ -375,7 +318,7 @@ const saveData = () => {
 
 const addOrUpdateInventoryItem = async () => {
   if (!inventoryFormRef.value) return
-  
+
   inventoryFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
@@ -403,7 +346,7 @@ const addOrUpdateInventoryItem = async () => {
           })
           ElMessage.success('添加库存记录成功')
         }
-        
+
         // 重新加载数据
         await loadData()
         closeAddInventoryDialog()
@@ -432,10 +375,10 @@ const deleteInventoryItem = async (index) => {
         type: 'warning',
       }
     )
-    
+
     const inventoryItem = inventoryList.value[index]
     await axios.delete(`/api/monthly-inventory/${inventoryItem.id}`)
-    
+
     // 重新加载数据
     await loadData()
     ElMessage.success('删除成功')
@@ -449,7 +392,7 @@ const deleteInventoryItem = async (index) => {
 
 const addOrUpdateCategory = async () => {
   if (!categoryFormRef.value) return
-  
+
   categoryFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
@@ -473,7 +416,7 @@ const addOrUpdateCategory = async () => {
           })
           ElMessage.success('添加分类成功')
         }
-        
+
         // 重新加载数据
         await loadData()
         closeAddCategoryDialog()
@@ -502,10 +445,10 @@ const deleteCategory = async (index) => {
         type: 'warning',
       }
     )
-    
+
     const category = categoryList.value[index]
     await axios.delete(`/api/outbound-categories/${category.id}`)
-    
+
     // 重新加载数据
     await loadData()
     ElMessage.success('删除成功')
@@ -554,9 +497,35 @@ const calculateUsageStatistics = async () => {
 
   try {
     const [year, month] = selectedStatMonth.value.split('-')
-    
+
+    // 从API获取月底库存数据
+    const inventoryResponse = await axios.get('/api/monthly-inventory')
+    const inventoryResult = inventoryResponse.data
+    const inventoryData = inventoryResult.data || []
+    console.log('月底库存数据:', inventoryData)
+    console.log('月底库存数据条数:', inventoryData.length)
+
+    // 从API获取库存查询数据（入库记录）
+    const stockResponse = await axios.get('/api/stock-ins', {
+      params: {
+        pageSize: 1000 // 获取足够多的数据用于统计
+      }
+    })
+    const stockResult = stockResponse.data
+    const stockData = stockResult.data || []
+    console.log('库存查询数据:', stockData)
+    console.log('库存查询数据条数:', stockData.length)
+
+    // 构建当月和上月的年月字符串
+    const currentMonth = selectedStatMonth.value
+    const prevMonth = getPreviousMonth(selectedStatMonth.value)
+    console.log(`当月: ${currentMonth}, 上月: ${prevMonth}`)
+
     // 计算当月月底库存金额
-    const currentMonthInventory = inventoryList.value.filter(item => item.date === selectedStatMonth.value)
+    const currentMonthInventory = inventoryData.filter(item => item.date === currentMonth)
+    console.log(`当月(${currentMonth})库存记录:`, currentMonthInventory)
+    console.log('当月库存记录中的分类:', currentMonthInventory.map(item => item.category))
+    
     const currentRiceAmount = currentMonthInventory
       .filter(item => item.category === '大米')
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
@@ -567,9 +536,13 @@ const calculateUsageStatistics = async () => {
       .filter(item => item.category === '调味品类')
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
 
+    console.log(`当月库存金额 - 大米: ${currentRiceAmount}, 食用油: ${currentOilAmount}, 调味品: ${currentSeasoningAmount}`)
+
     // 计算上个月月底库存金额
-    const prevMonth = getPreviousMonth(selectedStatMonth.value)
-    const prevMonthInventory = inventoryList.value.filter(item => item.date === prevMonth)
+    const prevMonthInventory = inventoryData.filter(item => item.date === prevMonth)
+    console.log(`上月(${prevMonth})库存记录:`, prevMonthInventory)
+    console.log('上月库存记录中的分类:', prevMonthInventory.map(item => item.category))
+    
     const prevRiceAmount = prevMonthInventory
       .filter(item => item.category === '大米')
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
@@ -580,15 +553,43 @@ const calculateUsageStatistics = async () => {
       .filter(item => item.category === '调味品类')
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
 
-    // 模拟从库存查询中获取当月入库数据（这里使用模拟数据，实际应该调用API）
-    const stockInRiceAmount = 0 // 实际应该从库存查询API获取
-    const stockInOilAmount = 0 // 实际应该从库存查询API获取
-    const stockInSeasoningAmount = 0 // 实际应该从库存查询API获取
+    console.log(`上月库存金额 - 大米: ${prevRiceAmount}, 食用油: ${prevOilAmount}, 调味品: ${prevSeasoningAmount}`)
 
-    // 计算使用量：当月库存 + 当月入库 - 上月库存
-    riceUsage.value = currentRiceAmount + stockInRiceAmount - prevRiceAmount
-    oilUsage.value = currentOilAmount + stockInOilAmount - prevOilAmount
-    seasoningUsage.value = currentSeasoningAmount + stockInSeasoningAmount - prevSeasoningAmount
+    // 计算当月入库金额（从库存查询数据中获取）
+    const currentMonthStockIn = stockData.filter(item => {
+      const itemDate = new Date(item.in_time)
+      const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
+      return itemYearMonth === currentMonth
+    })
+    
+    console.log(`当月(${currentMonth})入库记录:`, currentMonthStockIn)
+    console.log('当月入库记录中的分类:', currentMonthStockIn.map(item => item.category))
+
+    // 分类代码映射
+    const categoryMap = {
+      'rice': '大米',
+      'oil': '食用油类',
+      'seasoning': '调味品类'
+    }
+
+    const stockInRiceAmount = currentMonthStockIn
+      .filter(item => item.category === 'rice')
+      .reduce((sum, item) => sum + item.subtotal, 0)
+    const stockInOilAmount = currentMonthStockIn
+      .filter(item => item.category === 'oil')
+      .reduce((sum, item) => sum + item.subtotal, 0)
+    const stockInSeasoningAmount = currentMonthStockIn
+      .filter(item => item.category === 'seasoning')
+      .reduce((sum, item) => sum + item.subtotal, 0)
+
+    console.log(`当月入库金额 - 大米: ${stockInRiceAmount}, 食用油: ${stockInOilAmount}, 调味品: ${stockInSeasoningAmount}`)
+
+    // 计算使用量：上月库存 + 当月入库 - 当月库存
+    riceUsage.value = prevRiceAmount + stockInRiceAmount - currentRiceAmount
+    oilUsage.value = prevOilAmount + stockInOilAmount - currentOilAmount
+    seasoningUsage.value = prevSeasoningAmount + stockInSeasoningAmount - currentSeasoningAmount
+
+    console.log(`计算结果 - 大米使用量: ${riceUsage.value}, 食用油使用量: ${oilUsage.value}, 调味品使用量: ${seasoningUsage.value}`)
 
     // 确保使用量不为负数
     riceUsage.value = Math.max(0, riceUsage.value)
@@ -598,6 +599,10 @@ const calculateUsageStatistics = async () => {
   } catch (error) {
     console.error('计算使用量统计失败:', error)
     ElMessage.error('计算使用量统计失败')
+    // 如果API调用失败，设置为0
+    riceUsage.value = 0
+    oilUsage.value = 0
+    seasoningUsage.value = 0
   }
 }
 
@@ -606,7 +611,7 @@ const getPreviousMonth = (yearMonth) => {
   const [year, month] = yearMonth.split('-').map(Number)
   const date = new Date(year, month - 1, 1) // month - 1 因为JavaScript月份从0开始
   date.setMonth(date.getMonth() - 1) // 减去一个月
-  
+
   const prevYear = date.getFullYear()
   const prevMonth = String(date.getMonth() + 1).padStart(2, '0')
   return `${prevYear}-${prevMonth}`
@@ -869,40 +874,40 @@ onMounted(() => {
   .monthly-inventory {
     padding: 10px;
   }
-  
+
   .statistics-cards {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-  
+
   .stat-content {
     padding: 15px;
   }
-  
+
   .stat-value {
     font-size: 24px;
   }
-  
+
   .card-header {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
   }
-  
+
   :deep(.el-table) {
     font-size: 12px;
   }
-  
+
   :deep(.el-table th.el-table__cell),
   :deep(.el-table td.el-table__cell) {
     padding: 8px;
   }
-  
+
   :deep(.el-dialog) {
     width: 95% !important;
     margin: 10px;
   }
-  
+
   :deep(.el-form-item__content) {
     flex-direction: column;
   }
@@ -925,6 +930,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
