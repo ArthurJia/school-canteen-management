@@ -28,7 +28,7 @@
           导出Excel
         </el-button>
       </div>
-      
+
       <div class="toolbar-right">
         <el-tooltip :content="showModulesPanel ? '隐藏数据模块库' : '显示数据模块库'" placement="bottom">
           <el-button @click="toggleModulesPanel" :type="showModulesPanel ? 'primary' : 'default'">
@@ -52,79 +52,82 @@
       <!-- 悬浮的数据模块面板 -->
       <div class="modules-panel-overlay" v-show="showModulesPanel">
         <div class="modules-panel">
-        <div class="panel-header">
-          <h3>数据模块库</h3>
-          <p class="panel-desc">拖拽或点击模块到左侧Excel中</p>
-          <el-input v-model="searchText" placeholder="搜索模块..." size="small" clearable>
-            <template #prefix>
-              <el-icon>
-                <Search />
-              </el-icon>
-            </template>
-          </el-input>
-        </div>
-
-        <div class="modules-content">
-          <!-- 基础信息模块已移除 - 用户可以直接在Excel中手动输入标题、单位名称等信息 -->
-
-          <!-- 每日数据模块 (31行) -->
-          <div class="module-category">
-            <div class="category-header" @click="toggleCategory('daily')">
-              <el-icon>
-                <Calendar />
-              </el-icon>
-              <span>每日数据 (31行)</span>
-              <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.daily }">
-                <ArrowDown />
-              </el-icon>
-            </div>
-            <div class="module-list" v-show="categoryExpanded.daily">
-              <div v-for="module in filteredDailyModules" :key="module.id" class="module-card daily-module"
-                @click="showDateSelector(module)">
-                <div class="module-icon">📊</div>
-                <div class="module-info">
-                  <div class="module-title">{{ module.title }}</div>
-                  <div class="module-desc">{{ module.description }}</div>
-                  <div class="module-preview">
-                    <span class="day-range">1日 ↓ 31日</span>
-                    <span class="sample-data">{{ module.sampleData }}</span>
-                  </div>
-                  <div class="module-date-info">
-                    <span class="date-label">默认：{{ module.defaultYear }}年{{ module.defaultMonth }}月</span>
-                  </div>
-                </div>
-                <div class="module-badge">31行</div>
-              </div>
-            </div>
+          <div class="panel-header">
+            <h3>数据模块库</h3>
+            <p class="panel-desc">拖拽或点击模块到左侧Excel中</p>
+            <el-input v-model="searchText" placeholder="搜索模块..." size="small" clearable>
+              <template #prefix>
+                <el-icon>
+                  <Search />
+                </el-icon>
+              </template>
+            </el-input>
           </div>
 
-          <!-- 汇总数据模块 -->
-          <div class="module-category">
-            <div class="category-header" @click="toggleCategory('summary')">
-              <el-icon>
-                <DataAnalysis />
-              </el-icon>
-              <span>汇总统计</span>
-              <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.summary }">
-                <ArrowDown />
-              </el-icon>
-            </div>
-            <div class="module-list" v-show="categoryExpanded.summary">
-              <div v-for="module in filteredSummaryModules" :key="module.id"
-                class="module-card summary-module" :draggable="true"
-                @dragstart="handleDragStart($event, module)" @click="insertModule(module)">
-                <div class="module-icon">🧮</div>
-                <div class="module-info">
-                  <div class="module-title">{{ module.title }}</div>
-                  <div class="module-desc">{{ module.description }}</div>
-                  <div class="module-data">{{ module.sampleData }}</div>
+          <div class="modules-content">
+            <!-- 基础信息模块已移除 - 用户可以直接在Excel中手动输入标题、单位名称等信息 -->
+
+            <!-- 每日数据模块 (31行) -->
+            <div class="module-category">
+              <div class="category-header" @click="toggleCategory('daily')">
+                <el-icon>
+                  <Calendar />
+                </el-icon>
+                <span>每日数据 (31行)</span>
+                <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.daily }">
+                  <ArrowDown />
+                </el-icon>
+              </div>
+              <div class="module-list" v-show="categoryExpanded.daily">
+                <div v-for="module in filteredDailyModules" :key="module.id" class="module-card daily-module"
+                  @click="showDateSelector(module)">
+                  <div class="module-icon">📊</div>
+                  <div class="module-info">
+                    <div class="module-title">{{ module.title }}</div>
+                    <div class="module-desc">{{ module.description }}</div>
+                    <div class="module-preview">
+                      <span class="day-range">1日 ↓ 31日</span>
+                      <span class="sample-data">{{ module.sampleData }}</span>
+                    </div>
+                    <div class="module-date-info">
+                      <span class="date-label">默认：{{ module.defaultYear }}年{{ module.defaultMonth }}月</span>
+                    </div>
+                  </div>
+                  <div class="module-badge">31行</div>
                 </div>
               </div>
             </div>
+
+            <!-- 汇总数据模块 -->
+            <div class="module-category">
+              <div class="category-header" @click="toggleCategory('summary')">
+                <el-icon>
+                  <DataAnalysis />
+                </el-icon>
+                <span>汇总统计</span>
+                <el-icon class="category-arrow" :class="{ 'expanded': categoryExpanded.summary }">
+                  <ArrowDown />
+                </el-icon>
+              </div>
+              <div class="module-list" v-show="categoryExpanded.summary">
+                <div v-for="module in filteredSummaryModules" :key="module.id" class="module-card summary-module"
+                  :draggable="true" @dragstart="handleDragStart($event, module)" @click="showDateSelector(module)">
+                  <div class="module-icon">🧮</div>
+                  <div class="module-info">
+                    <div class="module-title">{{ module.title }}</div>
+                    <div class="module-desc">{{ module.description }}</div>
+                    <div class="module-data">{{ module.sampleData }}</div>
+                    <div class="module-date-info">
+                      <span class="date-label">默认：{{ new Date().getFullYear() }}年{{ new Date().getMonth() + 1 }}月</span>
+                    </div>
+                  </div>
+                  <div class="module-badge">月度合计</div>
+                </div>
+              </div>
+            </div>
+
+
           </div>
-
-
-        </div>
         </div>
       </div>
     </div>
@@ -138,7 +141,7 @@
             <h3>{{ selectedModule?.title }}</h3>
             <p>{{ selectedModule?.description }}</p>
             <div class="columns-info">
-              <span class="badge">31行数据</span>
+              <span class="badge">{{ selectedModule?.type === 'daily' ? '31行数据' : '月度合计' }}</span>
               <span class="category">{{ selectedModule?.category }}</span>
             </div>
           </div>
@@ -160,8 +163,7 @@
         </el-form>
 
         <div class="preview-info">
-          <el-alert :title="`将插入 ${dateForm.year}年${dateForm.month}月 的${selectedModule?.category}数据（31行）`" type="info"
-            :closable="false" show-icon />
+          <el-alert :title="getPreviewText()" type="info" :closable="false" show-icon />
         </div>
       </div>
 
@@ -184,13 +186,8 @@
           </el-empty>
         </div>
         <div v-else class="templates-grid">
-          <div 
-            v-for="(template, index) in availableTemplates" 
-            :key="template.id"
-            class="template-card"
-            :class="{ 'selected': selectedTemplateIndex === index }"
-            @click="selectedTemplateIndex = index"
-          >
+          <div v-for="(template, index) in availableTemplates" :key="template.id" class="template-card"
+            :class="{ 'selected': selectedTemplateIndex === index }" @click="selectedTemplateIndex = index">
             <div class="template-header">
               <div class="template-icon">📊</div>
               <div class="template-info">
@@ -200,14 +197,10 @@
             </div>
             <div class="template-meta">
               <span class="template-date">{{ formatDate(template.createdAt) }}</span>
-              <el-button 
-                type="danger" 
-                size="small" 
-                text 
-                @click.stop="deleteTemplate(index)"
-                title="删除模板"
-              >
-                <el-icon><Delete /></el-icon>
+              <el-button type="danger" size="small" text @click.stop="deleteTemplate(index)" title="删除模板">
+                <el-icon>
+                  <Delete />
+                </el-icon>
               </el-button>
             </div>
           </div>
@@ -216,11 +209,8 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="loadDialogVisible = false">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="confirmLoadTemplate" 
-            :disabled="selectedTemplateIndex === -1 || availableTemplates.length === 0"
-          >
+          <el-button type="primary" @click="confirmLoadTemplate"
+            :disabled="selectedTemplateIndex === -1 || availableTemplates.length === 0">
             加载模板
           </el-button>
         </span>
@@ -291,16 +281,16 @@ export default {
     const selectedModule = ref(null)
     const availableTemplates = ref([])
     const selectedTemplateIndex = ref(-1)
-    
+
     // 面板显示状态 - 默认隐藏
     const showModulesPanel = ref(false)
-    
+
     // 分类展开状态 - 默认收起
     const categoryExpanded = reactive({
       daily: false,    // 每日数据分类
       summary: false   // 汇总统计分类
     })
-    
+
     // 注入导航栏状态
     const sidebarCollapsed = inject('sidebarCollapsed', ref(false))
 
@@ -473,7 +463,9 @@ export default {
         sampleData: '4,650.00',
         type: 'summary',
         category: '蔬菜类',
-        dataField: 'totals.vegetables'
+        dataField: 'totals.vegetables',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_meat',
@@ -482,7 +474,9 @@ export default {
         sampleData: '8,680.00',
         type: 'summary',
         category: '鲜肉类',
-        dataField: 'totals.meat'
+        dataField: 'totals.meat',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_frozen',
@@ -491,7 +485,9 @@ export default {
         sampleData: '2,480.00',
         type: 'summary',
         category: '冷冻类',
-        dataField: 'totals.frozen'
+        dataField: 'totals.frozen',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_tofu',
@@ -500,7 +496,9 @@ export default {
         sampleData: '1,395.00',
         type: 'summary',
         category: '豆制品类',
-        dataField: 'totals.tofu'
+        dataField: 'totals.tofu',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_eggs',
@@ -509,7 +507,9 @@ export default {
         sampleData: '1,860.00',
         type: 'summary',
         category: '禽蛋类',
-        dataField: 'totals.eggs'
+        dataField: 'totals.eggs',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_fruits',
@@ -518,7 +518,9 @@ export default {
         sampleData: '930.00',
         type: 'summary',
         category: '水果类',
-        dataField: 'totals.fruits'
+        dataField: 'totals.fruits',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_snacks',
@@ -527,7 +529,9 @@ export default {
         sampleData: '620.00',
         type: 'summary',
         category: '点心类',
-        dataField: 'totals.snacks'
+        dataField: 'totals.snacks',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_rice',
@@ -536,7 +540,9 @@ export default {
         sampleData: '3,100.00',
         type: 'summary',
         category: '大米',
-        dataField: 'totals.rice'
+        dataField: 'totals.rice',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_flour',
@@ -545,7 +551,9 @@ export default {
         sampleData: '2,480.00',
         type: 'summary',
         category: '面粉制品',
-        dataField: 'totals.flour'
+        dataField: 'totals.flour',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_oil',
@@ -554,7 +562,9 @@ export default {
         sampleData: '1,240.00',
         type: 'summary',
         category: '食用油类',
-        dataField: 'totals.oil'
+        dataField: 'totals.oil',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_seasoning',
@@ -563,7 +573,9 @@ export default {
         sampleData: '775.00',
         type: 'summary',
         category: '调味品类',
-        dataField: 'totals.seasoning'
+        dataField: 'totals.seasoning',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       },
       {
         id: 'total_all',
@@ -572,7 +584,9 @@ export default {
         sampleData: '28,210.00',
         type: 'summary',
         category: '总计',
-        dataField: 'totals.all'
+        dataField: 'totals.all',
+        defaultYear: new Date().getFullYear(),
+        defaultMonth: new Date().getMonth() + 1
       }
     ]
 
@@ -811,72 +825,80 @@ export default {
       }
     }
 
-    // 插入模块（点击插入）- 已移除，改为显示日期选择器
-    const insertModule = async (module) => {
-      if (module.type === 'daily') {
-        showDateSelector(module)
+    // 获取预览文本
+    const getPreviewText = () => {
+      if (!selectedModule.value) return ''
+
+      if (selectedModule.value.type === 'daily') {
+        return `将插入 ${dateForm.year}年${dateForm.month}月 的${selectedModule.value.category}数据（31行）`
       } else {
-        // 非每日数据模块直接插入
-        if (!luckysheetInstance.value) return
-
-        const selection = luckysheetInstance.value.getRange()
-        if (!selection || selection.length === 0) {
-          ElMessage.warning('请先选择要插入数据的单元格')
-          return
-        }
-
-        const startRow = selection[0].row[0]
-        const startCol = selection[0].column[0]
-
-        await insertModuleData(module, startRow, startCol)
+        return `将插入 ${dateForm.year}年${dateForm.month}月 的${selectedModule.value.category}月度合计数据`
       }
     }
 
     // 获取汇总数据
-    const fetchSummaryData = async (dataField, category) => {
+    const fetchSummaryData = async (dataField, category, year, month) => {
       try {
-        const currentDate = new Date()
-        const year = currentDate.getFullYear()
-        const month = currentDate.getMonth() + 1
-
-        // 映射分类值到数据库字段
-        const categoryMapping = {
-          '蔬菜类': 'vegetable',
-          '鲜肉类': 'meat',
-          '冷冻类': 'frozen',
-          '豆制品类': 'tofu',
-          '禽蛋类': 'egg',
-          '水果类': 'fruit',
-          '点心类': 'dessert',
-          '面粉制品': 'flour',
-          '大米': 'rice',
-          '食用油类': 'oil',
-          '调味品类': 'seasoning'
+        // 使用传入的年月参数，如果没有则使用当前日期
+        if (!year || !month) {
+          const currentDate = new Date()
+          year = currentDate.getFullYear()
+          month = currentDate.getMonth() + 1
         }
+
+        console.log(`开始获取汇总数据: ${year}年${month}月 ${category}`)
 
         if (dataField.includes('totals.')) {
           // 月度合计数据
           if (category === '总计') {
-            // 获取月度总合计
-            const response = await fetch(`/api/monthly-report/data?year=${year}&month=${month}`)
-            const data = await response.json()
-            return data.monthlyTotal || 0
+            // 获取月度总合计 - 先尝试使用monthly-report API
+            try {
+              const response = await fetch(`/api/monthly-report/data?year=${year}&month=${month}`)
+              const data = await response.json()
+              if (data.monthlyTotal) {
+                return data.monthlyTotal
+              }
+            } catch (error) {
+              console.log('monthly-report API不可用，使用stock-ins API计算总计')
+            }
 
-          } else {
-            // 特定分类的月度合计
-            const categoryValue = categoryMapping[category] || category
+            // 如果monthly-report API不可用，使用stock-ins API计算总计
             const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
             const endDate = `${year}-${month.toString().padStart(2, '0')}-31`
+            const response = await fetch(`/api/stock-ins?startTime=${startDate}&endTime=${endDate}&pageSize=10000`)
+            const data = await response.json()
+
+            let total = 0
+            if (data.data && Array.isArray(data.data)) {
+              total = data.data.reduce((sum, record) => sum + parseFloat(record.subtotal || 0), 0)
+              console.log(`总计汇总数据: 总数据${data.data.length}条，总计${total}`)
+            }
+            return total
+
+          } else {
+            // 特定分类的月度合计 - 直接使用中文分类名称
+            const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
+            const endDate = `${year}-${month.toString().padStart(2, '0')}-31`
+
+            console.log(`请求特定分类数据: ${category}`)
+            console.log(`时间范围: ${startDate} 到 ${endDate}`)
 
             const response = await fetch(`/api/stock-ins?startTime=${startDate}&endTime=${endDate}&pageSize=10000`)
             const data = await response.json()
 
             let total = 0
             if (data.data && Array.isArray(data.data)) {
-              // 过滤指定分类的数据
-              const filteredData = data.data.filter(record => record.category === categoryValue)
+              // 直接使用中文分类名称过滤数据
+              const filteredData = data.data.filter(record => record.category === category)
               total = filteredData.reduce((sum, record) => sum + parseFloat(record.subtotal || 0), 0)
-              console.log(`汇总数据 ${category}(${categoryValue}): 总数据${data.data.length}条，找到${filteredData.length}条记录，总计${total}`)
+              console.log(`汇总数据 ${category}: 总数据${data.data.length}条，找到${filteredData.length}条记录，总计${total}`)
+
+              // 输出前几条数据用于调试
+              if (filteredData.length > 0) {
+                console.log('找到的数据样例:', filteredData.slice(0, 3))
+              } else {
+                console.log('未找到匹配的数据，数据库中的分类有:', [...new Set(data.data.map(r => r.category))])
+              }
             }
             return total
           }
@@ -892,53 +914,37 @@ export default {
     // 获取每日数据
     const fetchDailyData = async (year, month, category) => {
       try {
-        // 映射分类值到数据库字段
-        const categoryMapping = {
-          '蔬菜类': 'vegetable',
-          '鲜肉类': 'meat',
-          '冷冻类': 'frozen',
-          '豆制品类': 'tofu',
-          '禽蛋类': 'egg',
-          '水果类': 'fruit',
-          '点心类': 'dessert',
-          '面粉制品': 'flour',
-          '大米': 'rice',
-          '食用油类': 'oil',
-          '调味品类': 'seasoning'
-        }
-
-        const categoryValue = categoryMapping[category] || category
-
         // 构建API请求URL
         const startDate = `${year}-${month.toString().padStart(2, '0')}-01`
         const endDate = `${year}-${month.toString().padStart(2, '0')}-31`
 
         console.log(`开始获取每日数据: ${year}年${month}月 ${category}`)
-        console.log(`分类映射: ${category} -> ${categoryValue}`)
         console.log(`请求时间范围: ${startDate} 到 ${endDate}`)
 
         // 创建31天的数据数组，初始化为0
         const dailyData = new Array(31).fill(0)
 
-        // 填充实际数据
-        if (category === '合计') {
-          // 合计数据需要汇总所有分类
-          console.log('开始计算合计数据，汇总所有分类...')
-          const categories = ['vegetable', 'meat', 'frozen', 'tofu', 'egg', 'fruit', 'dessert', 'flour', 'rice', 'oil', 'seasoning']
+        // 获取所有数据
+        const apiUrl = `/api/stock-ins?startTime=${startDate}&endTime=${endDate}&pageSize=10000`
+        console.log(`请求API: ${apiUrl}`)
 
-          // 获取所有数据，然后汇总各个分类
-          // 设置一个很大的pageSize来获取所有数据，避免分页限制
-          const apiUrl = `/api/stock-ins?startTime=${startDate}&endTime=${endDate}&pageSize=10000`
-          console.log(`请求所有数据进行合计: ${apiUrl}`)
+        const response = await fetch(apiUrl)
+        const data = await response.json()
 
-          const allResponse = await fetch(apiUrl)
-          const allData = await allResponse.json()
+        console.log(`总共返回数据条数:`, data.data ? data.data.length : 0)
+        console.log(`API返回的总记录数:`, data.total || '未知')
 
-          console.log(`合计计算：总共返回数据条数:`, allData.data ? allData.data.length : 0)
-          console.log(`合计计算：API返回的总记录数:`, allData.total || '未知')
+        if (data.data && Array.isArray(data.data)) {
+          // 先查看所有数据的分类情况
+          const allCategories = [...new Set(data.data.map(record => record.category))]
+          console.log('数据库中所有的分类:', allCategories)
 
-          if (allData.data && Array.isArray(allData.data)) {
-            allData.data.forEach(record => {
+          // 填充实际数据
+          if (category === '合计') {
+            // 合计数据需要汇总所有分类
+            console.log('开始计算合计数据，汇总所有分类...')
+
+            data.data.forEach(record => {
               const recordDate = new Date(record.in_time)
               const day = recordDate.getDate()
               const subtotal = parseFloat(record.subtotal || 0)
@@ -948,28 +954,11 @@ export default {
                 console.log(`合计: ${day}日 += ${subtotal} (${record.category}), 当前总计: ${dailyData[day - 1]}`)
               }
             })
-          }
-        } else {
-          // 单个分类的数据 - 先获取所有数据，然后在前端过滤
-          // 设置一个很大的pageSize来获取所有数据，避免分页限制
-          const apiUrl = `/api/stock-ins?startTime=${startDate}&endTime=${endDate}&pageSize=10000`
-          console.log(`请求所有数据然后过滤分类: ${apiUrl}`)
-
-          const response = await fetch(apiUrl)
-          const data = await response.json()
-
-          console.log(`总共返回数据条数:`, data.data ? data.data.length : 0)
-          console.log(`API返回的总记录数:`, data.total || '未知')
-
-          if (data.data && Array.isArray(data.data)) {
-            // 先查看所有数据的分类情况
-            const allCategories = [...new Set(data.data.map(record => record.category))]
-            console.log('数据库中所有的分类:', allCategories)
-
-            // 过滤指定分类的数据
-            const filteredData = data.data.filter(record => record.category === categoryValue)
-            console.log(`过滤后 ${category}(${categoryValue}) 数据条数:`, filteredData.length)
-            console.log('过滤后的数据样例:', filteredData.slice(0, 5))
+          } else {
+            // 单个分类的数据 - 直接使用中文分类名称过滤
+            const filteredData = data.data.filter(record => record.category === category)
+            console.log(`过滤后 ${category} 数据条数:`, filteredData.length)
+            console.log('过滤后的数据样例:', filteredData.slice(0, 3))
 
             filteredData.forEach(record => {
               const recordDate = new Date(record.in_time)
@@ -983,6 +972,11 @@ export default {
                 console.log(`${category}: ${day}日 += ${subtotal}, 当前总计: ${dailyData[day - 1]}`)
               }
             })
+
+            // 如果没有找到数据，输出调试信息
+            if (filteredData.length === 0) {
+              console.log(`未找到 ${category} 的数据，数据库中的分类有:`, allCategories)
+            }
           }
         }
 
@@ -1089,11 +1083,14 @@ export default {
         }
 
       } else if (module.type === 'summary') {
+        const year = module.selectedYear || new Date().getFullYear()
+        const month = module.selectedMonth || new Date().getMonth() + 1
+
         try {
           ElMessage.info('正在获取汇总数据...')
 
-          // 获取实际的汇总数据
-          const summaryValue = await fetchSummaryData(module.dataField, module.category)
+          // 获取实际的汇总数据，传入年月参数
+          const summaryValue = await fetchSummaryData(module.dataField, module.category, year, month)
 
           // 根据数据类型格式化显示值
           let displayValue, cellValue
@@ -1155,7 +1152,7 @@ export default {
             ElMessage.warning('汇总数据设置失败')
           }
 
-          ElMessage.success(`已插入${module.title}（实际数据：${displayValue}）`)
+          ElMessage.success(`已插入${year}年${month}月${module.title}（实际数据：${displayValue}）`)
         } catch (error) {
           console.error('插入汇总数据失败:', error)
           ElMessage.error('插入汇总数据失败: ' + error.message)
@@ -1303,7 +1300,7 @@ export default {
           // 使用Luckysheet的正确API来加载数据
           if (selectedTemplate.sheetData && selectedTemplate.sheetData.length > 0) {
             window.luckysheet.destroy()
-            
+
             // 重新初始化Luckysheet并加载模板数据
             const options = {
               container: 'luckysheet',
@@ -1364,10 +1361,10 @@ export default {
               },
               data: selectedTemplate.sheetData
             }
-            
+
             window.luckysheet.create(options)
             luckysheetInstance.value = window.luckysheet
-            
+
             ElMessage.success(`已加载模板: ${selectedTemplate.name}`)
             loadDialogVisible.value = false
           } else {
@@ -1395,7 +1392,7 @@ export default {
 
         availableTemplates.value.splice(index, 1)
         localStorage.setItem('reportDesignerTemplates', JSON.stringify(availableTemplates.value))
-        
+
         // 如果删除的是当前选中的模板，重置选择
         if (selectedTemplateIndex.value === index) {
           selectedTemplateIndex.value = -1
@@ -1708,7 +1705,7 @@ export default {
 
       if (window.luckysheet) {
         initLuckysheet()
-        
+
         // 修复工具栏下拉菜单定位并添加拖动功能
         setTimeout(() => {
           const setupDraggableToolbar = () => {
@@ -1726,7 +1723,7 @@ export default {
                         dropdown.style.position = 'fixed';
                         dropdown.style.zIndex = '9999';
                         dropdown.style.cursor = 'move';
-                        
+
                         // 获取初始位置
                         const moreButton = document.querySelector('.luckysheet-toolbar-more-vertical');
                         const buttonRect = moreButton.getBoundingClientRect();
@@ -1734,14 +1731,14 @@ export default {
                         dropdown.style.left = buttonRect.left + 'px';
                         dropdown.style.transform = 'none';
                         dropdown.style.marginTop = '0';
-                        
+
                         // 让整个工具栏可拖动
                         dropdown.style.userSelect = 'none';
                         dropdown.title = '可拖动工具栏';
-                        
+
                         // 实现拖动功能
                         makeDraggable(dropdown);
-                        
+
                         console.log('工具栏下拉菜单已设置为可拖动');
                       }
                     }, 10);
@@ -1752,59 +1749,59 @@ export default {
               console.log('设置可拖动工具栏失败:', error);
             }
           };
-          
+
           // 拖动功能实现
           const makeDraggable = (element) => {
             let isDragging = false;
             let startX, startY, initialX, initialY;
-            
+
             // 直接使用整个工具栏作为拖动目标
             const dragTarget = element;
-            
+
             dragTarget.addEventListener('mousedown', (e) => {
               // 检查是否点击了工具栏按钮，如果是则不启动拖动
-              if (e.target.closest('.luckysheet-toolbar-button') || 
-                  e.target.closest('.luckysheet-toolbar-menu-button') ||
-                  e.target.tagName === 'BUTTON' ||
-                  e.target.closest('button')) {
+              if (e.target.closest('.luckysheet-toolbar-button') ||
+                e.target.closest('.luckysheet-toolbar-menu-button') ||
+                e.target.tagName === 'BUTTON' ||
+                e.target.closest('button')) {
                 return;
               }
-              
+
               isDragging = true;
               startX = e.clientX;
               startY = e.clientY;
-              
+
               const rect = element.getBoundingClientRect();
               initialX = rect.left;
               initialY = rect.top;
-              
+
               element.style.transition = 'none';
               document.body.style.userSelect = 'none';
               element.style.cursor = 'grabbing';
-              
+
               e.preventDefault();
             });
-            
+
             document.addEventListener('mousemove', (e) => {
               if (!isDragging) return;
-              
+
               const deltaX = e.clientX - startX;
               const deltaY = e.clientY - startY;
-              
+
               const newX = initialX + deltaX;
               const newY = initialY + deltaY;
-              
+
               // 限制在视窗范围内
               const maxX = window.innerWidth - element.offsetWidth;
               const maxY = window.innerHeight - element.offsetHeight;
-              
+
               const constrainedX = Math.max(0, Math.min(newX, maxX));
               const constrainedY = Math.max(0, Math.min(newY, maxY));
-              
+
               element.style.left = constrainedX + 'px';
               element.style.top = constrainedY + 'px';
             });
-            
+
             document.addEventListener('mouseup', () => {
               if (isDragging) {
                 isDragging = false;
@@ -1813,17 +1810,17 @@ export default {
                 element.style.cursor = 'move';
               }
             });
-            
+
             // 双击重置位置（只在空白区域有效）
             dragTarget.addEventListener('dblclick', (e) => {
               // 检查是否双击了工具栏按钮，如果是则不重置
-              if (e.target.closest('.luckysheet-toolbar-button') || 
-                  e.target.closest('.luckysheet-toolbar-menu-button') ||
-                  e.target.tagName === 'BUTTON' ||
-                  e.target.closest('button')) {
+              if (e.target.closest('.luckysheet-toolbar-button') ||
+                e.target.closest('.luckysheet-toolbar-menu-button') ||
+                e.target.tagName === 'BUTTON' ||
+                e.target.closest('button')) {
                 return;
               }
-              
+
               const moreButton = document.querySelector('.luckysheet-toolbar-more-vertical');
               if (moreButton) {
                 const buttonRect = moreButton.getBoundingClientRect();
@@ -1836,7 +1833,7 @@ export default {
               }
             });
           };
-          
+
           setupDraggableToolbar();
         }, 1000);
       } else {
@@ -1866,9 +1863,9 @@ export default {
       filteredDailyModules,
       filteredSummaryModules,
       handleDragStart,
-      insertModule,
       showDateSelector,
       getYearOptions,
+      getPreviewText,
       confirmInsertModule,
       saveTemplate,
       confirmSaveTemplate,
@@ -1886,7 +1883,8 @@ export default {
 
 <style scoped>
 .report-designer {
-  height: calc(100vh - 64px); /* 减去头部高度 */
+  height: calc(100vh - 64px);
+  /* 减去头部高度 */
   display: flex;
   flex-direction: column;
   background-color: #f5f5f5;
@@ -1949,7 +1947,8 @@ export default {
   /* 确保内部定位元素有正确的基准 */
   transform: translateZ(0);
   overflow: hidden;
-  min-height: 0; /* 确保flex子元素能正确收缩 */
+  min-height: 0;
+  /* 确保flex子元素能正确收缩 */
 }
 
 /* 悬浮的数据模块面板覆盖层 */
@@ -1958,7 +1957,8 @@ export default {
   top: 10px;
   right: 10px;
   bottom: 10px;
-  width: 320px; /* 调整宽度以适应卡片内容 */
+  width: 320px;
+  /* 调整宽度以适应卡片内容 */
   z-index: 1000;
   pointer-events: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1990,6 +1990,7 @@ export default {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -2086,7 +2087,8 @@ export default {
 
 /* 模块列表展开/收起动画 */
 .module-list {
-  max-height: 1000px; /* 设置一个足够大的最大高度 */
+  max-height: 1000px;
+  /* 设置一个足够大的最大高度 */
 }
 
 /* 当使用v-show时，可以通过CSS来控制动画 */
@@ -2101,6 +2103,7 @@ export default {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2109,15 +2112,18 @@ export default {
 
 .module-card {
   display: flex;
-  align-items: flex-start; /* 改为顶部对齐，适应多行文字 */
-  padding: 10px; /* 稍微减少内边距 */
+  align-items: flex-start;
+  /* 改为顶部对齐，适应多行文字 */
+  padding: 10px;
+  /* 稍微减少内边距 */
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   cursor: grab;
   transition: all 0.2s;
   background: white;
   position: relative;
-  min-height: 60px; /* 设置最小高度确保内容显示 */
+  min-height: 60px;
+  /* 设置最小高度确保内容显示 */
 }
 
 .module-card:hover {
@@ -2139,7 +2145,8 @@ export default {
 .module-info {
   flex: 1;
   min-width: 0;
-  word-wrap: break-word; /* 确保长文字能够换行 */
+  word-wrap: break-word;
+  /* 确保长文字能够换行 */
   overflow-wrap: break-word;
 }
 
@@ -2148,8 +2155,10 @@ export default {
   font-size: 13px;
   margin-bottom: 4px;
   color: #333;
-  line-height: 1.3; /* 改善行高 */
-  word-break: keep-all; /* 保持中文词汇完整性 */
+  line-height: 1.3;
+  /* 改善行高 */
+  word-break: keep-all;
+  /* 保持中文词汇完整性 */
 }
 
 .module-desc {
@@ -2157,8 +2166,10 @@ export default {
   color: #666;
   line-height: 1.4;
   margin-bottom: 4px;
-  word-break: keep-all; /* 保持中文词汇完整性 */
-  hyphens: auto; /* 自动断词 */
+  word-break: keep-all;
+  /* 保持中文词汇完整性 */
+  hyphens: auto;
+  /* 自动断词 */
 }
 
 .module-data {
@@ -2491,15 +2502,16 @@ export default {
 
 /* 导航栏收缩时的适配 */
 @media screen and (min-width: 769px) {
+
   /* 当导航栏收缩时，确保表格有足够空间 */
   .report-designer {
     transition: all 0.3s ease;
   }
-  
+
   .excel-container {
     transition: all 0.3s ease;
   }
-  
+
   /* 悬浮面板在导航栏收缩时的调整 */
   .modules-panel-overlay {
     transition: all 0.3s ease;
@@ -2512,19 +2524,19 @@ export default {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .template-card {
     padding: 16px;
   }
-  
+
   .template-icon {
     font-size: 28px;
   }
-  
+
   .template-name {
     font-size: 16px;
   }
-  
+
   /* 移动端时调整面板宽度 */
   .modules-panel-overlay {
     width: 280px;
