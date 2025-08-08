@@ -335,8 +335,9 @@ const loadData = async () => {
     const inventoryResponse = await axios.get('/api/monthly-inventory')
     inventoryList.value = inventoryResponse.data.data || []
 
-    // 加载出库分类数据
+// 加载出库分类数据
     const categoriesResponse = await axios.get('/api/outbound-categories')
+    // 保持原始输入顺序，不进行排序
     categoryList.value = categoriesResponse.data.data || []
 
     // 数据加载完成后重新计算统计数据
