@@ -311,7 +311,7 @@ export default {
       {
         id: 'daily_vegetables',
         title: '蔬菜类支出',
-        description: '31天蔬菜类每日支出金额（按行排列）',
+        description: '每日蔬菜支出',
         sampleData: '150.50, 120.30, 180.20...',
         type: 'daily',
         category: '蔬菜类',
@@ -323,7 +323,7 @@ export default {
       {
         id: 'daily_meat',
         title: '鲜肉类支出',
-        description: '31天鲜肉类每日支出金额（按行排列）',
+        description: '每日鲜肉支出',
         sampleData: '280.00, 250.00, 320.00...',
         type: 'daily',
         category: '鲜肉类',
@@ -335,7 +335,7 @@ export default {
       {
         id: 'daily_frozen',
         title: '冷冻类支出',
-        description: '31天冷冻类每日支出金额（按行排列）',
+        description: '每日冷冻食品支出',
         sampleData: '80.00, 90.00, 75.00...',
         type: 'daily',
         category: '冷冻类',
@@ -347,7 +347,7 @@ export default {
       {
         id: 'daily_tofu',
         title: '豆制品类支出',
-        description: '31天豆制品类每日支出金额（按行排列）',
+        description: '每日豆制品支出',
         sampleData: '45.00, 50.00, 40.00...',
         type: 'daily',
         category: '豆制品类',
@@ -359,7 +359,7 @@ export default {
       {
         id: 'daily_eggs',
         title: '禽蛋类支出',
-        description: '31天禽蛋类每日支出金额（按行排列）',
+        description: '每日禽蛋支出',
         sampleData: '60.00, 65.00, 55.00...',
         type: 'daily',
         category: '禽蛋类',
@@ -371,7 +371,7 @@ export default {
       {
         id: 'daily_fruits',
         title: '水果类支出',
-        description: '31天水果类每日支出金额（按行排列）',
+        description: '每日水果支出',
         sampleData: '30.00, 35.00, 25.00...',
         type: 'daily',
         category: '水果类',
@@ -383,7 +383,7 @@ export default {
       {
         id: 'daily_snacks',
         title: '点心类支出',
-        description: '31天点心类每日支出金额（按行排列）',
+        description: '每日点心支出',
         sampleData: '20.00, 25.00, 15.00...',
         type: 'daily',
         category: '点心类',
@@ -395,7 +395,7 @@ export default {
       {
         id: 'daily_rice',
         title: '大米支出',
-        description: '31天大米每日支出金额（按行排列）',
+        description: '每日大米支出',
         sampleData: '100.00, 100.00, 100.00...',
         type: 'daily',
         category: '大米',
@@ -407,7 +407,7 @@ export default {
       {
         id: 'daily_flour',
         title: '面粉制品支出',
-        description: '31天面粉制品每日支出金额（按行排列）',
+        description: '每日面粉制品支出',
         sampleData: '80.00, 85.00, 75.00...',
         type: 'daily',
         category: '面粉制品',
@@ -419,7 +419,7 @@ export default {
       {
         id: 'daily_oil',
         title: '食用油类支出',
-        description: '31天食用油类每日支出金额（按行排列）',
+        description: '每日食用油支出',
         sampleData: '40.00, 45.00, 35.00...',
         type: 'daily',
         category: '食用油类',
@@ -431,7 +431,7 @@ export default {
       {
         id: 'daily_seasoning',
         title: '调味品类支出',
-        description: '31天调味品类每日支出金额（按行排列）',
+        description: '每日调味品支出',
         sampleData: '25.00, 30.00, 20.00...',
         type: 'daily',
         category: '调味品类',
@@ -443,7 +443,7 @@ export default {
       {
         id: 'daily_total',
         title: '支出合计',
-        description: '31天每日支出总计金额（按行排列）',
+        description: '每日总支出',
         sampleData: '865.50, 865.30, 920.20...',
         type: 'daily',
         category: '合计',
@@ -459,7 +459,7 @@ export default {
       {
         id: 'total_vegetables',
         title: '蔬菜类月度合计',
-        description: '本月蔬菜类支出总计',
+        description: '蔬菜月度总计',
         sampleData: '4,650.00',
         type: 'summary',
         category: '蔬菜类',
@@ -470,7 +470,7 @@ export default {
       {
         id: 'total_meat',
         title: '鲜肉类月度合计',
-        description: '本月鲜肉类支出总计',
+        description: '鲜肉月度总计',
         sampleData: '8,680.00',
         type: 'summary',
         category: '鲜肉类',
@@ -481,7 +481,7 @@ export default {
       {
         id: 'total_frozen',
         title: '冷冻类月度合计',
-        description: '本月冷冻类支出总计',
+        description: '冷冻食品月度总计',
         sampleData: '2,480.00',
         type: 'summary',
         category: '冷冻类',
@@ -492,7 +492,7 @@ export default {
       {
         id: 'total_tofu',
         title: '豆制品类月度合计',
-        description: '本月豆制品类支出总计',
+        description: '豆制品月度总计',
         sampleData: '1,395.00',
         type: 'summary',
         category: '豆制品类',
@@ -503,7 +503,7 @@ export default {
       {
         id: 'total_eggs',
         title: '禽蛋类月度合计',
-        description: '本月禽蛋类支出总计',
+        description: '禽蛋月度总计',
         sampleData: '1,860.00',
         type: 'summary',
         category: '禽蛋类',
@@ -514,7 +514,7 @@ export default {
       {
         id: 'total_fruits',
         title: '水果类月度合计',
-        description: '本月水果类支出总计',
+        description: '水果月度总计',
         sampleData: '930.00',
         type: 'summary',
         category: '水果类',
@@ -525,7 +525,7 @@ export default {
       {
         id: 'total_snacks',
         title: '点心类月度合计',
-        description: '本月点心类支出总计',
+        description: '点心月度总计',
         sampleData: '620.00',
         type: 'summary',
         category: '点心类',
@@ -536,7 +536,7 @@ export default {
       {
         id: 'total_rice',
         title: '大米月度合计',
-        description: '本月大米支出总计',
+        description: '大米月度总计',
         sampleData: '3,100.00',
         type: 'summary',
         category: '大米',
@@ -547,7 +547,7 @@ export default {
       {
         id: 'total_flour',
         title: '面粉制品月度合计',
-        description: '本月面粉制品支出总计',
+        description: '面粉制品月度总计',
         sampleData: '2,480.00',
         type: 'summary',
         category: '面粉制品',
@@ -558,7 +558,7 @@ export default {
       {
         id: 'total_oil',
         title: '食用油类月度合计',
-        description: '本月食用油类支出总计',
+        description: '食用油月度总计',
         sampleData: '1,240.00',
         type: 'summary',
         category: '食用油类',
@@ -569,7 +569,7 @@ export default {
       {
         id: 'total_seasoning',
         title: '调味品类月度合计',
-        description: '本月调味品类支出总计',
+        description: '调味品月度总计',
         sampleData: '775.00',
         type: 'summary',
         category: '调味品类',
@@ -580,7 +580,7 @@ export default {
       {
         id: 'total_all',
         title: '月度总合计',
-        description: '本月所有支出总计',
+        description: '所有支出月度总计',
         sampleData: '28,210.00',
         type: 'summary',
         category: '总计',
@@ -2080,7 +2080,8 @@ export default {
 .module-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  /* 增加卡片间距 */
   overflow: hidden;
   transition: all 0.3s ease;
 }
@@ -2122,8 +2123,8 @@ export default {
   transition: all 0.2s;
   background: white;
   position: relative;
-  min-height: 60px;
-  /* 设置最小高度确保内容显示 */
+  min-height: 80px;
+  /* 增加最小高度确保日期信息显示 */
 }
 
 .module-card:hover {
@@ -2148,6 +2149,8 @@ export default {
   word-wrap: break-word;
   /* 确保长文字能够换行 */
   overflow-wrap: break-word;
+  padding-right: 20px;
+  /* 为右侧的badge留出空间 */
 }
 
 .module-title {
@@ -2206,6 +2209,8 @@ export default {
   padding: 2px 6px;
   border-radius: 10px;
   font-weight: bold;
+  z-index: 2;
+  /* 确保badge在最上层 */
 }
 
 .basic-module {
@@ -2225,15 +2230,24 @@ export default {
 }
 
 .module-date-info {
-  margin-top: 4px;
+  margin-top: 6px;
+  /* 增加上边距 */
+  position: relative;
+  /* 确保在正常文档流中 */
+  z-index: 1;
+  /* 确保在badge之上 */
 }
 
 .date-label {
   font-size: 9px;
   color: #1890ff;
   background: #e6f3ff;
-  padding: 1px 4px;
-  border-radius: 2px;
+  padding: 2px 6px;
+  /* 增加内边距 */
+  border-radius: 3px;
+  /* 稍微增加圆角 */
+  display: inline-block;
+  /* 确保正确显示 */
 }
 
 .date-selector-content {
