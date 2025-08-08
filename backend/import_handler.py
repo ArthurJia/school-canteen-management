@@ -100,7 +100,9 @@ def import_inventory_data(data, mode='append'):
             category TEXT,
             unit_price REAL DEFAULT 0,
             quantity REAL NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            unit TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         
@@ -118,14 +120,15 @@ def import_inventory_data(data, mode='append'):
         for item in data:
             try:
                 cursor.execute('''
-                INSERT INTO monthly_inventory (date, name, category, unit_price, quantity)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO monthly_inventory (date, name, category, unit_price, quantity, unit)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ''', (
                     item.get('date', datetime.now().strftime('%Y-%m')),
                     item.get('name', ''),
                     item.get('category', ''),
                     float(item.get('unitPrice', 0)),
-                    float(item.get('quantity', 0))
+                    float(item.get('quantity', 0)),
+                    item.get('unit', '千克')
                 ))
                 success_count += 1
             except Exception as e:

@@ -125,7 +125,7 @@
           <ul>
             <li><strong>数据用途：</strong>导入每月月底的库存盘点数据，包括食材名称、分类、单价和库存数量</li>
             <li><strong>支持格式：</strong>Excel文件(.xlsx, .xls)和CSV文件，文件大小不超过10MB</li>
-            <li><strong>必填字段：</strong>时间（年月）、名称、分类、单价、库存数量</li>
+            <li><strong>必填字段：</strong>时间（年月）、名称、分类、单价、库存数量、库存金额</li>
             <li><strong>导入方式：</strong>支持新增数据和覆盖数据两种模式</li>
           </ul>
         </div>
@@ -560,7 +560,7 @@ const importInventoryData = async () => {
     }
     
     // 验证必要的列
-    const requiredColumns = ['时间（年月）', '名称', '分类', '单价', '库存数量']
+    const requiredColumns = ['时间（年月）', '名称', '分类', '单价', '库存数量', '库存金额']
     const headers = Object.keys(data[0])
     const missingColumns = requiredColumns.filter(col => !headers.includes(col))
     
@@ -598,6 +598,7 @@ const importInventoryData = async () => {
         category: row['分类'],
         unitPrice: parseFloat(row['单价']) || 0,
         quantity: parseFloat(row['库存数量']) || 0,
+        amount: parseFloat(row['库存金额']) || 0, // 添加库存金额字段
         unit: row['单位'] || '千克' // 添加单位字段，默认为千克
       };
     });
@@ -803,6 +804,7 @@ const downloadInventoryTemplate = () => {
       '分类': '大米',
       '单价': 5.5,
       '库存数量': 100,
+      '库存金额': 550,
       '单位': '千克'
     },
     {
@@ -811,6 +813,7 @@ const downloadInventoryTemplate = () => {
       '分类': '食用油类',
       '单价': 12.8,
       '库存数量': 20,
+      '库存金额': 256,
       '单位': '升'
     },
     {
@@ -819,39 +822,16 @@ const downloadInventoryTemplate = () => {
       '分类': '调味品类',
       '单价': 8.5,
       '库存数量': 5,
+      '库存金额': 42.5,
       '单位': '升'
     }
   ]
   
-  // 添加分类说明
-  const categorySheet = [
-    { '分类名称': '大米', '说明': '主食类，包括各种大米' },
-    { '分类名称': '食用油类', '说明': '各种食用油，如大豆油、花生油等' },
-    { '分类名称': '调味品类', '说明': '调味料，如生抽、老抽、盐等' },
-    { '分类名称': '蔬菜类', '说明': '新鲜蔬菜' },
-    { '分类名称': '鲜肉类', '说明': '新鲜肉类' },
-    { '分类名称': '冷冻类', '说明': '冷冻食品' },
-    { '分类名称': '豆制品类', '说明': '豆腐、豆干等豆制品' },
-    { '分类名称': '禽蛋类', '说明': '鸡蛋、鸭蛋等' },
-    { '分类名称': '水果类', '说明': '各种水果' },
-    { '分类名称': '点心类', '说明': '糕点、面包等' },
-    { '分类名称': '面粉制品', '说明': '面条、面粉等' }
-  ]
-  
   try {
-    // 创建工作簿
-    const wb = XLSX.utils.book_new()
-    
-    // 创建数据工作表
-    const ws1 = XLSX.utils.json_to_sheet(templateData)
-    XLSX.utils.book_append_sheet(wb, ws1, '月底库存数据模板')
-    
-    // 创建分类说明工作表
-    const ws2 = XLSX.utils.json_to_sheet(categorySheet)
-    XLSX.utils.book_append_sheet(wb, ws2, '分类说明')
-    
-    // 下载文件
-    XLSX.writeFile(wb, '月底库存数据导入模板.xlsx')
+    const worksheet = XLSX.utils.json_to_sheet(templateData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, '月底库存数据')
+    XLSX.writeFile(workbook, '月底库存数据模板.xlsx')
     ElMessage.success('模板下载成功')
   } catch (error) {
     console.error('下载模板失败:', error)
