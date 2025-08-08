@@ -231,6 +231,28 @@ def delete_stock_in(stock_in_id):
         print(f"Error deleting stock record: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stock-ins/all', methods=['DELETE'])
+def delete_all_stock_ins():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 删除所有库存记录
+        cursor.execute('DELETE FROM stock_ins')
+        deleted_count = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'成功删除 {deleted_count} 条库存记录',
+            'deletedCount': deleted_count
+        }), 200
+        
+    except Exception as e:
+        print(f"Error deleting all stock records: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/stock-outs', methods=['POST'])
 def create_stock_out():
     data = request.get_json()
