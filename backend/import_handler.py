@@ -54,6 +54,30 @@ def import_stock_data(data, mode='append'):
                     item.get('note', ''),
                     in_time
                 ))
+                
+                # 如果提供了出库时间，也创建对应的出库记录
+                out_time = item.get('out_time')
+                if out_time:
+                    try:
+                        cursor.execute('''
+                        INSERT INTO stock_outs (name, category, quantity, unit, supplier, price, subtotal, is_daily, note, out_time)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ''', (
+                            item.get('name', ''),
+                            item.get('category', ''),
+                            quantity,
+                            item.get('unit', 'kg'),
+                            item.get('supplier', ''),
+                            price,
+                            subtotal,
+                            1 if item.get('is_daily', False) else 0,
+                            item.get('note', ''),
+                            out_time
+                        ))
+                    except Exception as out_error:
+                        print(f"Error creating corresponding stock out record: {str(out_error)}")
+                        # 不影响入库记录的创建，只记录错误
+                
                 success_count += 1
             except Exception as e:
                 print(f"Error importing stock item: {str(e)}, item: {item}")

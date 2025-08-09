@@ -143,7 +143,7 @@ def get_stock_ins():
         cursor.execute(count_query, params[:len(params)-2] if where_clauses else [])
         total = cursor.fetchone()[0]
         
-        # 将记录转换为字典列表
+        # 将记录转换为字典列表，并查询对应的出库时间
         stock_ins = []
         for record in records:
             stock_in = {
@@ -157,8 +157,24 @@ def get_stock_ins():
                 'subtotal': float(record[7]),  # 确保数字类型正确
                 'is_daily': bool(record[8]),
                 'note': record[9],
-                'in_time': record[10]
+                'in_time': record[10],
+                'out_time': None  # 默认为None
             }
+            
+            # 查询对应的出库时间（基于相同的食材名称、分类、供应商和日期）
+            cursor.execute('''
+                SELECT out_time FROM stock_outs 
+                WHERE name = ? AND category = ? AND supplier = ? 
+                AND date(out_time) = date(?) 
+                AND quantity = ? AND price = ?
+                ORDER BY out_time DESC 
+                LIMIT 1
+            ''', (record[1], record[2], record[5], record[10], record[3], record[6]))
+            
+            out_record = cursor.fetchone()
+            if out_record:
+                stock_in['out_time'] = out_record[0]
+            
             stock_ins.append(stock_in)
         
         conn.close()

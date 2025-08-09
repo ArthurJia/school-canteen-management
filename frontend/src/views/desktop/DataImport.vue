@@ -28,9 +28,10 @@
         <div class="desc-content">
           <h4>功能说明</h4>
           <ul>
-            <li><strong>数据用途：</strong>导入食材入库记录，包括入库时间、食材名称、分类、供应商、数量等信息</li>
+            <li><strong>数据用途：</strong>导入食材入库记录，包括入库时间、出库时间、食材名称、分类、供应商、数量等信息</li>
             <li><strong>支持格式：</strong>Excel文件(.xlsx, .xls)和CSV文件，文件大小不超过10MB</li>
             <li><strong>必填字段：</strong>入库时间、食材名称、分类、供应商、数量、单位、单价、小计</li>
+            <li><strong>可选字段：</strong>出库时间、备注</li>
             <li><strong>导入方式：</strong>支持新增数据和覆盖数据两种模式</li>
           </ul>
         </div>
@@ -367,6 +368,7 @@ const importStockData = async () => {
     
     // 验证必要的列
     const requiredColumns = ['入库时间', '食材名称', '分类', '供应商', '数量', '单位', '单价', '小计']
+    const optionalColumns = ['出库时间', '备注']
     const headers = Object.keys(data[0])
     const missingColumns = requiredColumns.filter(col => !headers.includes(col))
     
@@ -400,9 +402,22 @@ const importStockData = async () => {
         inTime = jsDate.toISOString().split('T')[0];
       }
       
+      // 处理出库时间
+      let outTime = row['出库时间'];
+      if (outTime && typeof outTime === 'number') {
+        // 处理Excel日期数值格式
+        const excelDate = parseInt(outTime);
+        const millisecondsPerDay = 24 * 60 * 60 * 1000;
+        const excelStartDate = new Date(1900, 0, 1);
+        const daysToAdd = excelDate > 60 ? excelDate - 1 : excelDate;
+        const jsDate = new Date(excelStartDate.getTime() + daysToAdd * millisecondsPerDay);
+        outTime = jsDate.toISOString().split('T')[0];
+      }
+      
       return {
         id: Date.now() + index, // 生成唯一ID
         in_time: inTime,
+        out_time: outTime || null,
         name: row['食材名称'],
         category: row['分类'],
         supplier: row['供应商'],
@@ -697,6 +712,7 @@ const downloadStockTemplate = () => {
   const templateData = [
     {
       '入库时间': '2024-01-01',
+      '出库时间': '2024-01-01',
       '食材名称': '优质大米',
       '分类': 'rice',
       '供应商': 'maidelong',
@@ -708,6 +724,7 @@ const downloadStockTemplate = () => {
     },
     {
       '入库时间': '2024-01-02',
+      '出库时间': '',
       '食材名称': '大豆油',
       '分类': 'oil',
       '供应商': 'yurun',
@@ -715,10 +732,11 @@ const downloadStockTemplate = () => {
       '单位': 'L',
       '单价': 12.8,
       '小计': 640,
-      '备注': '食用油'
+      '备注': '食用油（储存类食材，无出库时间）'
     },
     {
       '入库时间': '2024-01-03',
+      '出库时间': '2024-01-03',
       '食材名称': '白菜',
       '分类': 'vegetable',
       '供应商': 'hetianyu',
@@ -726,7 +744,7 @@ const downloadStockTemplate = () => {
       '单位': 'kg',
       '单价': 2.5,
       '小计': 75,
-      '备注': '新鲜蔬菜'
+      '备注': '新鲜蔬菜（当天类食材）'
     }
   ]
   

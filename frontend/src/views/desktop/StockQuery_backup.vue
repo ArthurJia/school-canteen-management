@@ -185,7 +185,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Download } from '@element-plus/icons-vue'
+import { Refresh, Download } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -253,6 +253,8 @@ const totalItems = ref(0)
 const loading = ref(false)
 const stockData = ref([])
 
+
+
 const fetchStockData = async () => {
   try {
     loading.value = true
@@ -290,6 +292,8 @@ const filteredStock = computed(() => {
   // 直接返回从后端获取的数据，因为搜索已经在后端完成
   return stockData.value
 })
+
+
 
 const editDialogVisible = ref(false)
 const editForm = ref({
@@ -367,6 +371,8 @@ const handleSearchClear = () => {
   currentPage.value = 1
   fetchStockData()
 }
+
+
 
 const exportToExcel = async () => {
   try {
@@ -451,6 +457,110 @@ const exportToExcel = async () => {
   }
 }
 
+// 计算使用量统计的方法
+const calculateUsageStatistics = async () => {
+  if (!selectedStatMonth.value) {
+    riceUsage.value = 0
+    oilUsage.value = 0
+    seasoningUsage.value = 0
+    return
+  }
+
+  try {
+    const [year, month] = selectedStatMonth.value.split('-')
+
+    // 从API获取月底库存数据
+    const inventoryResponse = await axios.get('/api/monthly-inventory')
+    const inventoryResult = inventoryResponse.data
+    const inventoryData = inventoryResult.data || []
+
+    // 从API获取库存查询数据（入库记录）
+    const stockResponse = await axios.get('/api/stock-ins', {
+      params: {
+        pageSize: 1000 // 获取足够多的数据用于统计
+      }
+    })
+    const stockResult = stockResponse.data
+    const stockData = stockResult.data || []
+
+    // 构建当月和上月的年月字符串
+    const currentMonth = selectedStatMonth.value
+    const prevMonth = getPreviousMonth(selectedStatMonth.value)
+
+    // 计算当月月底库存金额
+    const currentMonthInventory = inventoryData.filter(item => item.date === currentMonth)
+    
+    const currentRiceAmount = currentMonthInventory
+      .filter(item => item.category === '大米')
+      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    const currentOilAmount = currentMonthInventory
+      .filter(item => item.category === '食用油类')
+      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    const currentSeasoningAmount = currentMonthInventory
+      .filter(item => item.category === '调味品类')
+      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+
+    // 计算上个月月底库存金额
+    const prevMonthInventory = inventoryData.filter(item => item.date === prevMonth)
+    
+    const prevRiceAmount = prevMonthInventory
+      .filter(item => item.category === '大米')
+      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    const prevOilAmount = prevMonthInventory
+      .filter(item => item.category === '食用油类')
+      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+    const prevSeasoningAmount = prevMonthInventory
+      .filter(item => item.category === '调味品类')
+      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
+
+    // 计算当月入库金额（从库存查询数据中获取）
+    const currentMonthStockIn = stockData.filter(item => {
+      const itemDate = new Date(item.in_time)
+      const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
+      return itemYearMonth === currentMonth
+    })
+
+    const stockInRiceAmount = currentMonthStockIn
+      .filter(item => item.category === 'rice')
+      .reduce((sum, item) => sum + item.subtotal, 0)
+    const stockInOilAmount = currentMonthStockIn
+      .filter(item => item.category === 'oil')
+      .reduce((sum, item) => sum + item.subtotal, 0)
+    const stockInSeasoningAmount = currentMonthStockIn
+      .filter(item => item.category === 'seasoning')
+      .reduce((sum, item) => sum + item.subtotal, 0)
+
+    // 计算使用量：上月库存 + 当月入库 - 当月库存
+    riceUsage.value = prevRiceAmount + stockInRiceAmount - currentRiceAmount
+    oilUsage.value = prevOilAmount + stockInOilAmount - currentOilAmount
+    seasoningUsage.value = prevSeasoningAmount + stockInSeasoningAmount - currentSeasoningAmount
+
+    // 确保使用量不为负数
+    riceUsage.value = Math.max(0, riceUsage.value)
+    oilUsage.value = Math.max(0, oilUsage.value)
+    seasoningUsage.value = Math.max(0, seasoningUsage.value)
+
+  } catch (error) {
+    console.error('计算使用量统计失败:', error)
+    ElMessage.error('计算使用量统计失败')
+    // 如果API调用失败，设置为0
+    riceUsage.value = 0
+    oilUsage.value = 0
+    seasoningUsage.value = 0
+  }
+}
+
+// 获取上个月的年月字符串
+const getPreviousMonth = (yearMonth) => {
+  const [year, month] = yearMonth.split('-').map(Number)
+  const date = new Date(year, month - 1, 1) // month - 1 因为JavaScript月份从0开始
+  date.setMonth(date.getMonth() - 1) // 减去一个月
+
+  const prevYear = date.getFullYear()
+  const prevMonth = String(date.getMonth() + 1).padStart(2, '0')
+  return `${prevYear}-${prevMonth}`
+}
+
 onMounted(() => {
   fetchStockData()
 })
@@ -460,6 +570,113 @@ onMounted(() => {
 .stock-query {
   padding: 20px;
 }
+
+/* 统计区域样式 */
+.statistics-section {
+  margin-bottom: 30px;
+}
+
+.month-selector {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.statistics-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 5px solid #667eea;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card:nth-child(2) {
+  border-left: 5px solid #f39c12;
+}
+
+.stat-card:nth-child(3) {
+  border-left: 5px solid #4facfe;
+}
+
+.stat-content {
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.stat-card:nth-child(1) .stat-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #667eea;
+  letter-spacing: 0.5px;
+}
+
+.stat-card:nth-child(2) .stat-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #f39c12;
+  letter-spacing: 0.5px;
+}
+
+.stat-card:nth-child(3) .stat-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #4facfe;
+  letter-spacing: 0.5px;
+}
+
+.stat-card:nth-child(1) .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #5a67d8;
+  font-family: 'Arial', sans-serif;
+  letter-spacing: 1px;
+}
+
+.stat-card:nth-child(2) .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #e67e22;
+  font-family: 'Arial', sans-serif;
+  letter-spacing: 1px;
+}
+
+.stat-card:nth-child(3) .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #3182ce;
+  font-family: 'Arial', sans-serif;
+  letter-spacing: 1px;
+}
+
+.stat-desc {
+  font-size: 15px;
+  color: #666666;
+  font-weight: 500;
+}
+
 .query-card {
   margin-bottom: 20px;
 }
@@ -481,3 +698,58 @@ onMounted(() => {
   justify-content: flex-end;
 }
 </style>
+/* 响应
+式设计 */
+@media (max-width: 768px) {
+  .stock-query {
+    padding: 10px;
+  }
+
+  .statistics-cards {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .stat-content {
+    padding: 15px;
+  }
+
+  .stat-value {
+    font-size: 24px !important;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .statistics-cards {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+/* 卡片动画效果 */
+.statistics-section,
+.query-card {
+  animation: cardFadeIn 0.3s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

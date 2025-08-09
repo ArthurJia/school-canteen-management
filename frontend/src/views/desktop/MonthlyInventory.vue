@@ -1,40 +1,5 @@
 <template>
   <div class="monthly-inventory">
-    <!-- 数据统计区域 -->
-    <div class="statistics-section">
-      <!-- 月份选择器 -->
-      <div class="month-selector">
-        <el-date-picker v-model="selectedStatMonth" type="month" format="YYYY年MM月" value-format="YYYY-MM"
-          placeholder="选择统计月份" @change="calculateUsageStatistics" />
-      </div>
-
-      <!-- 统计卡片 -->
-      <div class="statistics-cards">
-        <el-card class="stat-card card-hover card-glow">
-          <div class="stat-content">
-            <div class="stat-title">大米使用量</div>
-            <div class="stat-value">{{ riceUsage.toFixed(2) }} 元</div>
-            <div class="stat-desc">{{ formatSelectedStatMonth }}</div>
-          </div>
-        </el-card>
-
-        <el-card class="stat-card card-hover card-glow">
-          <div class="stat-content">
-            <div class="stat-title">食用油类使用量</div>
-            <div class="stat-value">{{ oilUsage.toFixed(2) }} 元</div>
-            <div class="stat-desc">{{ formatSelectedStatMonth }}</div>
-          </div>
-        </el-card>
-
-        <el-card class="stat-card card-hover card-glow">
-          <div class="stat-content">
-            <div class="stat-title">调味品类使用量</div>
-            <div class="stat-value">{{ seasoningUsage.toFixed(2) }} 元</div>
-            <div class="stat-desc">{{ formatSelectedStatMonth }}</div>
-          </div>
-        </el-card>
-      </div>
-    </div>
 
     <!-- 月底库存卡片 -->
     <el-card class="form-card card-hover card-glow">
@@ -225,20 +190,7 @@ const inventoryPageSize = ref(10)
 const currentCategoryPage = ref(1)
 const categoryPageSize = ref(10)
 
-// 统计相关数据
-const selectedStatMonth = ref('')
-const riceUsage = ref(0)
-const oilUsage = ref(0)
-const seasoningUsage = ref(0)
 
-// 计算属性 - 格式化选中的统计月份
-const formatSelectedStatMonth = computed(() => {
-  if (!selectedStatMonth.value) {
-    return '请选择月份'
-  }
-  const [year, month] = selectedStatMonth.value.split('-')
-  return `${year}年${month}月`
-})
 
 // 计算属性 - 分页后的库存列表
 const paginatedInventoryList = computed(() => {
@@ -340,10 +292,7 @@ const loadData = async () => {
     // 保持原始输入顺序，不进行排序
     categoryList.value = categoriesResponse.data.data || []
 
-    // 数据加载完成后重新计算统计数据
-    if (selectedStatMonth.value) {
-      await calculateUsageStatistics()
-    }
+
 
   } catch (error) {
     console.error('加载数据失败:', error)
@@ -527,146 +476,11 @@ const closeAddCategoryDialog = () => {
   categoryFormRef.value?.resetFields()
 }
 
-// 计算使用量统计的方法
-const calculateUsageStatistics = async () => {
-  if (!selectedStatMonth.value) {
-    riceUsage.value = 0
-    oilUsage.value = 0
-    seasoningUsage.value = 0
-    return
-  }
 
-  try {
-    const [year, month] = selectedStatMonth.value.split('-')
-
-    // 从API获取月底库存数据
-    const inventoryResponse = await axios.get('/api/monthly-inventory')
-    const inventoryResult = inventoryResponse.data
-    const inventoryData = inventoryResult.data || []
-    console.log('月底库存数据:', inventoryData)
-    console.log('月底库存数据条数:', inventoryData.length)
-
-    // 从API获取库存查询数据（入库记录）
-    const stockResponse = await axios.get('/api/stock-ins', {
-      params: {
-        pageSize: 1000 // 获取足够多的数据用于统计
-      }
-    })
-    const stockResult = stockResponse.data
-    const stockData = stockResult.data || []
-    console.log('库存查询数据:', stockData)
-    console.log('库存查询数据条数:', stockData.length)
-
-    // 构建当月和上月的年月字符串
-    const currentMonth = selectedStatMonth.value
-    const prevMonth = getPreviousMonth(selectedStatMonth.value)
-    console.log(`当月: ${currentMonth}, 上月: ${prevMonth}`)
-
-    // 计算当月月底库存金额
-    const currentMonthInventory = inventoryData.filter(item => item.date === currentMonth)
-    console.log(`当月(${currentMonth})库存记录:`, currentMonthInventory)
-    console.log('当月库存记录中的分类:', currentMonthInventory.map(item => item.category))
-    
-    const currentRiceAmount = currentMonthInventory
-      .filter(item => item.category === '大米')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const currentOilAmount = currentMonthInventory
-      .filter(item => item.category === '食用油类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const currentSeasoningAmount = currentMonthInventory
-      .filter(item => item.category === '调味品类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-
-    console.log(`当月库存金额 - 大米: ${currentRiceAmount}, 食用油: ${currentOilAmount}, 调味品: ${currentSeasoningAmount}`)
-
-    // 计算上个月月底库存金额
-    const prevMonthInventory = inventoryData.filter(item => item.date === prevMonth)
-    console.log(`上月(${prevMonth})库存记录:`, prevMonthInventory)
-    console.log('上月库存记录中的分类:', prevMonthInventory.map(item => item.category))
-    
-    const prevRiceAmount = prevMonthInventory
-      .filter(item => item.category === '大米')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const prevOilAmount = prevMonthInventory
-      .filter(item => item.category === '食用油类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const prevSeasoningAmount = prevMonthInventory
-      .filter(item => item.category === '调味品类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-
-    console.log(`上月库存金额 - 大米: ${prevRiceAmount}, 食用油: ${prevOilAmount}, 调味品: ${prevSeasoningAmount}`)
-
-    // 计算当月入库金额（从库存查询数据中获取）
-    const currentMonthStockIn = stockData.filter(item => {
-      const itemDate = new Date(item.in_time)
-      const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
-      return itemYearMonth === currentMonth
-    })
-    
-    console.log(`当月(${currentMonth})入库记录:`, currentMonthStockIn)
-    console.log('当月入库记录中的分类:', currentMonthStockIn.map(item => item.category))
-
-    // 分类代码映射
-    const categoryMap = {
-      'rice': '大米',
-      'oil': '食用油类',
-      'seasoning': '调味品类'
-    }
-
-    const stockInRiceAmount = currentMonthStockIn
-      .filter(item => item.category === 'rice')
-      .reduce((sum, item) => sum + item.subtotal, 0)
-    const stockInOilAmount = currentMonthStockIn
-      .filter(item => item.category === 'oil')
-      .reduce((sum, item) => sum + item.subtotal, 0)
-    const stockInSeasoningAmount = currentMonthStockIn
-      .filter(item => item.category === 'seasoning')
-      .reduce((sum, item) => sum + item.subtotal, 0)
-
-    console.log(`当月入库金额 - 大米: ${stockInRiceAmount}, 食用油: ${stockInOilAmount}, 调味品: ${stockInSeasoningAmount}`)
-
-    // 计算使用量：上月库存 + 当月入库 - 当月库存
-    riceUsage.value = prevRiceAmount + stockInRiceAmount - currentRiceAmount
-    oilUsage.value = prevOilAmount + stockInOilAmount - currentOilAmount
-    seasoningUsage.value = prevSeasoningAmount + stockInSeasoningAmount - currentSeasoningAmount
-
-    console.log(`计算结果 - 大米使用量: ${riceUsage.value}, 食用油使用量: ${oilUsage.value}, 调味品使用量: ${seasoningUsage.value}`)
-
-    // 确保使用量不为负数
-    riceUsage.value = Math.max(0, riceUsage.value)
-    oilUsage.value = Math.max(0, oilUsage.value)
-    seasoningUsage.value = Math.max(0, seasoningUsage.value)
-
-  } catch (error) {
-    console.error('计算使用量统计失败:', error)
-    ElMessage.error('计算使用量统计失败')
-    // 如果API调用失败，设置为0
-    riceUsage.value = 0
-    oilUsage.value = 0
-    seasoningUsage.value = 0
-  }
-}
-
-// 获取上个月的年月字符串
-const getPreviousMonth = (yearMonth) => {
-  const [year, month] = yearMonth.split('-').map(Number)
-  const date = new Date(year, month - 1, 1) // month - 1 因为JavaScript月份从0开始
-  date.setMonth(date.getMonth() - 1) // 减去一个月
-
-  const prevYear = date.getFullYear()
-  const prevMonth = String(date.getMonth() + 1).padStart(2, '0')
-  return `${prevYear}-${prevMonth}`
-}
 
 // 生命周期
 onMounted(() => {
   loadData()
-  // 设置默认统计月份为当前月份
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  selectedStatMonth.value = `${year}-${month}`
-  calculateUsageStatistics()
 })
 </script>
 
@@ -675,111 +489,7 @@ onMounted(() => {
   padding: 20px;
 }
 
-/* 统计区域样式 */
-.statistics-section {
-  margin-bottom: 30px;
-}
 
-.month-selector {
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.statistics-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  background: #ffffff;
-  border: none;
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  border-left: 5px solid #667eea;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.stat-card:nth-child(2) {
-  border-left: 5px solid #f39c12;
-}
-
-.stat-card:nth-child(3) {
-  border-left: 5px solid #4facfe;
-}
-
-.stat-content {
-  padding: 20px;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-}
-
-.stat-card:nth-child(1) .stat-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #667eea;
-  letter-spacing: 0.5px;
-}
-
-.stat-card:nth-child(2) .stat-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #f39c12;
-  letter-spacing: 0.5px;
-}
-
-.stat-card:nth-child(3) .stat-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #4facfe;
-  letter-spacing: 0.5px;
-}
-
-.stat-card:nth-child(1) .stat-value {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #5a67d8;
-  font-family: 'Arial', sans-serif;
-  letter-spacing: 1px;
-}
-
-.stat-card:nth-child(2) .stat-value {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #e67e22;
-  font-family: 'Arial', sans-serif;
-  letter-spacing: 1px;
-}
-
-.stat-card:nth-child(3) .stat-value {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #3182ce;
-  font-family: 'Arial', sans-serif;
-  letter-spacing: 1px;
-}
-
-.stat-desc {
-  font-size: 15px;
-  color: #666666;
-  font-weight: 500;
-}
 
 .form-card {
   margin-bottom: 20px;
@@ -923,18 +633,7 @@ onMounted(() => {
     padding: 10px;
   }
 
-  .statistics-cards {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
 
-  .stat-content {
-    padding: 15px;
-  }
-
-  .stat-value {
-    font-size: 24px;
-  }
 
   .card-header {
     flex-direction: column;
@@ -961,11 +660,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 1200px) {
-  .statistics-cards {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  }
-}
+
 
 /* 卡片动画效果 */
 .form-card,
