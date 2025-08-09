@@ -39,21 +39,21 @@
     <el-card class="form-card card-hover card-glow">
       <template #header>
         <div class="card-header">
-          <span>食材出库</span>
+          <span>储存类食材出库</span>
         </div>
       </template>
 
-      <el-form :model="form" label-width="100px">
+      <el-form :model="storageForm" label-width="120px" v-loading="calculationLoading">
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="出库日期" required>
-              <el-date-picker v-model="form.stockOutDate" type="date" placeholder="选择日期" format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD" style="width: 100%" />
+            <el-form-item label="出库年月" required>
+              <el-date-picker v-model="storageForm.outboundMonth" type="month" placeholder="选择年月" format="YYYY年MM月"
+                value-format="YYYY-MM" style="width: 100%" @change="handleMonthChange" />
             </el-form-item>
           </el-col>
           <el-col :span="16">
             <el-form-item label="备注">
-              <el-input v-model="form.note" type="textarea" :rows="1" />
+              <el-input v-model="storageForm.note" type="textarea" :rows="1" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -61,52 +61,46 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="食材名称" required>
-              <el-input v-model="form.name" placeholder="请输入食材名称" @change="handleIngredientInput" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="分类" required>
-              <el-select v-model="form.category" placeholder="请选择食材分类">
-                <el-option-group v-for="group in categories" :key="group.label" :label="group.label">
-                  <el-option v-for="item in group.options" :key="item.value" :label="item.label" :value="item.value" />
-                </el-option-group>
+              <el-select v-model="storageForm.ingredientName" placeholder="请选择食材名称" filterable remote
+                :remote-method="searchStorageIngredients" :loading="ingredientSearchLoading"
+                @change="handleIngredientChange" style="width: 100%">
+                <el-option v-for="ingredient in storageIngredientOptions" :key="ingredient.id" :label="ingredient.name"
+                  :value="ingredient.name" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="供应商" required>
-              <el-select v-model="form.supplier" placeholder="请选择供应商">
-                <el-option v-for="supplier in suppliers" :key="supplier.value" :label="supplier.label"
-                  :value="supplier.value" />
-              </el-select>
+            <el-form-item label="分类">
+              <el-input v-model="storageForm.category" readonly placeholder="自动填充" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="供应商">
+              <el-input v-model="storageForm.supplier" readonly placeholder="自动填充" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="数量" required>
-              <el-input v-model="form.quantity" type="number" :min="1" placeholder="请输入数量" style="width: 60%" />
-              <el-select v-model="form.unit" placeholder="单位" style="width: 38%; margin-left: 2%">
-                <el-option label="千克(kg)" value="kg" />
-                <el-option label="升(L)" value="L" />
-              </el-select>
+            <el-form-item label="数量">
+              <el-input v-model="storageForm.quantity" readonly placeholder="自动计算" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="单价(元)" required>
-              <el-input v-model="form.price" type="number" :min="0" :step="0.01" placeholder="请输入单价" />
+            <el-form-item label="单价(元)">
+              <el-input v-model="storageForm.unitPrice" readonly placeholder="自动计算" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="小计(元)">
-              <el-input :value="subtotal" readonly />
+              <el-input v-model="storageForm.subtotal" readonly placeholder="自动计算" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-form-item>
-          <el-button type="primary" @click="handleSubmit">一键出库</el-button>
+          <el-button type="primary" @click="handleStorageOutbound" :disabled="!canSubmit">一键出库</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -179,6 +173,30 @@ const pageSize = ref(20) // 默认显示20条记录
 const totalRecords = ref(0)
 const monthlySuppliers = ref([]) // 存储历史每月供应商记录
 
+// 储存类食材出库相关数据
+const storageForm = ref({
+  outboundMonth: '',
+  note: '',
+  ingredientName: '',
+  category: '',
+  supplier: '',
+  quantity: '',
+  unitPrice: '',
+  subtotal: ''
+})
+
+const storageIngredientOptions = ref([])
+const ingredientSearchLoading = ref(false)
+const calculationLoading = ref(false)
+
+// 计算属性 - 是否可以提交
+const canSubmit = computed(() => {
+  return storageForm.value.outboundMonth &&
+    storageForm.value.ingredientName &&
+    storageForm.value.quantity &&
+    storageForm.value.subtotal
+})
+
 // 统计相关数据
 const selectedStatMonth = ref('')
 const riceUsage = ref(0)
@@ -245,6 +263,285 @@ const handleSizeChange = (size) => {
 const handleCurrentChange = (page) => {
   currentPage.value = page
   fetchAllRecords()
+}
+
+// 储存类食材出库相关函数
+
+// 搜索储存类食材
+const searchStorageIngredients = async (query) => {
+  if (!query) {
+    storageIngredientOptions.value = []
+    return
+  }
+
+  ingredientSearchLoading.value = true
+  try {
+    const response = await axios.get('/api/storage-ingredients')
+    const allIngredients = response.data.data || []
+
+    // 模糊搜索
+    storageIngredientOptions.value = allIngredients.filter(ingredient =>
+      ingredient.name.toLowerCase().includes(query.toLowerCase())
+    )
+  } catch (error) {
+    console.error('搜索储存类食材失败:', error)
+    ElMessage.error('搜索储存类食材失败')
+  } finally {
+    ingredientSearchLoading.value = false
+  }
+}
+
+// 获取分类标签
+const getCategoryLabel = (categoryValue) => {
+  const categoryMap = {
+    'rice': '大米',
+    'oil': '食用油类',
+    'seasoning': '调味品类'
+  }
+  return categoryMap[categoryValue] || categoryValue
+}
+
+// 处理年月变化
+const handleMonthChange = () => {
+  if (storageForm.value.ingredientName) {
+    calculateStorageOutbound()
+  }
+}
+
+// 处理食材选择变化
+const handleIngredientChange = async () => {
+  if (!storageForm.value.ingredientName) {
+    resetStorageForm()
+    return
+  }
+
+  // 获取选中的食材信息
+  const selectedIngredient = storageIngredientOptions.value.find(
+    ingredient => ingredient.name === storageForm.value.ingredientName
+  )
+
+  if (selectedIngredient) {
+    // 设置分类
+    storageForm.value.category = getCategoryLabel(selectedIngredient.category)
+
+    // 根据年月和分类确定供应商
+    await setSupplierByMonthAndCategory()
+
+    // 计算数量、单价和小计
+    await calculateStorageOutbound()
+  }
+}
+
+// 根据年月和分类确定供应商
+const setSupplierByMonthAndCategory = async () => {
+  if (!storageForm.value.outboundMonth || !storageForm.value.category) {
+    return
+  }
+
+  const [year, month] = storageForm.value.outboundMonth.split('-')
+  const categoryValue = getCategoryValueByLabel(storageForm.value.category)
+
+  // 在历史每月供应商记录中查找匹配的供应商
+  const matchedSupplier = monthlySuppliers.value.find(supplier => {
+    return supplier.year === parseInt(year) &&
+      supplier.month === parseInt(month) &&
+      supplier.supplyItems &&
+      supplier.supplyItems.includes(categoryValue)
+  })
+
+  if (matchedSupplier) {
+    storageForm.value.supplier = matchedSupplier.name
+  } else {
+    storageForm.value.supplier = '未找到匹配供应商'
+  }
+}
+
+// 获取分类值（英文）
+const getCategoryValueByLabel = (label) => {
+  const labelMap = {
+    '大米': 'rice',
+    '食用油类': 'oil',
+    '调味品类': 'seasoning'
+  }
+  return labelMap[label] || 'seasoning'
+}
+
+// 计算储存类食材出库数量和金额
+const calculateStorageOutbound = async () => {
+  if (!storageForm.value.outboundMonth || !storageForm.value.ingredientName) {
+    return
+  }
+
+  calculationLoading.value = true
+  try {
+    const [year, month] = storageForm.value.outboundMonth.split('-')
+    const currentMonth = `${year}-${month}`
+    const prevMonth = getPreviousMonth(currentMonth)
+
+    // 获取月底库存数据
+    const inventoryResponse = await axios.get('/api/monthly-inventory')
+    const inventoryData = inventoryResponse.data.data || []
+
+    // 获取入库数据
+    const stockResponse = await axios.get('/api/stock-ins', {
+      params: { pageSize: 1000 }
+    })
+    const stockData = stockResponse.data.data || []
+
+    // 计算上个月月底库存
+    const prevMonthInventory = inventoryData.find(item =>
+      item.date === prevMonth && item.name === storageForm.value.ingredientName
+    )
+    const prevQuantity = prevMonthInventory ? prevMonthInventory.quantity : 0
+    const prevAmount = prevMonthInventory ? (prevMonthInventory.unitPrice * prevMonthInventory.quantity) : 0
+
+    // 计算当月月底库存
+    const currentMonthInventory = inventoryData.find(item =>
+      item.date === currentMonth && item.name === storageForm.value.ingredientName
+    )
+    const currentQuantity = currentMonthInventory ? currentMonthInventory.quantity : 0
+    const currentAmount = currentMonthInventory ? (currentMonthInventory.unitPrice * currentMonthInventory.quantity) : 0
+
+    // 计算当月入库
+    const currentMonthStockIn = stockData.filter(item => {
+      const itemDate = new Date(item.in_time)
+      const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
+      return itemYearMonth === currentMonth && item.name === storageForm.value.ingredientName
+    })
+
+    const stockInQuantity = currentMonthStockIn.reduce((sum, item) => sum + item.quantity, 0)
+    const stockInAmount = currentMonthStockIn.reduce((sum, item) => sum + item.subtotal, 0)
+
+    // 计算使用量：上月库存 + 当月入库 - 当月库存
+    const usageQuantity = prevQuantity + stockInQuantity - currentQuantity
+    const usageAmount = prevAmount + stockInAmount - currentAmount
+
+    // 计算单价：小计/数量
+    const unitPrice = usageQuantity > 0 ? (usageAmount / usageQuantity) : 0
+
+    // 设置表单值
+    storageForm.value.quantity = Math.max(0, usageQuantity).toFixed(2)
+    storageForm.value.unitPrice = unitPrice.toFixed(2)
+    storageForm.value.subtotal = Math.max(0, usageAmount).toFixed(2)
+
+  } catch (error) {
+    console.error('计算储存类食材出库失败:', error)
+    ElMessage.error('计算储存类食材出库失败')
+  } finally {
+    calculationLoading.value = false
+  }
+}
+
+// 获取上个月的年月字符串
+const getPreviousMonth = (yearMonth) => {
+  const [year, month] = yearMonth.split('-').map(Number)
+  const date = new Date(year, month - 1, 1) // month - 1 因为JavaScript月份从0开始
+  date.setMonth(date.getMonth() - 1) // 减去一个月
+
+  const prevYear = date.getFullYear()
+  const prevMonth = String(date.getMonth() + 1).padStart(2, '0')
+  return `${prevYear}-${prevMonth}`
+}
+
+// 重置储存类食材表单
+const resetStorageForm = () => {
+  storageForm.value = {
+    outboundMonth: storageForm.value.outboundMonth, // 保留年月选择
+    note: storageForm.value.note, // 保留备注
+    ingredientName: '',
+    category: '',
+    supplier: '',
+    quantity: '',
+    unitPrice: '',
+    subtotal: ''
+  }
+}
+
+// 处理储存类食材出库
+const handleStorageOutbound = async () => {
+  if (!canSubmit.value) {
+    ElMessage.warning('请完善出库信息')
+    return
+  }
+
+  try {
+    const [year, month] = storageForm.value.outboundMonth.split('-')
+    const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate()
+
+    // 计算四次出库的数量和金额
+    const totalQuantity = parseFloat(storageForm.value.quantity)
+    const totalAmount = parseFloat(storageForm.value.subtotal)
+
+    const quarterQuantity = Math.floor(totalQuantity / 4)
+    const quarterAmount = Math.floor(totalAmount / 4)
+
+    // 最后一次出库的数量和金额（包含余数）
+    const lastQuantity = totalQuantity - (quarterQuantity * 3)
+    const lastAmount = totalAmount - (quarterAmount * 3)
+
+    // 四次出库的日期和数据
+    const outboundRecords = [
+      {
+        date: `${year}-${month}-${String(lastDay).padStart(2, '0')}`,
+        quantity: lastQuantity,
+        amount: lastAmount
+      },
+      {
+        date: `${year}-${month}-${String(lastDay - 7).padStart(2, '0')}`,
+        quantity: quarterQuantity,
+        amount: quarterAmount
+      },
+      {
+        date: `${year}-${month}-${String(lastDay - 14).padStart(2, '0')}`,
+        quantity: quarterQuantity,
+        amount: quarterAmount
+      },
+      {
+        date: `${year}-${month}-${String(lastDay - 21).padStart(2, '0')}`,
+        quantity: quarterQuantity,
+        amount: quarterAmount
+      }
+    ]
+
+    // 获取分类值
+    const categoryValue = getCategoryValueByLabel(storageForm.value.category)
+
+    // 创建四次出库记录
+    for (const record of outboundRecords) {
+      const outboundData = {
+        name: storageForm.value.ingredientName,
+        category: categoryValue,
+        supplier: getSupplierValue(storageForm.value.supplier),
+        quantity: record.quantity,
+        price: parseFloat(storageForm.value.unitPrice),
+        unit: 'kg', // 储存类食材默认使用千克
+        note: storageForm.value.note || `储存类食材出库 - ${storageForm.value.outboundMonth}`,
+        is_daily: false, // 储存类食材不是当天类
+        subtotal: record.amount,
+        stockOutDate: record.date
+      }
+
+      await createStockOut(outboundData)
+    }
+
+    ElMessage.success('储存类食材出库成功，已创建4条出库记录')
+
+    // 重置表单
+    resetStorageForm()
+
+    // 刷新出库记录
+    fetchAllRecords()
+
+  } catch (error) {
+    console.error('储存类食材出库失败:', error)
+    ElMessage.error('储存类食材出库失败：' + error.message)
+  }
+}
+
+// 获取供应商值（英文）
+const getSupplierValue = (supplierName) => {
+  const supplier = suppliers.value.find(s => s.label === supplierName)
+  return supplier ? supplier.value : 'unknown'
 }
 
 
@@ -403,26 +700,20 @@ const calculateUsageStatistics = async () => {
   }
 }
 
-// 获取上个月的年月字符串
-const getPreviousMonth = (yearMonth) => {
-  const [year, month] = yearMonth.split('-').map(Number)
-  const date = new Date(year, month - 1, 1) // month - 1 因为JavaScript月份从0开始
-  date.setMonth(date.getMonth() - 1) // 减去一个月
-
-  const prevYear = date.getFullYear()
-  const prevMonth = String(date.getMonth() + 1).padStart(2, '0')
-  return `${prevYear}-${prevMonth}`
-}
-
 // 组件挂载时获取所有记录
 onMounted(() => {
   fetchAllRecords()
   fetchMonthlySuppliers()
+
   // 设置默认统计月份为当前月份
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   selectedStatMonth.value = `${year}-${month}`
+
+  // 设置默认出库年月为当前月份
+  storageForm.value.outboundMonth = `${year}-${month}`
+
   calculateUsageStatistics()
 })
 
