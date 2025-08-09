@@ -11,9 +11,6 @@
           placeholder="选择月份"
           @change="handleDateChange"
         />
-        <el-button type="primary" class="query-btn" @click="loadReportData">
-          查询
-        </el-button>
       </div>
     </div>
 
@@ -185,6 +182,8 @@ export default defineComponent({
         const [year, month] = date.split('-');
         reportData.year = parseInt(year);
         reportData.month = parseInt(month);
+        // 自动加载报表数据
+        loadReportData();
       }
     };
 
@@ -417,8 +416,5 @@ export default defineComponent({
   height: 100%;
 }
 
-/* 查询按钮居中 */
-.query-btn {
-  text-align: center;
-}
+
 </style>
