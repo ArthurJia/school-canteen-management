@@ -95,22 +95,40 @@
       </el-card>
     </template>
 
-    <!-- 年月选择器对话框 -->
+    <!-- 供应商供货品类和年月份设置对话框 -->
     <el-dialog
       v-model="monthPickerVisible"
-      title="选择供应月份"
-      width="30%"
+      title="供应商供货品类和年月份"
+      width="50%"
       destroy-on-close
     >
-              <el-date-picker
-                v-model="tempSelectedDate"
-                type="month"
-                format="YYYY年MM月"
-                value-format="YYYY-MM"
-                style="width: 100%"
-                placeholder="请选择月份"
-                :locale="zhCn"
-              />
+      <el-form :model="monthlySupplierForm" label-width="120px">
+        <el-form-item label="供应商">
+          <el-input :value="tempSupplier?.name" readonly />
+        </el-form-item>
+        <el-form-item label="供应品类" required>
+          <el-checkbox-group v-model="monthlySupplierForm.supplyItems">
+            <el-checkbox
+              v-for="item in supplyCategories"
+              :key="item.value"
+              :label="item.value"
+            >
+              {{ item.label }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="供应月份" required>
+          <el-date-picker
+            v-model="tempSelectedDate"
+            type="month"
+            format="YYYY年MM月"
+            value-format="YYYY-MM"
+            style="width: 100%"
+            placeholder="请选择月份"
+            :locale="zhCn"
+          />
+        </el-form-item>
+      </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="monthPickerVisible = false">取消</el-button>
@@ -319,6 +337,9 @@ const fetchMonthlySuppliers = async () => {
 const monthPickerVisible = ref(false)
 const tempSelectedDate = ref(new Date())
 const tempSupplier = ref(null)
+const monthlySupplierForm = ref({
+  supplyItems: []
+})
 
 const handleAddMonthlySupplier = (supplier) => {
   tempSupplier.value = supplier
@@ -329,20 +350,29 @@ const handleAddMonthlySupplier = (supplier) => {
   const month = String(now.getMonth() + 1).padStart(2, '0')
   tempSelectedDate.value = `${year}-${month}`
   
+  // 初始化表单数据，默认选中该供应商的所有供应品类
+  monthlySupplierForm.value = {
+    supplyItems: supplier.supplyItems ? [...supplier.supplyItems] : []
+  }
+  
   monthPickerVisible.value = true
 }
 
 const confirmAddMonthlySupplier = async () => {
   if (!tempSupplier.value) return
   
+  // 验证必填字段
+  if (!monthlySupplierForm.value.supplyItems || monthlySupplierForm.value.supplyItems.length === 0) {
+    ElMessage.warning('请至少选择一个供应品类')
+    return
+  }
+  
+  if (!tempSelectedDate.value) {
+    ElMessage.warning('请选择供应月份')
+    return
+  }
+  
   try {
-    if (!tempSelectedDate.value) {
-      const now = new Date()
-      const year = now.getFullYear()
-      const month = now.getMonth() + 1
-      tempSelectedDate.value = `${year}-${String(month).padStart(2, '0')}`
-    }
-    
     const [year, month] = tempSelectedDate.value.split('-')
     
     const loadingInstance = ElLoading.service({
@@ -351,9 +381,15 @@ const confirmAddMonthlySupplier = async () => {
     })
     
     try {
-      await addMonthlySupplier(tempSupplier.value.id, year, month)
+      // 传递供应品类信息到后端
+      await addMonthlySupplier(tempSupplier.value.id, year, month, monthlySupplierForm.value.supplyItems)
       ElMessage.success(`已将供应商设为${year}年${month}月供应商`)
       monthPickerVisible.value = false
+      
+      // 重置表单
+      monthlySupplierForm.value = {
+        supplyItems: []
+      }
       
       if (currentView.value === 'monthly') {
         await fetchMonthlySuppliers()
@@ -784,5 +820,19 @@ const handleExportExcel = async () => {
 .history-suppliers .monthly-info span {
   color: #909399;
   font-size: 14px;
+}
+
+/* 供应品类复选框样式 */
+.el-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.el-checkbox {
+  margin-right: 0;
+  white-space: nowrap;
 }
 </style>

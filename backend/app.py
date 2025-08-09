@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
+import json
 from datetime import datetime
 from database import get_db_connection
 from import_handler import import_stock_data, import_inventory_data
@@ -885,7 +886,7 @@ def get_all_monthly_suppliers():
         
         # 获取所有每月供应商记录，包括供应商信息和年月信息
         cursor.execute('''
-        SELECT s.id, s.name, s.contact, s.phone, s.full_name, s.supply_items, s.created_at, ms.year, ms.month
+        SELECT s.id, s.name, s.contact, s.phone, s.full_name, s.supply_items, s.created_at, ms.year, ms.month, ms.supply_items
         FROM suppliers s
         JOIN monthly_suppliers ms ON s.id = ms.supplier_id
         ORDER BY ms.year DESC, ms.month DESC, s.name ASC
@@ -896,8 +897,16 @@ def get_all_monthly_suppliers():
         # 将记录转换为字典列表
         monthly_suppliers = []
         for record in records:
-            # 将逗号分隔的供应项目字符串转换为数组
-            supply_items = record[5].split(',') if record[5] else []
+            # 处理每月供应商的供应品类（优先使用每月供应商表中的数据）
+            monthly_supply_items = record[9]  # ms.supply_items
+            if monthly_supply_items:
+                try:
+                    supply_items = json.loads(monthly_supply_items)
+                except (json.JSONDecodeError, TypeError):
+                    supply_items = []
+            else:
+                # 如果每月供应商表中没有供应品类，使用供应商表中的数据
+                supply_items = record[5].split(',') if record[5] else []
             
             supplier = {
                 'id': record[0],
@@ -940,7 +949,7 @@ def get_monthly_suppliers():
         
         # 获取指定年月的每月供应商
         cursor.execute('''
-        SELECT s.* FROM suppliers s
+        SELECT s.*, ms.supply_items FROM suppliers s
         JOIN monthly_suppliers ms ON s.id = ms.supplier_id
         WHERE ms.year = ? AND ms.month = ?
         ORDER BY s.name ASC
@@ -951,8 +960,16 @@ def get_monthly_suppliers():
         # 将记录转换为字典列表
         monthly_suppliers = []
         for record in records:
-            # 将逗号分隔的供应项目字符串转换为数组
-            supply_items = record[5].split(',') if record[5] else []
+            # 处理每月供应商的供应品类（优先使用每月供应商表中的数据）
+            monthly_supply_items = record[7]  # ms.supply_items
+            if monthly_supply_items:
+                try:
+                    supply_items = json.loads(monthly_supply_items)
+                except (json.JSONDecodeError, TypeError):
+                    supply_items = []
+            else:
+                # 如果每月供应商表中没有供应品类，使用供应商表中的数据
+                supply_items = record[5].split(',') if record[5] else []
             
             supplier = {
                 'id': record[0],
@@ -999,15 +1016,20 @@ def set_monthly_supplier():
             conn.close()
             return jsonify({'error': 'Supplier not found'}), 404
         
+        # 处理供应品类数据
+        supply_items = data.get('supply_items', [])
+        supply_items_json = json.dumps(supply_items) if supply_items else None
+        
         # 尝试插入每月供应商记录
         try:
             cursor.execute('''
-            INSERT INTO monthly_suppliers (supplier_id, year, month)
-            VALUES (?, ?, ?)
+            INSERT INTO monthly_suppliers (supplier_id, year, month, supply_items)
+            VALUES (?, ?, ?, ?)
             ''', (
                 data['supplier_id'],
                 data['year'],
-                data['month']
+                data['month'],
+                supply_items_json
             ))
             
             conn.commit()
@@ -1017,9 +1039,16 @@ def set_monthly_supplier():
             return jsonify({'success': True, 'id': last_id}), 201
             
         except sqlite3.IntegrityError:
-            # 如果记录已存在（违反唯一约束），返回成功
+            # 如果记录已存在（违反唯一约束），更新供应品类
+            cursor.execute('''
+            UPDATE monthly_suppliers 
+            SET supply_items = ? 
+            WHERE supplier_id = ? AND year = ? AND month = ?
+            ''', (supply_items_json, data['supplier_id'], data['year'], data['month']))
+            
+            conn.commit()
             conn.close()
-            return jsonify({'success': True, 'message': 'Supplier already set for this month'}), 200
+            return jsonify({'success': True, 'message': 'Supplier supply items updated for this month'}), 200
         
     except Exception as e:
         print(f"Error setting monthly supplier: {str(e)}")

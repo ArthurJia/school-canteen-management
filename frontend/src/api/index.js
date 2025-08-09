@@ -577,9 +577,9 @@ export const getAllMonthlySuppliers = async () => {
 }
 
 // 添加每月供应商
-export const addMonthlySupplier = async (supplierId, year, month) => {
+export const addMonthlySupplier = async (supplierId, year, month, supplyItems = []) => {
   try {
-    console.log(`Adding monthly supplier: ID ${supplierId} for ${year}-${month}`);
+    console.log(`Adding monthly supplier: ID ${supplierId} for ${year}-${month} with supply items:`, supplyItems);
     
     const response = await fetch(`${API_BASE_URL}/api/monthly-suppliers`, {
       method: 'POST',
@@ -589,7 +589,8 @@ export const addMonthlySupplier = async (supplierId, year, month) => {
       body: JSON.stringify({
         supplier_id: supplierId,
         year: parseInt(year),
-        month: parseInt(month)
+        month: parseInt(month),
+        supply_items: supplyItems
       })
     });
     

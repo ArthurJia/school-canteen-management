@@ -27,11 +27,19 @@ def init_db():
         supplier_id INTEGER NOT NULL,
         year INTEGER NOT NULL,
         month INTEGER NOT NULL,
+        supply_items TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (supplier_id) REFERENCES suppliers (id),
         UNIQUE(year, month, supplier_id)
     )
     ''')
+    
+    # 检查并添加supply_items列（如果不存在）
+    try:
+        cursor.execute("ALTER TABLE monthly_suppliers ADD COLUMN supply_items TEXT")
+    except sqlite3.OperationalError:
+        # 列已存在，忽略错误
+        pass
     
     # 删除旧的入库记录表
     cursor.execute('DROP TABLE IF EXISTS stock_ins')
