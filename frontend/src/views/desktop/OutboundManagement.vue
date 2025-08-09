@@ -468,45 +468,61 @@ const handleStorageOutbound = async () => {
     const [year, month] = storageForm.value.outboundMonth.split('-')
     const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate()
 
-    // 计算四次出库的数量和金额
     const totalQuantity = parseFloat(storageForm.value.quantity)
     const totalAmount = parseFloat(storageForm.value.subtotal)
-
-    const quarterQuantity = Math.floor(totalQuantity / 4)
-    const quarterAmount = Math.floor(totalAmount / 4)
-
-    // 最后一次出库的数量和金额（包含余数）
-    const lastQuantity = totalQuantity - (quarterQuantity * 3)
-    const lastAmount = totalAmount - (quarterAmount * 3)
-
-    // 四次出库的日期和数据
-    const outboundRecords = [
-      {
-        date: `${year}-${month}-${String(lastDay).padStart(2, '0')}`,
-        quantity: lastQuantity,
-        amount: lastAmount
-      },
-      {
-        date: `${year}-${month}-${String(lastDay - 7).padStart(2, '0')}`,
-        quantity: quarterQuantity,
-        amount: quarterAmount
-      },
-      {
-        date: `${year}-${month}-${String(lastDay - 14).padStart(2, '0')}`,
-        quantity: quarterQuantity,
-        amount: quarterAmount
-      },
-      {
-        date: `${year}-${month}-${String(lastDay - 21).padStart(2, '0')}`,
-        quantity: quarterQuantity,
-        amount: quarterAmount
-      }
-    ]
 
     // 获取分类值
     const categoryValue = getCategoryValueByLabel(storageForm.value.category)
 
-    // 创建四次出库记录
+    let outboundRecords = []
+    let successMessage = ''
+
+    // 判断出库方式：数量少于2时一次性出库，否则分4次出库
+    if (totalQuantity < 2) {
+      // 一次性出库：在所选年月的最后一天
+      outboundRecords = [
+        {
+          date: `${year}-${month}-${String(lastDay).padStart(2, '0')}`,
+          quantity: totalQuantity,
+          amount: totalAmount
+        }
+      ]
+      successMessage = '储存类食材出库成功，已创建1条出库记录'
+    } else {
+      // 分4次出库：原有逻辑
+      const quarterQuantity = Math.floor(totalQuantity / 4)
+      const quarterAmount = Math.floor(totalAmount / 4)
+
+      // 最后一次出库的数量和金额（包含余数）
+      const lastQuantity = totalQuantity - (quarterQuantity * 3)
+      const lastAmount = totalAmount - (quarterAmount * 3)
+
+      outboundRecords = [
+        {
+          date: `${year}-${month}-${String(lastDay).padStart(2, '0')}`,
+          quantity: lastQuantity,
+          amount: lastAmount
+        },
+        {
+          date: `${year}-${month}-${String(lastDay - 7).padStart(2, '0')}`,
+          quantity: quarterQuantity,
+          amount: quarterAmount
+        },
+        {
+          date: `${year}-${month}-${String(lastDay - 14).padStart(2, '0')}`,
+          quantity: quarterQuantity,
+          amount: quarterAmount
+        },
+        {
+          date: `${year}-${month}-${String(lastDay - 21).padStart(2, '0')}`,
+          quantity: quarterQuantity,
+          amount: quarterAmount
+        }
+      ]
+      successMessage = '储存类食材出库成功，已创建4条出库记录'
+    }
+
+    // 创建出库记录
     for (const record of outboundRecords) {
       const outboundData = {
         name: storageForm.value.ingredientName,
@@ -524,7 +540,7 @@ const handleStorageOutbound = async () => {
       await createStockOut(outboundData)
     }
 
-    ElMessage.success('储存类食材出库成功，已创建4条出库记录')
+    ElMessage.success(successMessage)
 
     // 重置表单
     resetStorageForm()
