@@ -57,13 +57,13 @@
       <template #header>
         <div class="card-header">
           <span>储存类食材明细</span>
-          <el-button type="primary" :icon="Plus" @click="showAddCategoryDialog = true">
+          <el-button type="primary" :icon="Plus" @click="showAddIngredientDialog = true">
             添加食材
           </el-button>
         </div>
       </template>
 
-      <el-table :data="paginatedCategoryList" border style="width: 100%" v-loading="loading" stripe>
+      <el-table :data="paginatedIngredientList" border style="width: 100%" v-loading="loading" stripe>
         <el-table-column prop="name" label="名称" width="200" />
         <el-table-column prop="unit" label="单位" width="120" />
         <el-table-column prop="unitPrice" label="单价（元）" width="120" align="right">
@@ -74,22 +74,22 @@
         <el-table-column prop="specification" label="规格" />
         <el-table-column label="操作" width="180">
           <template #default="{ $index }">
-            <el-button size="small" @click="editCategory($index)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteCategory($index)">删除</el-button>
+            <el-button size="small" @click="editIngredient($index)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteIngredient($index)">删除</el-button>
           </template>
         </el-table-column>
         <template #empty>
-          <el-empty description="暂无分类数据" />
+          <el-empty description="暂无食材数据" />
         </template>
       </el-table>
       
       <div class="pagination">
         <el-pagination
-          v-model:current-page="currentCategoryPage"
-          v-model:page-size="categoryPageSize"
+          v-model:current-page="currentIngredientPage"
+          v-model:page-size="ingredientPageSize"
           :page-sizes="[10, 20, 30, 50]"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="categoryList.length"
+          :total="ingredientList.length"
         />
       </div>
     </el-card>
@@ -103,10 +103,10 @@
             placeholder="选择月份" style="width: 100%" />
         </el-form-item>
         <el-form-item label="名称" prop="name">
-          <el-select v-model="newInventoryItem.name" placeholder="请选择分类名称" style="width: 100%">
-            <el-option value="">请选择分类名称</el-option>
-            <el-option v-for="category in categoryList" :key="category.name" :value="category.name"
-              :label="category.name" />
+          <el-select v-model="newInventoryItem.name" placeholder="请选择食材名称" style="width: 100%">
+            <el-option value="">请选择食材名称</el-option>
+            <el-option v-for="ingredient in ingredientList" :key="ingredient.name" :value="ingredient.name"
+              :label="ingredient.name" />
           </el-select>
         </el-form-item>
         <el-form-item label="单位" prop="unit">
@@ -137,31 +137,31 @@
       </template>
     </el-dialog>
 
-    <!-- 添加/编辑分类对话框 -->
-    <el-dialog v-model="showAddCategoryDialog" :title="editingCategoryIndex !== -1 ? '编辑分类' : '添加分类'" width="50%"
-      @closed="closeAddCategoryDialog">
-      <el-form :model="newCategory" :rules="categoryRules" ref="categoryFormRef" label-width="120px">
-        <el-form-item label="分类名称" prop="name">
-          <el-input v-model="newCategory.name" placeholder="请输入分类名称" />
+    <!-- 添加/编辑食材对话框 -->
+    <el-dialog v-model="showAddIngredientDialog" :title="editingIngredientIndex !== -1 ? '编辑食材' : '添加食材'" width="50%"
+      @closed="closeAddIngredientDialog">
+      <el-form :model="newIngredient" :rules="ingredientRules" ref="ingredientFormRef" label-width="120px">
+        <el-form-item label="食材名称" prop="name">
+          <el-input v-model="newIngredient.name" placeholder="请输入食材名称" />
         </el-form-item>
         <el-form-item label="单位" prop="unit">
-          <el-select v-model="newCategory.unit" placeholder="请选择单位" style="width: 100%">
+          <el-select v-model="newIngredient.unit" placeholder="请选择单位" style="width: 100%">
             <el-option label="千克" value="千克" />
             <el-option label="升" value="升" />
           </el-select>
         </el-form-item>
         <el-form-item label="单价（元）" prop="unitPrice">
-          <el-input v-model.number="newCategory.unitPrice" type="number" :step="0.01" placeholder="请输入单价" />
+          <el-input v-model.number="newIngredient.unitPrice" type="number" :step="0.01" placeholder="请输入单价" />
         </el-form-item>
         <el-form-item label="规格" prop="specification">
-          <el-input v-model="newCategory.specification" placeholder="选填" />
+          <el-input v-model="newIngredient.specification" placeholder="选填" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="closeAddCategoryDialog">取消</el-button>
-          <el-button type="primary" @click="addOrUpdateCategory">
-            {{ editingCategoryIndex !== -1 ? '确认修改' : '确认添加' }}
+          <el-button @click="closeAddIngredientDialog">取消</el-button>
+          <el-button type="primary" @click="addOrUpdateIngredient">
+            {{ editingIngredientIndex !== -1 ? '确认修改' : '确认添加' }}
           </el-button>
         </span>
       </template>
@@ -178,17 +178,17 @@ import axios from 'axios'
 // 响应式数据
 const loading = ref(false)
 const inventoryList = ref([])
-const categoryList = ref([])
+const ingredientList = ref([])
 const showAddInventoryDialog = ref(false)
-const showAddCategoryDialog = ref(false)
-const editingCategoryIndex = ref(-1)
+const showAddIngredientDialog = ref(false)
+const editingIngredientIndex = ref(-1)
 const editingInventoryIndex = ref(-1)
 
 // 分页相关
 const currentInventoryPage = ref(1)
 const inventoryPageSize = ref(10)
-const currentCategoryPage = ref(1)
-const categoryPageSize = ref(10)
+const currentIngredientPage = ref(1)
+const ingredientPageSize = ref(10)
 
 
 
@@ -199,16 +199,16 @@ const paginatedInventoryList = computed(() => {
   return inventoryList.value.slice(startIndex, endIndex)
 })
 
-// 计算属性 - 分页后的分类列表
-const paginatedCategoryList = computed(() => {
-  const startIndex = (currentCategoryPage.value - 1) * categoryPageSize.value
-  const endIndex = startIndex + categoryPageSize.value
-  return categoryList.value.slice(startIndex, endIndex)
+// 计算属性 - 分页后的食材列表
+const paginatedIngredientList = computed(() => {
+  const startIndex = (currentIngredientPage.value - 1) * ingredientPageSize.value
+  const endIndex = startIndex + ingredientPageSize.value
+  return ingredientList.value.slice(startIndex, endIndex)
 })
 
 // 表单引用
 const inventoryFormRef = ref(null)
-const categoryFormRef = ref(null)
+const ingredientFormRef = ref(null)
 
 // 新库存记录
 const newInventoryItem = ref({
@@ -220,8 +220,8 @@ const newInventoryItem = ref({
   unit: ''
 })
 
-// 新分类
-const newCategory = ref({
+// 新食材
+const newIngredient = ref({
   name: '',
   unit: '千克',
   unitPrice: 0,
@@ -230,8 +230,8 @@ const newCategory = ref({
 
 // 监听器 - 当选择名称时自动填充分类、单价和单位
 watch(() => newInventoryItem.value.name, (newName) => {
-  const selectedCategory = categoryList.value.find(cat => cat.name === newName)
-  if (selectedCategory) {
+  const selectedIngredient = ingredientList.value.find(ingredient => ingredient.name === newName)
+  if (selectedIngredient) {
     // 根据名称设置分类显示规则
     if (newName === '大米') {
       newInventoryItem.value.category = '大米'
@@ -240,8 +240,8 @@ watch(() => newInventoryItem.value.name, (newName) => {
     } else {
       newInventoryItem.value.category = '调味品类'
     }
-    newInventoryItem.value.unitPrice = selectedCategory.unitPrice
-    newInventoryItem.value.unit = selectedCategory.unit // 自动填充单位
+    newInventoryItem.value.unitPrice = selectedIngredient.unitPrice
+    newInventoryItem.value.unit = selectedIngredient.unit // 自动填充单位
   } else {
     newInventoryItem.value.category = ''
     newInventoryItem.value.unitPrice = 0
@@ -263,9 +263,9 @@ const inventoryRules = {
   ]
 }
 
-const categoryRules = {
+const ingredientRules = {
   name: [
-    { required: true, message: '请输入分类名称', trigger: 'blur' },
+    { required: true, message: '请输入食材名称', trigger: 'blur' },
     { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
   ],
   unit: [
@@ -287,10 +287,10 @@ const loadData = async () => {
     const inventoryResponse = await axios.get('/api/monthly-inventory')
     inventoryList.value = inventoryResponse.data.data || []
 
-// 加载出库分类数据
-    const categoriesResponse = await axios.get('/api/outbound-categories')
+// 加载储存类食材明细数据
+    const ingredientsResponse = await axios.get('/api/storage-ingredients')
     // 保持原始输入顺序，不进行排序
-    categoryList.value = categoriesResponse.data.data || []
+    ingredientList.value = ingredientsResponse.data.data || []
 
 
 
@@ -380,54 +380,54 @@ const deleteInventoryItem = async (index) => {
   }
 }
 
-const addOrUpdateCategory = async () => {
-  if (!categoryFormRef.value) return
+const addOrUpdateIngredient = async () => {
+  if (!ingredientFormRef.value) return
 
-  categoryFormRef.value.validate(async (valid) => {
+  ingredientFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        if (editingCategoryIndex.value !== -1) {
+        if (editingIngredientIndex.value !== -1) {
           // 编辑模式
-          const category = categoryList.value[editingCategoryIndex.value]
-          await axios.put(`/api/outbound-categories/${category.id}`, {
-            name: newCategory.value.name,
-            unit: newCategory.value.unit,
-            unitPrice: newCategory.value.unitPrice,
-            specification: newCategory.value.specification
+          const ingredient = ingredientList.value[editingIngredientIndex.value]
+          await axios.put(`/api/storage-ingredients/${ingredient.id}`, {
+            name: newIngredient.value.name,
+            unit: newIngredient.value.unit,
+            unitPrice: newIngredient.value.unitPrice,
+            specification: newIngredient.value.specification
           })
-          ElMessage.success('修改分类成功')
+          ElMessage.success('修改食材成功')
         } else {
           // 添加模式
-          await axios.post('/api/outbound-categories', {
-            name: newCategory.value.name,
-            unit: newCategory.value.unit,
-            unitPrice: newCategory.value.unitPrice,
-            specification: newCategory.value.specification
+          await axios.post('/api/storage-ingredients', {
+            name: newIngredient.value.name,
+            unit: newIngredient.value.unit,
+            unitPrice: newIngredient.value.unitPrice,
+            specification: newIngredient.value.specification
           })
-          ElMessage.success('添加分类成功')
+          ElMessage.success('添加食材成功')
         }
 
         // 重新加载数据
         await loadData()
-        closeAddCategoryDialog()
+        closeAddIngredientDialog()
       } catch (error) {
-        console.error('操作分类失败:', error)
-        ElMessage.error('操作分类失败')
+        console.error('操作食材失败:', error)
+        ElMessage.error('操作食材失败')
       }
     }
   })
 }
 
-const editCategory = (index) => {
-  editingCategoryIndex.value = index
-  newCategory.value = { ...categoryList.value[index] }
-  showAddCategoryDialog.value = true
+const editIngredient = (index) => {
+  editingIngredientIndex.value = index
+  newIngredient.value = { ...ingredientList.value[index] }
+  showAddIngredientDialog.value = true
 }
 
-const deleteCategory = async (index) => {
+const deleteIngredient = async (index) => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除这个分类吗？',
+      '确定要删除这个食材吗？',
       '提示',
       {
         confirmButtonText: '确定',
@@ -436,8 +436,8 @@ const deleteCategory = async (index) => {
       }
     )
 
-    const category = categoryList.value[index]
-    await axios.delete(`/api/outbound-categories/${category.id}`)
+    const ingredient = ingredientList.value[index]
+    await axios.delete(`/api/storage-ingredients/${ingredient.id}`)
 
     // 重新加载数据
     await loadData()
@@ -464,16 +464,16 @@ const closeAddInventoryDialog = () => {
   inventoryFormRef.value?.resetFields()
 }
 
-const closeAddCategoryDialog = () => {
-  showAddCategoryDialog.value = false
-  editingCategoryIndex.value = -1
-  newCategory.value = {
+const closeAddIngredientDialog = () => {
+  showAddIngredientDialog.value = false
+  editingIngredientIndex.value = -1
+  newIngredient.value = {
     name: '',
     unit: '千克',
     unitPrice: 0,
     specification: ''
   }
-  categoryFormRef.value?.resetFields()
+  ingredientFormRef.value?.resetFields()
 }
 
 

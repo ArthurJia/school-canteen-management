@@ -102,9 +102,9 @@ def init_db():
     )
     ''')
     
-    # 创建出库分类表
+    # 创建储存类食材明细表
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS outbound_categories (
+    CREATE TABLE IF NOT EXISTS storage_ingredients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
         unit TEXT NOT NULL,

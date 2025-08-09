@@ -1578,25 +1578,25 @@ def delete_monthly_inventory(inventory_id):
         print(f"Error deleting monthly inventory: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# 出库分类API
-@app.route('/api/outbound-categories', methods=['GET'])
-def get_outbound_categories():
+# 储存类食材明细API
+@app.route('/api/storage-ingredients', methods=['GET'])
+def get_storage_ingredients():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
         SELECT id, name, unit, unit_price, specification, created_at
-        FROM outbound_categories
+        FROM storage_ingredients
         ORDER BY name ASC
         ''')
         
         records = cursor.fetchall()
         conn.close()
         
-        categories = []
+        ingredients = []
         for record in records:
-            category = {
+            ingredient = {
                 'id': record[0],
                 'name': record[1],
                 'unit': record[2],
@@ -1604,16 +1604,16 @@ def get_outbound_categories():
                 'specification': record[4] or '',
                 'created_at': record[5]
             }
-            categories.append(category)
+            ingredients.append(ingredient)
         
-        return jsonify({'data': categories})
+        return jsonify({'data': ingredients})
         
     except Exception as e:
-        print(f"Error fetching outbound categories: {str(e)}")
+        print(f"Error fetching storage ingredients: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/outbound-categories', methods=['POST'])
-def create_outbound_category():
+@app.route('/api/storage-ingredients', methods=['POST'])
+def create_storage_ingredient():
     try:
         data = request.get_json()
         if not data:
@@ -1628,7 +1628,7 @@ def create_outbound_category():
         cursor = conn.cursor()
         
         cursor.execute('''
-        INSERT INTO outbound_categories (name, unit, unit_price, specification)
+        INSERT INTO storage_ingredients (name, unit, unit_price, specification)
         VALUES (?, ?, ?, ?)
         ''', (
             data['name'],
@@ -1644,11 +1644,11 @@ def create_outbound_category():
         return jsonify({'success': True, 'id': last_id}), 201
         
     except Exception as e:
-        print(f"Error creating outbound category: {str(e)}")
+        print(f"Error creating storage ingredient: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/outbound-categories/<int:category_id>', methods=['PUT'])
-def update_outbound_category(category_id):
+@app.route('/api/storage-ingredients/<int:ingredient_id>', methods=['PUT'])
+def update_storage_ingredient(ingredient_id):
     try:
         data = request.get_json()
         if not data:
@@ -1658,7 +1658,7 @@ def update_outbound_category(category_id):
         cursor = conn.cursor()
         
         cursor.execute('''
-        UPDATE outbound_categories 
+        UPDATE storage_ingredients 
         SET name = ?, unit = ?, unit_price = ?, specification = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         ''', (
@@ -1666,40 +1666,40 @@ def update_outbound_category(category_id):
             data['unit'],
             float(data['unitPrice']),
             data.get('specification', ''),
-            category_id
+            ingredient_id
         ))
         
         conn.commit()
         
         if cursor.rowcount == 0:
             conn.close()
-            return jsonify({'error': 'Category not found'}), 404
+            return jsonify({'error': 'Storage ingredient not found'}), 404
             
         conn.close()
         return jsonify({'success': True}), 200
         
     except Exception as e:
-        print(f"Error updating outbound category: {str(e)}")
+        print(f"Error updating storage ingredient: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/outbound-categories/<int:category_id>', methods=['DELETE'])
-def delete_outbound_category(category_id):
+@app.route('/api/storage-ingredients/<int:ingredient_id>', methods=['DELETE'])
+def delete_storage_ingredient(ingredient_id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        cursor.execute('DELETE FROM outbound_categories WHERE id = ?', (category_id,))
+        cursor.execute('DELETE FROM storage_ingredients WHERE id = ?', (ingredient_id,))
         conn.commit()
         
         if cursor.rowcount == 0:
             conn.close()
-            return jsonify({'error': 'Category not found'}), 404
+            return jsonify({'error': 'Storage ingredient not found'}), 404
             
         conn.close()
         return jsonify({'success': True}), 200
         
     except Exception as e:
-        print(f"Error deleting outbound category: {str(e)}")
+        print(f"Error deleting storage ingredient: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # 报表设计器模板API
