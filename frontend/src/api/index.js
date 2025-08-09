@@ -78,15 +78,181 @@ export const createStockOut = async (data) => {
   return response.json()
 }
 
-export const getStockOuts = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/stock-outs`)
-  
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '获取出库记录失败')
+export const getStockOuts = async (params = {}) => {
+  try {
+    // 构建查询参数
+    const queryParams = new URLSearchParams();
+    if (params.startTime) queryParams.append('startTime', params.startTime);
+    if (params.endTime) queryParams.append('endTime', params.endTime);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.page) queryParams.append('page', params.page);
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize);
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `${API_BASE_URL}/api/stock-outs?${queryString}` : `${API_BASE_URL}/api/stock-outs`;
+    
+    console.log(`Fetching stock-outs from: ${url}`);
+    
+    // 添加超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+    
+    const response = await fetch(url, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('API error:', error);
+      throw new Error(error.message || `获取出库记录失败: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Received ${data.data?.length || 0} stock-out records`);
+    return data;
+    
+  } catch (error) {
+    console.error('Failed to fetch stock-outs:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('获取出库记录超时，请稍后重试');
+    }
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('网络连接失败，请检查网络连接');
+    }
+    throw error;
   }
-  
-  return response.json()
+}
+
+export const updateStockOut = async (id, data) => {
+  try {
+    console.log(`Updating stock out with ID ${id}:`, data);
+    
+    const response = await fetch(`${API_BASE_URL}/api/stock-outs/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('API error:', error);
+      throw new Error(error.message || `更新出库记录失败: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Stock out updated successfully:', result);
+    return result;
+    
+  } catch (error) {
+    console.error(`Failed to update stock out with ID ${id}:`, error);
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('网络连接失败，请检查网络连接');
+    }
+    throw error;
+  }
+}
+
+export const deleteStockOut = async (id) => {
+  try {
+    console.log(`Deleting stock out with ID ${id}`);
+    
+    const response = await fetch(`${API_BASE_URL}/api/stock-outs/${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('API error:', error);
+      throw new Error(error.message || `删除出库记录失败: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Stock out deleted successfully:', result);
+    return result;
+    
+  } catch (error) {
+    console.error(`Failed to delete stock out with ID ${id}:`, error);
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('网络连接失败，请检查网络连接');
+    }
+    throw error;
+  }
+}
+
+export const getTodayOutCategoryTotals = async () => {
+  try {
+    console.log('Fetching today out category totals');
+    
+    // 添加超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+    
+    const response = await fetch(`${API_BASE_URL}/api/stock-outs/category-totals/today`, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('API error:', error);
+      throw new Error(error.message || `获取今日出库分类总计失败: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Received today out category totals:', data);
+    return data;
+    
+  } catch (error) {
+    console.error('Failed to fetch today out category totals:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('获取今日出库分类总计超时，请稍后重试');
+    }
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('网络连接失败，请检查网络连接');
+    }
+    throw error;
+  }
+}
+
+export const getMonthOutCategoryTotals = async () => {
+  try {
+    console.log('Fetching month out category totals');
+    
+    // 添加超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+    
+    const response = await fetch(`${API_BASE_URL}/api/stock-outs/category-totals/month`, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('API error:', error);
+      throw new Error(error.message || `获取本月出库分类总计失败: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Received month out category totals:', data);
+    return data;
+    
+  } catch (error) {
+    console.error('Failed to fetch month out category totals:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('获取本月出库分类总计超时，请稍后重试');
+    }
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('网络连接失败，请检查网络连接');
+    }
+    throw error;
+  }
 }
 
 export const getTodayCategoryTotals = async () => {

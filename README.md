@@ -20,9 +20,11 @@
 - 食材入库录入
 - 今日入库记录查看
 - 今日/本月分类价格统计
+- 当天类食材自动出库功能
 
 **使用的API接口**:
 - `POST /api/stock-ins` - 创建入库记录
+- `POST /api/stock-outs` - 创建出库记录（当天类食材自动出库）
 - `GET /api/stock-ins` - 获取入库记录列表
 - `GET /api/category-totals/today` - 获取今日分类总计
 - `GET /api/category-totals/month` - 获取本月分类总计
@@ -30,10 +32,33 @@
 
 **对应数据库表**: 
 - `stock_ins` - 入库记录表
+- `stock_outs` - 出库记录表（当天类食材自动出库）
 - `monthly_suppliers` - 每月供应商表
 - `suppliers` - 供应商表
 
-### 2. 库存查询页面 (`/desktop/stock`)
+### 2. 出库管理页面 (`/desktop/outbound`)
+**文件位置**: `frontend/src/views/desktop/OutboundManagement.vue`
+
+**功能描述**: 
+- 食材出库录入
+- 今日出库记录查看
+- 今日/本月出库分类价格统计
+
+**使用的API接口**:
+- `POST /api/stock-outs` - 创建出库记录
+- `GET /api/stock-outs` - 获取出库记录列表
+- `PUT /api/stock-outs/{id}` - 更新出库记录
+- `DELETE /api/stock-outs/{id}` - 删除出库记录
+- `GET /api/stock-outs/category-totals/today` - 获取今日出库分类总计
+- `GET /api/stock-outs/category-totals/month` - 获取本月出库分类总计
+- `GET /api/monthly-suppliers/all` - 获取历史每月供应商记录
+
+**对应数据库表**: 
+- `stock_outs` - 出库记录表
+- `monthly_suppliers` - 每月供应商表
+- `suppliers` - 供应商表
+
+### 3. 库存查询页面 (`/desktop/stock`)
 **文件位置**: `frontend/src/views/desktop/StockQuery.vue`
 
 **功能描述**:
@@ -49,7 +74,7 @@
 **对应数据库表**:
 - `stock_ins` - 入库记录表
 
-### 3. 供应商管理页面 (`/desktop/supplier`)
+### 4. 供应商管理页面 (`/desktop/supplier`)
 **文件位置**: `frontend/src/views/desktop/SupplierManagement.vue`
 
 **功能描述**:
@@ -73,7 +98,7 @@
 - `suppliers` - 供应商表
 - `monthly_suppliers` - 每月供应商表
 
-### 4. 月底盘点明细页面 (`/desktop/monthly-inventory`)
+### 5. 月底盘点明细页面 (`/desktop/monthly-inventory`)
 **文件位置**: `frontend/src/views/desktop/MonthlyInventory.vue`
 
 **功能描述**:
@@ -95,7 +120,7 @@
 - `monthly_inventory` - 月底库存表
 - `outbound_categories` - 出库分类表
 
-### 5. 月度报表页面 (`/desktop/report`)
+### 6. 月度报表页面 (`/desktop/report`)
 **文件位置**: `frontend/src/views/desktop/MonthlyReport.vue`
 
 **功能描述**:
@@ -113,7 +138,7 @@
 - `stock_ins` - 入库记录表（用于统计）
 - `report_templates` - 报表模板表
 
-### 6. 报表设计及导出页面 (`/desktop/report-designer`)
+### 7. 报表设计及导出页面 (`/desktop/report-designer`)
 **文件位置**: `frontend/src/views/desktop/ReportDesigner.vue`
 
 **功能描述**:
@@ -129,7 +154,7 @@
 **对应数据库表**:
 - `designer_templates` - 设计器模板表
 
-### 7. 数据导入页面 (`/desktop/data-import`)
+### 8. 数据导入页面 (`/desktop/data-import`)
 **文件位置**: `frontend/src/views/desktop/DataImport.vue`
 
 **功能描述**:
@@ -195,13 +220,16 @@ CREATE TABLE monthly_suppliers (
 ```sql
 CREATE TABLE stock_outs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_name TEXT NOT NULL,               -- 物品名称
+    name TEXT NOT NULL,                    -- 食材名称
+    category TEXT,                         -- 分类
     quantity REAL NOT NULL,                -- 数量
     unit TEXT NOT NULL,                    -- 单位
-    purpose TEXT,                          -- 用途
-    operator TEXT,                         -- 操作员
-    out_time TEXT DEFAULT CURRENT_TIMESTAMP, -- 出库时间
-    remarks TEXT                           -- 备注
+    supplier TEXT,                         -- 供应商
+    price REAL DEFAULT 0,                  -- 单价
+    subtotal REAL DEFAULT 0,               -- 小计
+    is_daily BOOLEAN DEFAULT 0,            -- 是否为当天类食材
+    note TEXT,                             -- 备注
+    out_time TEXT DEFAULT CURRENT_TIMESTAMP -- 出库时间
 )
 ```
 
@@ -271,7 +299,12 @@ CREATE TABLE designer_templates (
 
 ### 出库管理相关
 - `POST /api/stock-outs` - 创建出库记录
-- `GET /api/stock-outs` - 获取出库记录列表
+- `GET /api/stock-outs` - 获取出库记录列表（支持分页、搜索、日期筛选）
+- `PUT /api/stock-outs/{id}` - 更新出库记录
+- `DELETE /api/stock-outs/{id}` - 删除出库记录
+- `DELETE /api/stock-outs/all` - 删除所有出库记录
+- `GET /api/stock-outs/category-totals/today` - 获取今日出库分类总计
+- `GET /api/stock-outs/category-totals/month` - 获取本月出库分类总计
 
 ### 统计相关
 - `GET /api/category-totals/today` - 获取今日分类总计

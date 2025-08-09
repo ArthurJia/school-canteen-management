@@ -59,6 +59,32 @@ def create_stock_in():
         
         conn.commit()
         last_id = cursor.lastrowid
+        
+        # 如果是当天类食材，自动创建出库记录
+        is_daily = data.get('is_daily', False)
+        if is_daily:
+            try:
+                cursor.execute('''
+                INSERT INTO stock_outs (name, category, quantity, unit, supplier, price, subtotal, is_daily, note, out_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    data['name'],
+                    data.get('category', ''),
+                    quantity,
+                    data['unit'],
+                    data.get('supplier', ''),
+                    price,
+                    subtotal,
+                    1,  # 当天类食材
+                    data.get('note', ''),
+                    in_time  # 使用相同的时间
+                ))
+                conn.commit()
+                print(f"当天类食材 {data['name']} 已自动出库")
+            except Exception as e:
+                print(f"自动出库失败: {str(e)}")
+                # 不影响入库操作，只记录错误
+        
         conn.close()
         
         return jsonify({'success': True, 'id': last_id}), 201
@@ -255,50 +281,297 @@ def delete_all_stock_ins():
 
 @app.route('/api/stock-outs', methods=['POST'])
 def create_stock_out():
-    data = request.get_json()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-    INSERT INTO stock_outs (item_name, quantity, unit, purpose, operator, remarks)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ''', (
-        data['item_name'],
-        data['quantity'],
-        data['unit'],
-        data.get('purpose', ''),
-        data.get('operator', ''),
-        data.get('remarks', '')
-    ))
-    
-    conn.commit()
-    conn.close()
-    return jsonify({'success': True}), 201
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # 必填字段验证
+        required_fields = ['name', 'quantity', 'unit']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        # 计算小计金额
+        quantity = float(data['quantity'])
+        price = float(data.get('price', 0))
+        subtotal = quantity * price
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 处理出库日期，如果提供则使用，否则使用当前日期
+        out_time = data.get('stockOutDate') or datetime.now().strftime('%Y-%m-%d')
+        
+        cursor.execute('''
+        INSERT INTO stock_outs (name, category, quantity, unit, supplier, price, subtotal, is_daily, note, out_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data['name'],
+            data.get('category', ''),
+            quantity,
+            data['unit'],
+            data.get('supplier', ''),
+            price,
+            subtotal,
+            1 if data.get('is_daily', False) else 0,
+            data.get('note', ''),  # 前端使用note字段
+            out_time
+        ))
+        
+        conn.commit()
+        last_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({'success': True, 'id': last_id}), 201
+        
+    except Exception as e:
+        print(f"Error creating stock out: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stock-outs', methods=['GET'])
 def get_stock_outs():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT * FROM stock_outs ORDER BY out_time DESC')
-    records = cursor.fetchall()
-    
-    conn.close()
-    
-    stock_outs = []
-    for record in records:
-        stock_outs.append({
-            'id': record[0],
-            'item_name': record[1],
-            'quantity': record[2],
-            'unit': record[3],
-            'purpose': record[4],
-            'operator': record[5],
-            'out_time': record[6],
-            'remarks': record[7]
+    try:
+        # 获取查询参数
+        start_time = request.args.get('startTime')
+        end_time = request.args.get('endTime')
+        search = request.args.get('search', '')
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('pageSize', 10))
+        
+        # 计算偏移量
+        offset = (page - 1) * page_size
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 构建查询条件
+        query = 'SELECT * FROM stock_outs'
+        count_query = 'SELECT COUNT(*) FROM stock_outs'
+        params = []
+        where_clauses = []
+        
+        if start_time or end_time:
+            if start_time:
+                where_clauses.append('date(out_time) >= date(?)')
+                params.append(start_time)
+            if end_time:
+                where_clauses.append('date(out_time) <= date(?)')
+                params.append(end_time)
+        
+        if search:
+            where_clauses.append('(name LIKE ? OR category LIKE ? OR supplier LIKE ?)')
+            search_param = f'%{search}%'
+            params.extend([search_param, search_param, search_param])
+        
+        if where_clauses:
+            query += ' WHERE ' + ' AND '.join(where_clauses)
+            count_query += ' WHERE ' + ' AND '.join(where_clauses)
+        
+        query += ' ORDER BY out_time DESC LIMIT ? OFFSET ?'
+        params.extend([page_size, offset])
+        
+        # 执行查询获取数据
+        cursor.execute(query, params)
+        records = cursor.fetchall()
+        
+        # 执行查询获取总数
+        cursor.execute(count_query, params[:len(params)-2] if where_clauses else [])
+        total = cursor.fetchone()[0]
+        
+        # 将记录转换为字典列表
+        stock_outs = []
+        for record in records:
+            stock_out = {
+                'id': record[0],
+                'name': record[1],
+                'category': record[2],
+                'quantity': float(record[3]),  # 确保数字类型正确
+                'unit': record[4],
+                'supplier': record[5],
+                'price': float(record[6]),     # 确保数字类型正确
+                'subtotal': float(record[7]),  # 确保数字类型正确
+                'is_daily': bool(record[8]),
+                'note': record[9],
+                'out_time': record[10]
+            }
+            stock_outs.append(stock_out)
+        
+        conn.close()
+        
+        return jsonify({
+            'data': stock_outs,
+            'total': total,
+            'page': page,
+            'pageSize': page_size
         })
-    
-    return jsonify(stock_outs)
+        
+    except Exception as e:
+        print(f"Error fetching stock-outs: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-outs/<int:stock_out_id>', methods=['PUT'])
+def update_stock_out(stock_out_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # 必填字段验证
+        required_fields = ['name', 'quantity', 'unit']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+
+        # 计算小计金额
+        quantity = float(data['quantity'])
+        price = float(data.get('price', 0))
+        subtotal = quantity * price
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 更新出库记录
+        cursor.execute('''
+        UPDATE stock_outs 
+        SET name = ?, 
+            category = ?, 
+            quantity = ?, 
+            unit = ?, 
+            supplier = ?, 
+            price = ?, 
+            subtotal = ?, 
+            is_daily = ?, 
+            note = ?, 
+            out_time = ?
+        WHERE id = ?
+        ''', (
+            data['name'],
+            data.get('category', ''),
+            quantity,
+            data['unit'],
+            data.get('supplier', ''),
+            price,
+            subtotal,
+            1 if data.get('is_daily', False) else 0,
+            data.get('note', ''),
+            data.get('out_time', ''),
+            stock_out_id
+        ))
+        
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Stock out record not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error updating stock out record: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-outs/<int:stock_out_id>', methods=['DELETE'])
+def delete_stock_out(stock_out_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 删除指定的出库记录
+        cursor.execute('DELETE FROM stock_outs WHERE id = ?', (stock_out_id,))
+        conn.commit()
+        
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Stock out record not found'}), 404
+            
+        conn.close()
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        print(f"Error deleting stock out record: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-outs/all', methods=['DELETE'])
+def delete_all_stock_outs():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 删除所有出库记录
+        cursor.execute('DELETE FROM stock_outs')
+        deleted_count = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'成功删除 {deleted_count} 条出库记录',
+            'deletedCount': deleted_count
+        }), 200
+        
+    except Exception as e:
+        print(f"Error deleting all stock out records: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-outs/category-totals/today', methods=['GET'])
+def get_today_out_category_totals():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 获取今日各分类的出库总计
+        cursor.execute('''
+            SELECT 
+                category,
+                ROUND(SUM(subtotal), 2) as total
+            FROM stock_outs 
+            WHERE date(out_time) = date('now', 'localtime')
+            GROUP BY category
+            ORDER BY total DESC
+        ''')
+        
+        records = cursor.fetchall()
+        conn.close()
+        
+        # 转换为字典列表
+        totals = [{'category': record[0] or '未分类', 'total': float(record[1])} for record in records]
+        
+        return jsonify({'data': totals})
+        
+    except Exception as e:
+        print(f"Error fetching today's out category totals: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stock-outs/category-totals/month', methods=['GET'])
+def get_month_out_category_totals():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 获取本月各分类的出库总计
+        cursor.execute('''
+            SELECT 
+                category,
+                ROUND(SUM(subtotal), 2) as total
+            FROM stock_outs 
+            WHERE strftime('%Y-%m', out_time) = strftime('%Y-%m', 'now', 'localtime')
+            GROUP BY category
+            ORDER BY total DESC
+        ''')
+        
+        records = cursor.fetchall()
+        conn.close()
+        
+        # 转换为字典列表
+        totals = [{'category': record[0] or '未分类', 'total': float(record[1])} for record in records]
+        
+        return jsonify({'data': totals})
+        
+    except Exception as e:
+        print(f"Error fetching month's out category totals: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/category-totals/today', methods=['GET'])
 def get_today_category_totals():

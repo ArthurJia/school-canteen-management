@@ -205,7 +205,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { createStockIn, getStockIns, getTodayCategoryTotals, getMonthCategoryTotals, getAllMonthlySuppliers } from '@/api'
+import { createStockIn, getStockIns, getTodayCategoryTotals, getMonthCategoryTotals, getAllMonthlySuppliers, createStockOut } from '@/api'
 
 // 设置今日入库记录表格的最大高度，约为8行记录的高度（每行40px）
 const todayRecordsMaxHeight = 320 // 8行 * 40px = 320px
@@ -495,7 +495,23 @@ const handleSubmit = async () => {
     
     const result = await createStockIn(payload)
     
-    ElMessage.success('入库成功')
+    // 如果是当天类食材，自动创建出库记录
+    if (isDailyCategory(form.value.category)) {
+      try {
+        const outPayload = {
+          ...payload,
+          stockOutDate: payload.stockInDate // 使用相同的日期
+        }
+        await createStockOut(outPayload)
+        ElMessage.success('入库成功，当天类食材已自动出库')
+      } catch (outError) {
+        console.error('自动出库失败:', outError)
+        ElMessage.warning('入库成功，但自动出库失败: ' + (outError.message || '未知错误'))
+      }
+    } else {
+      ElMessage.success('入库成功')
+    }
+    
     // 清空表单
     form.value = {
       id: null,

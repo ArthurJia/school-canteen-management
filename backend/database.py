@@ -53,17 +53,23 @@ def init_db():
     )
     ''')
     
-    # 创建出库记录表
+    # 删除旧的出库记录表
+    cursor.execute('DROP TABLE IF EXISTS stock_outs')
+    
+    # 创建新的出库记录表（与入库记录表结构相同）
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS stock_outs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        item_name TEXT NOT NULL,
-        quantity REAL NOT NULL,
-        unit TEXT NOT NULL,
-        purpose TEXT,
-        operator TEXT,
-        out_time TEXT DEFAULT CURRENT_TIMESTAMP,
-        remarks TEXT
+        name TEXT NOT NULL,                    -- 食材名称
+        category TEXT,                         -- 分类
+        quantity REAL NOT NULL,                -- 数量
+        unit TEXT NOT NULL,                    -- 单位
+        supplier TEXT,                         -- 供应商
+        price REAL DEFAULT 0,                  -- 单价
+        subtotal REAL DEFAULT 0,               -- 小计
+        is_daily BOOLEAN DEFAULT 0,            -- 是否为当天类食材
+        note TEXT,                             -- 备注
+        out_time TEXT DEFAULT CURRENT_TIMESTAMP -- 出库时间
     )
     ''')
     

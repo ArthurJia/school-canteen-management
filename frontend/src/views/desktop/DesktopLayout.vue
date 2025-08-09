@@ -30,6 +30,10 @@
             <el-icon><Goods /></el-icon>
             <span>入库管理</span>
           </el-menu-item>
+          <el-menu-item index="/desktop/outbound" class="menu-item">
+            <el-icon><Sell /></el-icon>
+            <span>出库管理</span>
+          </el-menu-item>
           <el-menu-item index="/desktop/stock" class="menu-item">
             <el-icon><PieChart /></el-icon>
             <span>库存查询</span>
