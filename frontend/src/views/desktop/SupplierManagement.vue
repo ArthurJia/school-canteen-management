@@ -107,15 +107,19 @@
           <el-input :value="tempSupplier?.name" readonly />
         </el-form-item>
         <el-form-item label="供应品类" required>
-          <el-checkbox-group v-model="monthlySupplierForm.supplyItems">
-            <el-checkbox
-              v-for="item in supplyCategories"
+          <el-select
+            v-model="monthlySupplierForm.supplyItems"
+            multiple
+            placeholder="请选择供应品类"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in currentSupplierCategories"
               :key="item.value"
-              :label="item.value"
-            >
-              {{ item.label }}
-            </el-checkbox>
-          </el-checkbox-group>
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="供应月份" required>
           <el-date-picker
@@ -286,6 +290,21 @@ const formatSelectedMonth = computed(() => {
   }
   const [year, month] = selectedDate.value.split('-')
   return `${year}年${month}月`
+})
+
+// 计算属性：当前供应商的供应品类选项
+const currentSupplierCategories = computed(() => {
+  if (!tempSupplier.value || !tempSupplier.value.supplyItems) {
+    return []
+  }
+  
+  // 获取当前供应商的供应品类
+  const supplierItems = tempSupplier.value.supplyItems || []
+  
+  // 从所有品类中筛选出该供应商拥有的品类
+  return supplyCategories.value.filter(category => 
+    supplierItems.includes(category.value)
+  )
 })
 
 // 视图切换处理
@@ -822,17 +841,5 @@ const handleExportExcel = async () => {
   font-size: 14px;
 }
 
-/* 供应品类复选框样式 */
-.el-checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  max-height: 200px;
-  overflow-y: auto;
-}
 
-.el-checkbox {
-  margin-right: 0;
-  white-space: nowrap;
-}
 </style>
