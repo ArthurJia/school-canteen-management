@@ -66,6 +66,11 @@
       <el-table :data="paginatedIngredientList" border style="width: 100%" v-loading="loading" stripe>
         <el-table-column prop="name" label="名称" width="200" />
         <el-table-column prop="unit" label="单位" width="120" />
+        <el-table-column prop="category" label="分类" width="120">
+          <template #default="{ row }">
+            {{ getCategoryLabel(row.category) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="unitPrice" label="单价（元）" width="120" align="right">
           <template #default="{ row }">
             {{ row.unitPrice.toFixed(2) }}
@@ -150,6 +155,16 @@
             <el-option label="升" value="升" />
           </el-select>
         </el-form-item>
+        <el-form-item label="分类" prop="category">
+          <el-select v-model="newIngredient.category" placeholder="请选择分类" style="width: 100%">
+            <el-option
+              v-for="item in storageCategories"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="单价（元）" prop="unitPrice">
           <el-input v-model.number="newIngredient.unitPrice" type="number" :step="0.01" placeholder="请输入单价" />
         </el-form-item>
@@ -220,32 +235,67 @@ const newInventoryItem = ref({
   unit: ''
 })
 
+// 储存类食材分类选项
+const storageCategories = [
+  { value: 'rice', label: '大米' },
+  { value: 'oil', label: '食用油类' },
+  { value: 'seasoning', label: '调味品类' }
+]
+
 // 新食材
 const newIngredient = ref({
   name: '',
   unit: '千克',
   unitPrice: 0,
-  specification: ''
+  specification: '',
+  category: 'seasoning'
 })
+
+// 获取分类标签的函数
+const getCategoryLabel = (categoryValue) => {
+  const category = storageCategories.find(item => item.value === categoryValue)
+  return category ? category.label : categoryValue
+}
+
+// 根据食材名称自动设置分类
+const getCategoryByName = (name) => {
+  if (!name) return 'seasoning'
+  
+  const nameLower = name.toLowerCase()
+  
+  // 大米类
+  if (name.includes('大米') || name.includes('米') || nameLower.includes('rice')) {
+    return 'rice'
+  }
+  
+  // 食用油类
+  if ((name.includes('油') && name.includes('食用')) || name.includes('大豆油') || name.includes('菜籽油') || name.includes('花生油') || name.includes('玉米油') || nameLower.includes('oil')) {
+    return 'oil'
+  }
+  
+  // 调味品类（默认）
+  return 'seasoning'
+}
 
 // 监听器 - 当选择名称时自动填充分类、单价和单位
 watch(() => newInventoryItem.value.name, (newName) => {
   const selectedIngredient = ingredientList.value.find(ingredient => ingredient.name === newName)
   if (selectedIngredient) {
-    // 根据名称设置分类显示规则
-    if (newName === '大米') {
-      newInventoryItem.value.category = '大米'
-    } else if (newName === '大豆油') {
-      newInventoryItem.value.category = '食用油类'
-    } else {
-      newInventoryItem.value.category = '调味品类'
-    }
+    // 使用储存类食材明细中的分类
+    newInventoryItem.value.category = getCategoryLabel(selectedIngredient.category)
     newInventoryItem.value.unitPrice = selectedIngredient.unitPrice
     newInventoryItem.value.unit = selectedIngredient.unit // 自动填充单位
   } else {
     newInventoryItem.value.category = ''
     newInventoryItem.value.unitPrice = 0
     newInventoryItem.value.unit = ''
+  }
+})
+
+// 监听器 - 当输入食材名称时自动设置分类
+watch(() => newIngredient.value.name, (newName) => {
+  if (newName) {
+    newIngredient.value.category = getCategoryByName(newName)
   }
 })
 
@@ -270,6 +320,9 @@ const ingredientRules = {
   ],
   unit: [
     { required: true, message: '请选择单位', trigger: 'change' }
+  ],
+  category: [
+    { required: true, message: '请选择分类', trigger: 'change' }
   ],
   unitPrice: [
     { required: true, message: '请输入单价', trigger: 'blur' },
@@ -393,7 +446,8 @@ const addOrUpdateIngredient = async () => {
             name: newIngredient.value.name,
             unit: newIngredient.value.unit,
             unitPrice: newIngredient.value.unitPrice,
-            specification: newIngredient.value.specification
+            specification: newIngredient.value.specification,
+            category: newIngredient.value.category
           })
           ElMessage.success('修改食材成功')
         } else {
@@ -402,7 +456,8 @@ const addOrUpdateIngredient = async () => {
             name: newIngredient.value.name,
             unit: newIngredient.value.unit,
             unitPrice: newIngredient.value.unitPrice,
-            specification: newIngredient.value.specification
+            specification: newIngredient.value.specification,
+            category: newIngredient.value.category
           })
           ElMessage.success('添加食材成功')
         }
@@ -471,7 +526,8 @@ const closeAddIngredientDialog = () => {
     name: '',
     unit: '千克',
     unitPrice: 0,
-    specification: ''
+    specification: '',
+    category: 'seasoning'
   }
   ingredientFormRef.value?.resetFields()
 }

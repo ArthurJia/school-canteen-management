@@ -1615,7 +1615,7 @@ def get_storage_ingredients():
         cursor = conn.cursor()
         
         cursor.execute('''
-        SELECT id, name, unit, unit_price, specification, created_at
+        SELECT id, name, unit, unit_price, specification, created_at, category
         FROM storage_ingredients
         ORDER BY name ASC
         ''')
@@ -1631,7 +1631,8 @@ def get_storage_ingredients():
                 'unit': record[2],
                 'unitPrice': float(record[3]),
                 'specification': record[4] or '',
-                'created_at': record[5]
+                'created_at': record[5],
+                'category': record[6] or 'seasoning'
             }
             ingredients.append(ingredient)
         
@@ -1657,13 +1658,14 @@ def create_storage_ingredient():
         cursor = conn.cursor()
         
         cursor.execute('''
-        INSERT INTO storage_ingredients (name, unit, unit_price, specification)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO storage_ingredients (name, unit, unit_price, specification, category)
+        VALUES (?, ?, ?, ?, ?)
         ''', (
             data['name'],
             data['unit'],
             float(data['unitPrice']),
-            data.get('specification', '')
+            data.get('specification', ''),
+            data.get('category', 'seasoning')
         ))
         
         conn.commit()
@@ -1688,13 +1690,14 @@ def update_storage_ingredient(ingredient_id):
         
         cursor.execute('''
         UPDATE storage_ingredients 
-        SET name = ?, unit = ?, unit_price = ?, specification = ?, updated_at = CURRENT_TIMESTAMP
+        SET name = ?, unit = ?, unit_price = ?, specification = ?, category = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
         ''', (
             data['name'],
             data['unit'],
             float(data['unitPrice']),
             data.get('specification', ''),
+            data.get('category', 'seasoning'),
             ingredient_id
         ))
         
