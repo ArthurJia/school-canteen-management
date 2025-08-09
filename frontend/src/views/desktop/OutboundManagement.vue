@@ -634,77 +634,54 @@ const calculateUsageStatistics = async () => {
 
   try {
     const [year, month] = selectedStatMonth.value.split('-')
-
-    // 从API获取月底库存数据
-    const inventoryResponse = await axios.get('/api/monthly-inventory')
-    const inventoryResult = inventoryResponse.data
-    const inventoryData = inventoryResult.data || []
-
-    // 从API获取库存查询数据（入库记录）
-    const stockResponse = await axios.get('/api/stock-ins', {
-      params: {
-        pageSize: 1000 // 获取足够多的数据用于统计
-      }
-    })
-    const stockResult = stockResponse.data
-    const stockData = stockResult.data || []
-
-    // 构建当月和上月的年月字符串
     const currentMonth = selectedStatMonth.value
     const prevMonth = getPreviousMonth(selectedStatMonth.value)
 
-    // 计算当月月底库存金额
-    const currentMonthInventory = inventoryData.filter(item => item.date === currentMonth)
+    // 获取月底库存数据
+    const inventoryResponse = await axios.get('/api/monthly-inventory')
+    const inventoryData = inventoryResponse.data.data || []
 
-    const currentRiceAmount = currentMonthInventory
-      .filter(item => item.category === '大米')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const currentOilAmount = currentMonthInventory
-      .filter(item => item.category === '食用油类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const currentSeasoningAmount = currentMonthInventory
-      .filter(item => item.category === '调味品类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-
-    // 计算上个月月底库存金额
-    const prevMonthInventory = inventoryData.filter(item => item.date === prevMonth)
-
-    const prevRiceAmount = prevMonthInventory
-      .filter(item => item.category === '大米')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const prevOilAmount = prevMonthInventory
-      .filter(item => item.category === '食用油类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-    const prevSeasoningAmount = prevMonthInventory
-      .filter(item => item.category === '调味品类')
-      .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
-
-    // 计算当月入库金额（从库存查询数据中获取）
-    const currentMonthStockIn = stockData.filter(item => {
-      const itemDate = new Date(item.in_time)
-      const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
-      return itemYearMonth === currentMonth
+    // 获取入库数据
+    const stockResponse = await axios.get('/api/stock-ins', {
+      params: { pageSize: 1000 }
     })
+    const stockData = stockResponse.data.data || []
 
-    const stockInRiceAmount = currentMonthStockIn
-      .filter(item => item.category === 'rice')
-      .reduce((sum, item) => sum + item.subtotal, 0)
-    const stockInOilAmount = currentMonthStockIn
-      .filter(item => item.category === 'oil')
-      .reduce((sum, item) => sum + item.subtotal, 0)
-    const stockInSeasoningAmount = currentMonthStockIn
-      .filter(item => item.category === 'seasoning')
-      .reduce((sum, item) => sum + item.subtotal, 0)
+    // 按分类计算使用量统计
+    const calculateCategoryUsage = (categoryName, categoryValue) => {
+      // 计算上个月月底库存金额（按分类汇总）
+      const prevMonthInventory = inventoryData.filter(item =>
+        item.date === prevMonth && item.category === categoryName
+      )
+      const prevAmount = prevMonthInventory.reduce((sum, item) =>
+        sum + (item.unitPrice * item.quantity), 0
+      )
 
-    // 计算使用量：上月库存 + 当月入库 - 当月库存
-    riceUsage.value = prevRiceAmount + stockInRiceAmount - currentRiceAmount
-    oilUsage.value = prevOilAmount + stockInOilAmount - currentOilAmount
-    seasoningUsage.value = prevSeasoningAmount + stockInSeasoningAmount - currentSeasoningAmount
+      // 计算当月月底库存金额（按分类汇总）
+      const currentMonthInventory = inventoryData.filter(item =>
+        item.date === currentMonth && item.category === categoryName
+      )
+      const currentAmount = currentMonthInventory.reduce((sum, item) =>
+        sum + (item.unitPrice * item.quantity), 0
+      )
 
-    // 确保使用量不为负数
-    riceUsage.value = Math.max(0, riceUsage.value)
-    oilUsage.value = Math.max(0, oilUsage.value)
-    seasoningUsage.value = Math.max(0, seasoningUsage.value)
+      // 计算当月入库金额（按分类汇总）
+      const currentMonthStockIn = stockData.filter(item => {
+        const itemDate = new Date(item.in_time)
+        const itemYearMonth = `${itemDate.getFullYear()}-${String(itemDate.getMonth() + 1).padStart(2, '0')}`
+        return itemYearMonth === currentMonth && item.category === categoryValue
+      })
+      const stockInAmount = currentMonthStockIn.reduce((sum, item) => sum + item.subtotal, 0)
+
+      // 计算使用量：上月库存金额 + 当月入库金额 - 当月库存金额
+      const usageAmount = prevAmount + stockInAmount - currentAmount
+      return Math.max(0, usageAmount)
+    }
+
+    // 分别计算三个分类的使用量
+    riceUsage.value = calculateCategoryUsage('大米', '大米')
+    oilUsage.value = calculateCategoryUsage('食用油类', '食用油类')
+    seasoningUsage.value = calculateCategoryUsage('调味品类', '调味品类')
 
   } catch (error) {
     console.error('计算使用量统计失败:', error)
