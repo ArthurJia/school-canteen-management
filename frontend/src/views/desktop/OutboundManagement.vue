@@ -42,19 +42,13 @@
           <span>食材出库</span>
         </div>
       </template>
-      
+
       <el-form :model="form" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="出库日期" required>
-              <el-date-picker
-                v-model="form.stockOutDate"
-                type="date"
-                placeholder="选择日期"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
+              <el-date-picker v-model="form.stockOutDate" type="date" placeholder="选择日期" format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="16">
@@ -63,31 +57,18 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="食材名称" required>
-              <el-input
-                v-model="form.name"
-                placeholder="请输入食材名称"
-                @change="handleIngredientInput"
-              />
+              <el-input v-model="form.name" placeholder="请输入食材名称" @change="handleIngredientInput" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="分类" required>
               <el-select v-model="form.category" placeholder="请选择食材分类">
-                <el-option-group
-                  v-for="group in categories"
-                  :key="group.label"
-                  :label="group.label"
-                >
-                  <el-option
-                    v-for="item in group.options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
+                <el-option-group v-for="group in categories" :key="group.label" :label="group.label">
+                  <el-option v-for="item in group.options" :key="item.value" :label="item.label" :value="item.value" />
                 </el-option-group>
               </el-select>
             </el-form-item>
@@ -95,27 +76,17 @@
           <el-col :span="8">
             <el-form-item label="供应商" required>
               <el-select v-model="form.supplier" placeholder="请选择供应商">
-                <el-option
-                  v-for="supplier in suppliers"
-                  :key="supplier.value"
-                  :label="supplier.label"
-                  :value="supplier.value"
-                />
+                <el-option v-for="supplier in suppliers" :key="supplier.value" :label="supplier.label"
+                  :value="supplier.value" />
               </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="数量" required>
-              <el-input 
-                v-model="form.quantity" 
-                type="number"
-                :min="1"
-                placeholder="请输入数量"
-                style="width: 60%"
-              />
+              <el-input v-model="form.quantity" type="number" :min="1" placeholder="请输入数量" style="width: 60%" />
               <el-select v-model="form.unit" placeholder="单位" style="width: 38%; margin-left: 2%">
                 <el-option label="千克(kg)" value="kg" />
                 <el-option label="升(L)" value="L" />
@@ -124,13 +95,7 @@
           </el-col>
           <el-col :span="8">
             <el-form-item label="单价(元)" required>
-              <el-input 
-                v-model="form.price" 
-                type="number"
-                :min="0"
-                :step="0.01"
-                placeholder="请输入单价"
-              />
+              <el-input v-model="form.price" type="number" :min="0" :step="0.01" placeholder="请输入单价" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -139,28 +104,22 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-form-item>
           <el-button type="primary" @click="handleSubmit">一键出库</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <el-card class="today-records card-hover card-glow">
+    <el-card class="all-records card-hover card-glow">
       <template #header>
         <div class="card-header">
-          <span>今日出库记录</span>
-          <el-button type="primary" link @click="refreshTodayRecords">刷新</el-button>
+          <span>所有出库记录</span>
+          <el-button type="primary" link @click="refreshAllRecords">刷新</el-button>
         </div>
       </template>
-      
-      <el-table 
-        :data="todayRecords" 
-        style="width: 100%" 
-        stripe
-        :max-height="todayRecordsMaxHeight"
-        class="today-records-table"
-      >
+
+      <el-table :data="allRecords" style="width: 100%" stripe v-loading="recordsLoading" class="all-records-table">
         <el-table-column label="出库时间">
           <template #default="scope">
             {{ formatDateTime(scope.row.out_time) }}
@@ -178,63 +137,16 @@
         <el-table-column prop="subtotal" label="小计(元)" />
         <el-table-column prop="note" label="备注" />
       </el-table>
+
+      <!-- 分页器 -->
+      <div class="pagination-container">
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+          :total="totalRecords" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+          @current-change="handleCurrentChange" />
+      </div>
     </el-card>
 
-    <div class="totals-row cards-flex">
-      <el-card class="totals-card card-hover card-glow">
-        <template #header>
-          <div class="card-header">
-            <span>今日分类价格总计</span>
-            <el-button type="primary" link @click="fetchTodayCategoryTotals">刷新</el-button>
-          </div>
-        </template>
-        
-        <div>
-          <el-table :data="todayCategoryTotals" style="width: 100%" stripe>
-            <el-table-column prop="category" label="分类">
-              <template #default="scope">
-                {{ categories.flatMap(group => group.options).find(opt => opt.value === scope.row.category)?.label || scope.row.category }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="total" label="总计(元)">
-              <template #default="scope">
-                {{ scope.row.total.toFixed(2) }}
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="total-sum">
-            总计金额：{{ todayTotalSum.toFixed(2) }} 元
-          </div>
-        </div>
-      </el-card>
 
-      <el-card class="totals-card card-hover card-glow">
-        <template #header>
-          <div class="card-header">
-            <span>本月分类价格总计</span>
-            <el-button type="primary" link @click="fetchMonthCategoryTotals">刷新</el-button>
-          </div>
-        </template>
-        
-        <div>
-          <el-table :data="monthCategoryTotals" style="width: 100%" stripe>
-            <el-table-column prop="category" label="分类">
-              <template #default="scope">
-                {{ categories.flatMap(group => group.options).find(opt => opt.value === scope.row.category)?.label || scope.row.category }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="total" label="总计(元)">
-              <template #default="scope">
-                {{ scope.row.total.toFixed(2) }}
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="total-sum">
-            总计金额：{{ monthTotalSum.toFixed(2) }} 元
-          </div>
-        </div>
-      </el-card>
-    </div>
   </div>
 </template>
 
@@ -243,9 +155,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { createStockOut, getStockOuts, getTodayOutCategoryTotals, getMonthOutCategoryTotals, getAllMonthlySuppliers } from '@/api'
 import axios from 'axios'
-
-// 设置今日出库记录表格的最大高度，约为8行记录的高度（每行40px）
-const todayRecordsMaxHeight = 320 // 8行 * 40px = 320px
 
 // 格式化日期时间（只显示年月日）
 const formatDateTime = (dateTimeStr) => {
@@ -262,9 +171,12 @@ const formatDateTime = (dateTimeStr) => {
   }
 }
 
-const todayRecords = ref([])
-const todayCategoryTotals = ref([])
-const monthCategoryTotals = ref([])
+// 出库记录相关数据
+const allRecords = ref([])
+const recordsLoading = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(20) // 默认显示20条记录
+const totalRecords = ref(0)
 const monthlySuppliers = ref([]) // 存储历史每月供应商记录
 
 // 统计相关数据
@@ -273,15 +185,7 @@ const riceUsage = ref(0)
 const oilUsage = ref(0)
 const seasoningUsage = ref(0)
 
-// 计算今日分类价格总计和
-const todayTotalSum = computed(() => {
-  return todayCategoryTotals.value.reduce((sum, item) => sum + item.total, 0)
-})
 
-// 计算本月分类价格总计和
-const monthTotalSum = computed(() => {
-  return monthCategoryTotals.value.reduce((sum, item) => sum + item.total, 0)
-})
 
 // 计算属性 - 格式化选中的统计月份
 const formatSelectedStatMonth = computed(() => {
@@ -292,68 +196,58 @@ const formatSelectedStatMonth = computed(() => {
   return `${year}年${month}月`
 })
 
-// 获取今日出库记录
-const fetchTodayRecords = async () => {
+// 获取所有出库记录
+const fetchAllRecords = async () => {
+  recordsLoading.value = true
   try {
-    // 获取当前日期（使用本地时区）
-    const today = new Date()
-    // 格式化为YYYY-MM-DD格式，确保使用本地时区
-    const dateStr = today.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).replace(/\//g, '-')
-    
-    console.log(`获取今日出库记录: date=${dateStr}`)
-    const response = await getStockOuts({ startTime: dateStr, endTime: dateStr })
-    
+    console.log(`获取所有出库记录: page=${currentPage.value}, pageSize=${pageSize.value}`)
+    const response = await getStockOuts({
+      page: currentPage.value,
+      pageSize: pageSize.value
+    })
+
     if (!response.data) {
       console.error('API返回数据格式不正确:', response)
       ElMessage.warning('获取数据格式不正确')
-      todayRecords.value = []
+      allRecords.value = []
+      totalRecords.value = 0
       return
     }
-    
-    todayRecords.value = response.data.map(record => ({
+
+    allRecords.value = response.data.map(record => ({
       ...record,
       category_label: categories.value.flatMap(group => group.options).find(opt => opt.value === record.category)?.label || record.category,
       supplier_label: suppliers.value.find(s => s.value === record.supplier)?.label || record.supplier,
       subtotal: (record.quantity * record.price).toFixed(2)
     }))
+
+    totalRecords.value = response.total || 0
   } catch (error) {
-    console.error('获取今日出库记录失败:', error)
-    ElMessage.error('获取今日出库记录失败')
+    console.error('获取所有出库记录失败:', error)
+    ElMessage.error('获取所有出库记录失败')
+  } finally {
+    recordsLoading.value = false
   }
 }
 
-// 刷新今日记录
-const refreshTodayRecords = () => {
-  fetchTodayRecords()
+// 刷新所有记录
+const refreshAllRecords = () => {
+  fetchAllRecords()
 }
 
-// 获取今日分类价格总计
-const fetchTodayCategoryTotals = async () => {
-  try {
-    const response = await getTodayOutCategoryTotals()
-    todayCategoryTotals.value = response.data
-    console.log('今日出库分类价格总计:', todayCategoryTotals.value)
-  } catch (error) {
-    console.error('获取今日出库分类价格总计失败:', error)
-    ElMessage.error(error.message || '获取今日出库分类价格总计失败')
-  }
+// 分页器事件处理
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  fetchAllRecords()
 }
 
-// 获取本月分类价格总计
-const fetchMonthCategoryTotals = async () => {
-  try {
-    const response = await getMonthOutCategoryTotals()
-    monthCategoryTotals.value = response.data
-    console.log('本月出库分类价格总计:', monthCategoryTotals.value)
-  } catch (error) {
-    console.error('获取本月出库分类价格总计失败:', error)
-    ElMessage.error(error.message || '获取本月出库分类价格总计失败')
-  }
+const handleCurrentChange = (page) => {
+  currentPage.value = page
+  fetchAllRecords()
 }
+
+
 
 // 获取今天的日期，格式为YYYY-MM-DD
 const getTodayDate = () => {
@@ -392,20 +286,20 @@ const fetchMonthlySuppliers = async () => {
 // 根据出库日期和分类自动选择供应商
 const updateSupplierByDateAndCategory = () => {
   if (!form.value.stockOutDate || !form.value.category) return
-  
+
   // 从出库日期中提取年月
   const date = new Date(form.value.stockOutDate)
   const year = date.getFullYear()
   const month = date.getMonth() + 1 // JavaScript月份从0开始
-  
+
   // 在历史每月供应商记录中查找匹配的供应商
   const matchedSupplier = monthlySuppliers.value.find(supplier => {
-    return supplier.year === year && 
-           supplier.month === month && 
-           supplier.supplyItems && 
-           supplier.supplyItems.includes(form.value.category)
+    return supplier.year === year &&
+      supplier.month === month &&
+      supplier.supplyItems &&
+      supplier.supplyItems.includes(form.value.category)
   })
-  
+
   if (matchedSupplier) {
     // 找到匹配的供应商，更新表单
     const supplierOption = suppliers.value.find(s => s.label === matchedSupplier.name)
@@ -448,7 +342,7 @@ const calculateUsageStatistics = async () => {
 
     // 计算当月月底库存金额
     const currentMonthInventory = inventoryData.filter(item => item.date === currentMonth)
-    
+
     const currentRiceAmount = currentMonthInventory
       .filter(item => item.category === '大米')
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
@@ -461,7 +355,7 @@ const calculateUsageStatistics = async () => {
 
     // 计算上个月月底库存金额
     const prevMonthInventory = inventoryData.filter(item => item.date === prevMonth)
-    
+
     const prevRiceAmount = prevMonthInventory
       .filter(item => item.category === '大米')
       .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0)
@@ -520,11 +414,9 @@ const getPreviousMonth = (yearMonth) => {
   return `${prevYear}-${prevMonth}`
 }
 
-// 组件挂载时获取今日记录和分类总计
+// 组件挂载时获取所有记录
 onMounted(() => {
-  fetchTodayRecords()
-  fetchTodayCategoryTotals()
-  fetchMonthCategoryTotals()
+  fetchAllRecords()
   fetchMonthlySuppliers()
   // 设置默认统计月份为当前月份
   const now = new Date()
@@ -654,9 +546,9 @@ const handleSubmit = async () => {
       stockOutDate: form.value.stockOutDate // 添加出库日期
     }
     console.log('发送出库请求数据:', payload)
-    
+
     const result = await createStockOut(payload)
-    
+
     ElMessage.success('出库成功')
     // 清空表单
     form.value = {
@@ -671,11 +563,9 @@ const handleSubmit = async () => {
       selectedIngredient: null,
       stockOutDate: getTodayDate() // 重置为今天的日期
     }
-    
-    // 刷新今日出库记录和价格总计
-    fetchTodayRecords()
-    fetchTodayCategoryTotals()
-    fetchMonthCategoryTotals()
+
+    // 刷新所有出库记录
+    fetchAllRecords()
   } catch (error) {
     console.error('出库错误:', error)
     ElMessage.error(error.message || '出库失败，请检查网络连接或联系管理员')
@@ -793,35 +683,45 @@ const handleSubmit = async () => {
   color: #666666;
   font-weight: 500;
 }
+
 .form-card {
   margin-bottom: 20px;
 }
-.today-records {
+
+.all-records {
   margin-top: 20px;
 }
 
-/* 今日出库记录表格样式 */
-.today-records-table {
+/* 所有出库记录表格样式 */
+.all-records-table {
   /* 确保表格内容超出时显示滚动条 */
   overflow: auto;
 }
 
 /* 自定义滚动条样式 */
-:deep(.today-records-table .el-scrollbar__bar) {
+:deep(.all-records-table .el-scrollbar__bar) {
   opacity: 0.3;
 }
 
-:deep(.today-records-table .el-scrollbar__bar:hover) {
+:deep(.all-records-table .el-scrollbar__bar:hover) {
   opacity: 0.8;
 }
 
 /* 确保表头固定 */
-:deep(.today-records-table .el-table__header-wrapper) {
+:deep(.all-records-table .el-table__header-wrapper) {
   position: sticky;
   top: 0;
   z-index: 1;
   background-color: #fff;
 }
+
+/* 分页器容器样式 */
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -829,34 +729,17 @@ const handleSubmit = async () => {
   font-size: 18px;
   font-weight: bold;
 }
+
 /* 减少表单项之间的间距 */
 :deep(.el-form-item) {
   margin-bottom: 15px;
 }
+
 /* 调整表格样式 */
 :deep(.el-table) {
   margin-top: 10px;
 }
-/* 总计卡片行样式 */
-.totals-row {
-  display: flex;
-  gap: 20px;
-  margin-top: 20px;
-}
-/* 总计卡片样式 */
-.totals-card {
-  flex: 1;
-  min-width: 0; /* 防止内容溢出 */
-}
-/* 总计金额样式 */
-.total-sum {
-  margin-top: 15px;
-  text-align: right;
-  font-weight: bold;
-  font-size: 16px;
-  color: #409EFF;
-  padding-right: 20px;
-}
+
 
 /* 响应式布局 */
 @media (max-width: 768px) {
@@ -877,12 +760,7 @@ const handleSubmit = async () => {
     font-size: 24px !important;
   }
 
-  .totals-row {
-    flex-direction: column;
-  }
-  .totals-card {
-    margin-bottom: 20px;
-  }
+
 }
 
 @media (max-width: 1200px) {
@@ -894,7 +772,7 @@ const handleSubmit = async () => {
 /* 卡片动画效果 */
 .statistics-section,
 .form-card,
-.today-records {
+.all-records {
   animation: cardFadeIn 0.3s ease-out;
 }
 
