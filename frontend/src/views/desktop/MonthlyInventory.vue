@@ -29,9 +29,9 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ $index }">
-            <el-button size="small" @click="editInventoryItem($index)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteInventoryItem($index)">
+          <template #default="{ row, $index }">
+            <el-button size="small" @click="editInventoryItem(row, $index)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteInventoryItem(row, $index)">
               删除
             </el-button>
           </template>
@@ -78,9 +78,9 @@
         </el-table-column>
         <el-table-column prop="specification" label="规格" />
         <el-table-column label="操作" width="180">
-          <template #default="{ $index }">
-            <el-button size="small" @click="editIngredient($index)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteIngredient($index)">删除</el-button>
+          <template #default="{ row, $index }">
+            <el-button size="small" @click="editIngredient(row, $index)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteIngredient(row, $index)">删除</el-button>
           </template>
         </el-table-column>
         <template #empty>
@@ -401,13 +401,15 @@ const addOrUpdateInventoryItem = async () => {
   })
 }
 
-const editInventoryItem = (index) => {
-  editingInventoryIndex.value = index
-  newInventoryItem.value = { ...inventoryList.value[index] }
+const editInventoryItem = (row, pageIndex) => {
+  // 找到该行在完整列表中的真实索引
+  const realIndex = inventoryList.value.findIndex(item => item.id === row.id)
+  editingInventoryIndex.value = realIndex
+  newInventoryItem.value = { ...row }
   showAddInventoryDialog.value = true
 }
 
-const deleteInventoryItem = async (index) => {
+const deleteInventoryItem = async (row, pageIndex) => {
   try {
     await ElMessageBox.confirm(
       '确定要删除这条库存记录吗？',
@@ -419,8 +421,7 @@ const deleteInventoryItem = async (index) => {
       }
     )
 
-    const inventoryItem = inventoryList.value[index]
-    await axios.delete(`/api/monthly-inventory/${inventoryItem.id}`)
+    await axios.delete(`/api/monthly-inventory/${row.id}`)
 
     // 重新加载数据
     await loadData()
@@ -473,13 +474,15 @@ const addOrUpdateIngredient = async () => {
   })
 }
 
-const editIngredient = (index) => {
-  editingIngredientIndex.value = index
-  newIngredient.value = { ...ingredientList.value[index] }
+const editIngredient = (row, pageIndex) => {
+  // 找到该行在完整列表中的真实索引
+  const realIndex = ingredientList.value.findIndex(item => item.id === row.id)
+  editingIngredientIndex.value = realIndex
+  newIngredient.value = { ...row }
   showAddIngredientDialog.value = true
 }
 
-const deleteIngredient = async (index) => {
+const deleteIngredient = async (row, pageIndex) => {
   try {
     await ElMessageBox.confirm(
       '确定要删除这个食材吗？',
@@ -491,8 +494,7 @@ const deleteIngredient = async (index) => {
       }
     )
 
-    const ingredient = ingredientList.value[index]
-    await axios.delete(`/api/storage-ingredients/${ingredient.id}`)
+    await axios.delete(`/api/storage-ingredients/${row.id}`)
 
     // 重新加载数据
     await loadData()
